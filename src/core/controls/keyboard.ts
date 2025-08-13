@@ -70,10 +70,6 @@ export const initializeKeyboard = (): void => {
     });
 };
 
-export const sleep = (ms: number) => {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-};
-
 export const waitForEnter = (): Promise<void> => {
     return new Promise((resolve) => {
         const listener = (event: KeyboardEvent): void => {

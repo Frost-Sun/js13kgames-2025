@@ -22,16 +22,30 @@
  * SOFTWARE.
  */
 
-import "./style.css";
+import { initializeKeyboard, waitForEnter } from "./core/controls/keyboard";
+import {
+    hasTouchScreen,
+    initializeTouchscreen,
+    waitForTap,
+} from "./core/controls/touchscreen";
 import { canvas } from "./graphics";
-import { init } from "./game";
+import { renderText, TextSize } from "./text";
 
-const resize = (): void => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+export const initializeControls = (): void => {
+    initializeKeyboard();
+    initializeTouchscreen();
 };
 
-window.addEventListener("resize", resize, false);
-resize();
+export const waitForProgressInput = async (): Promise<void> => {
+    await (hasTouchScreen ? waitForTap(canvas) : waitForEnter());
+};
 
-init();
+export const renderWaitForProgressInput = (
+    action = "continue",
+    y = 7.7,
+): void => {
+    const text =
+        (hasTouchScreen ? "Tap the screen to " : "Press ENTER to ") + action;
+
+    renderText(text, TextSize.Small, "Courier New", 1, y, true, 0, text);
+};
