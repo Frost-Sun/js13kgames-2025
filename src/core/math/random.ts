@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Tero Jäntti, Sami Heikkinen
+ * Copyright (c) 2024 - 2025 Tero Jäntti, Sami Heikkinen
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -22,16 +22,23 @@
  * SOFTWARE.
  */
 
-import "./style.css";
-import { canvas } from "./graphics";
-import { init } from "./game";
-
-const resize = (): void => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+/*
+ * Returns a random number between [0, max).
+ */
+export const random = (max = 1): number => {
+    return Math.random() * max;
 };
 
-window.addEventListener("resize", resize, false);
-resize();
+/*
+ * Random number between [0, max).
+ */
+export const randomInt = (max: number): number => {
+    return Math.floor(Math.random() * max);
+};
 
-init();
+/*
+ * Random number between [min, max).
+ */
+export const randomMinMax = (min: number, max: number): number => {
+    return Math.random() * (max - min) + min;
+};

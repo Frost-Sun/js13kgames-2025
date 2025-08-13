@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Tero Jäntti, Sami Heikkinen
+ * Copyright (c) 2024 - 2025 Tero Jäntti, Sami Heikkinen
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -22,16 +22,8 @@
  * SOFTWARE.
  */
 
-import "./style.css";
-import { canvas } from "./graphics";
-import { init } from "./game";
-
-const resize = (): void => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-};
-
-window.addEventListener("resize", resize, false);
-resize();
-
-init();
+export enum GraphicsDetailLevel {
+    HIGH = "high",
+    MEDIUM = "medium",
+    LOW = "low",
+}

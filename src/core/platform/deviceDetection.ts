@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Tero Jäntti, Sami Heikkinen
+ * Copyright (c) 2024 - 2025 Tero Jäntti, Sami Heikkinen
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -22,16 +22,23 @@
  * SOFTWARE.
  */
 
-import "./style.css";
-import { canvas } from "./graphics";
-import { init } from "./game";
+// Browser/device detection
+export const isIPad =
+    /iPad/.test(navigator.userAgent) ||
+    (navigator.userAgent.includes("Mac") && "ontouchend" in document);
 
-const resize = (): void => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-};
+export const isSafari =
+    /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
 
-window.addEventListener("resize", resize, false);
-resize();
+export const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(
+    navigator.userAgent,
+);
 
-init();
+export const isIOS =
+    // Traditional iOS detection
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    // Modern iPad detection (iPadOS 13+ reports as Mac)
+    (navigator.userAgent.includes("Mac") && navigator.maxTouchPoints > 1);
+
+export const isAndroid = /Android/.test(navigator.userAgent);
+export const isDesktop = !isMobileDevice && !isIPad;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Tero Jäntti, Sami Heikkinen
+ * Copyright (c) 2024 - 2025 Tero Jäntti, Sami Heikkinen
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -22,16 +22,36 @@
  * SOFTWARE.
  */
 
-import "./style.css";
-import { canvas } from "./graphics";
-import { init } from "./game";
+let gradient: CanvasGradient;
 
-const resize = (): void => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+const createGradient = (
+    canvas: HTMLCanvasElement,
+    cx: CanvasRenderingContext2D,
+): CanvasGradient => {
+    const width = canvas.width;
+    const height = canvas.height;
+
+    const result = cx.createRadialGradient(
+        width / 2,
+        height / 2,
+        0, // Inner circle
+        width / 2,
+        height / 2,
+        width / 2, // Outer circle
+    );
+
+    result.addColorStop(0, "rgba(255, 255, 255, 0.3)");
+    result.addColorStop(1, "rgba(0, 0, 0, 0.5)");
+    return result;
 };
 
-window.addEventListener("resize", resize, false);
-resize();
-
-init();
+export const renderGradient = (
+    canvas: HTMLCanvasElement,
+    cx: CanvasRenderingContext2D,
+) => {
+    if (!gradient) {
+        gradient = createGradient(canvas, cx);
+    }
+    cx.fillStyle = gradient;
+    cx.fillRect(0, 0, canvas.width, canvas.height);
+};

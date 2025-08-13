@@ -22,16 +22,33 @@
  * SOFTWARE.
  */
 
-import "./style.css";
-import { canvas } from "./graphics";
-import { init } from "./game";
+import { renderWaitForProgressInput } from "./controls";
+import { clearCanvas } from "./graphics";
+import { renderText, TextSize } from "./text";
 
-const resize = (): void => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+export const drawLoadingView = (): void => {
+    clearCanvas("rgb(50, 100, 50)");
+    renderText("Loading...", TextSize.Normal, "Courier New");
 };
 
-window.addEventListener("resize", resize, false);
-resize();
+export const drawStartScreen = (): void => {
+    clearCanvas("rgb(100, 150, 100)");
 
-init();
+    renderText(
+        "FROST𖤓SUN",
+        TextSize.Small,
+        "Impact",
+        1,
+        4,
+        false,
+        0,
+        "FROST𖤓SUN",
+        ["#ACD5F3", "orange"],
+    );
+
+    renderText("presents", TextSize.Tiny, "Impact", 0.5, 5.25, false);
+
+    renderText("[GAME TITLE HERE]", TextSize.Xl, "Impact", 1, 1.8);
+
+    renderWaitForProgressInput("start");
+};

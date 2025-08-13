@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Tero Jäntti, Sami Heikkinen
+ * Copyright (c) 2024 - 2025 Tero Jäntti, Sami Heikkinen
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -22,16 +22,34 @@
  * SOFTWARE.
  */
 
-import "./style.css";
-import { canvas } from "./graphics";
-import { init } from "./game";
-
-const resize = (): void => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+export const ButtonStyles = {
+    zIndex: "10",
+    size: "40px",
+    color: "rgba(255, 255, 255, 0.4)",
+    background: "black",
+    border: "1px solid rgba(255, 255, 255, 0.2)",
+    borderRadius: "4px",
+    fontSize: "24px",
+    lineHeight: "0",
 };
 
-window.addEventListener("resize", resize, false);
-resize();
+export const createButton = (id: string, text: string): HTMLButtonElement => {
+    const button = document.createElement("button");
 
-init();
+    button.id = id;
+    button.style.position = "absolute";
+    button.style.zIndex = ButtonStyles.zIndex;
+    button.textContent = text;
+    button.style.fontFamily = "Impact";
+    button.style.minWidth = ButtonStyles.size;
+    button.style.minHeight = ButtonStyles.size;
+    button.style.color = ButtonStyles.color;
+    button.style.background = ButtonStyles.background;
+    button.style.border = ButtonStyles.border;
+    button.style.borderRadius = ButtonStyles.borderRadius;
+    button.style.fontSize = ButtonStyles.fontSize;
+    button.style.lineHeight = ButtonStyles.lineHeight;
+    button.style.display = "block";
+
+    return button;
+};

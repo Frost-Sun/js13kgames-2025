@@ -22,16 +22,6 @@
  * SOFTWARE.
  */
 
-import "./style.css";
-import { canvas } from "./graphics";
-import { init } from "./game";
-
-const resize = (): void => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+export const sleep = (ms: number) => {
+    return new Promise((resolve) => setTimeout(resolve, ms));
 };
-
-window.addEventListener("resize", resize, false);
-resize();
-
-init();
