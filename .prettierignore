@@ -2,3 +2,5 @@ build
 coverage
 package.json
 package-lock.json
+src/core/audio/musicplayer.js
+src/core/audio/sfxPlayer.js
