@@ -55,18 +55,20 @@ let y = 0;
 
 const setState = (newState: GameState): void => {
     gameState = newState;
-};
 
-const update = (t: number, dt: number): void => {
     switch (gameState) {
-        case GameState.Load:
-            break;
-
         case GameState.StartScreen: {
             waitForProgressInput().then(() => setState(GameState.Running));
             break;
         }
 
+        default:
+            break;
+    }
+};
+
+const update = (t: number, dt: number): void => {
+    switch (gameState) {
         case GameState.Running: {
             const newX = x + dt * 0.5;
             const newY = y + dt * 0.6;
@@ -74,6 +76,7 @@ const update = (t: number, dt: number): void => {
             y = newY < canvas.height ? newY : 0;
             break;
         }
+
         default:
             break;
     }
