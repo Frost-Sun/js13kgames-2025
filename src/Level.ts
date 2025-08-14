@@ -23,6 +23,7 @@
  */
 
 import type { Area } from "./core/math/Area";
+import type { TimeStep } from "./core/time/TimeStep";
 import { cx } from "./graphics";
 import { Mouse } from "./Mouse";
 
@@ -37,14 +38,14 @@ export class Level implements Area {
         this.y + this.height / 2,
     );
 
-    update(t: number, dt: number): void {
-        this.player.update(t, dt);
+    update(time: TimeStep): void {
+        this.player.update(time);
     }
 
-    draw(t: number, dt: number): void {
+    draw(time: TimeStep): void {
         cx.save();
 
-        this.player.draw(t, dt);
+        this.player.draw(time);
 
         cx.restore();
     }

@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+import type { TimeStep } from "./core/time/TimeStep";
 import { cx } from "./graphics";
 import type { GameObject } from "./GameObject";
 import { getControls } from "./controls";
@@ -37,15 +38,15 @@ export class Mouse implements GameObject {
         this.y = y;
     }
 
-    update(t: number, _: number): void {
+    update(_: TimeStep): void {
         const movement = getControls().movement;
         this.x += movement.x;
         this.y += movement.y;
     }
 
-    draw(t: number, dt: number): void {
+    draw(time: TimeStep): void {
         cx.save();
-        cx.fillStyle = `rgb(80, 80, ${200 + Math.sin(t / 500) * 55})`;
+        cx.fillStyle = `rgb(80, 80, ${200 + Math.sin(time.t / 500) * 55})`;
         cx.fillRect(this.x, this.y, this.width, this.height);
         cx.fillStyle = "red";
         cx.font = "32px Courier New";

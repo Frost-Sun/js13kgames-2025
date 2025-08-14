@@ -28,6 +28,7 @@ import {
     waitForProgressInput,
 } from "./controls";
 import { sleep } from "./core/time/sleep";
+import type { TimeStep } from "./core/time/TimeStep";
 import { canvas, clearCanvas, cx } from "./graphics";
 import { Level } from "./Level";
 import { drawLoadingView, drawStartScreen } from "./views";
@@ -44,17 +45,22 @@ const TIME_STEP = 1000 / 60;
 const MAX_FRAME = TIME_STEP * 5;
 
 let lastTime = 0;
+const time: TimeStep = {
+    t: 0,
+    dt: 0,
+};
 
 const level = new Level();
 
 const gameLoop = (t: number): void => {
     requestAnimationFrame(gameLoop);
 
-    const dt = Math.min(t - lastTime, MAX_FRAME);
+    time.t = t;
+    time.dt = Math.min(t - lastTime, MAX_FRAME);
     lastTime = t;
 
-    update(t, dt);
-    draw(t, dt);
+    update(time);
+    draw(time);
 };
 
 const setState = (newState: GameState): void => {
@@ -71,11 +77,11 @@ const setState = (newState: GameState): void => {
     }
 };
 
-const update = (t: number, dt: number): void => {
+const update = (time: TimeStep): void => {
     switch (gameState) {
         case GameState.Running: {
             updateControls();
-            level.update(t, dt);
+            level.update(time);
             break;
         }
 
@@ -84,7 +90,7 @@ const update = (t: number, dt: number): void => {
     }
 };
 
-const draw = (t: number, dt: number): void => {
+const draw = (time: TimeStep): void => {
     cx.save();
 
     clearCanvas();
@@ -100,7 +106,7 @@ const draw = (t: number, dt: number): void => {
 
         case GameState.Running: {
             clearCanvas("rgb(180, 180, 220)");
-            level.draw(t, dt);
+            level.draw(time);
             break;
         }
 
@@ -118,7 +124,7 @@ export const init = async (): Promise<void> => {
 
     initializeControls();
 
-    window.requestAnimationFrame(gameLoop);
+    requestAnimationFrame(gameLoop);
 
     // DUMMY SLEEP FOR TESTING LOAD SCREEN
     await sleep(1500);

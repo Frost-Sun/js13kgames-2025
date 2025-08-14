@@ -22,14 +22,14 @@
  * SOFTWARE.
  */
 
-import { type Area } from "./core/math/Area";
-import type { TimeStep } from "./core/time/TimeStep";
+export interface TimeStep {
+    /**
+     * Current game time in milliseconds.
+     */
+    t: number;
 
-export interface GameObject extends Area {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-
-    draw(time: TimeStep): void;
+    /**
+     * Time since last frame in milliseconds.
+     */
+    dt: number;
 }
