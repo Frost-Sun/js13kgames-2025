@@ -22,9 +22,15 @@
  * SOFTWARE.
  */
 
-import { initializeControls, waitForProgressInput } from "./controls";
+import {
+    initializeControls,
+    updateControls,
+    waitForProgressInput,
+} from "./controls";
 import { sleep } from "./core/time/sleep";
+import type { TimeStep } from "./core/time/TimeStep";
 import { canvas, clearCanvas, cx } from "./graphics";
+import { Level } from "./Level";
 import { drawLoadingView, drawStartScreen } from "./views";
 
 enum GameState {
@@ -39,47 +45,52 @@ const TIME_STEP = 1000 / 60;
 const MAX_FRAME = TIME_STEP * 5;
 
 let lastTime = 0;
+const time: TimeStep = {
+    t: 0,
+    dt: 0,
+};
+
+const level = new Level();
 
 const gameLoop = (t: number): void => {
     requestAnimationFrame(gameLoop);
 
-    const dt = Math.min(t - lastTime, MAX_FRAME);
+    time.t = t;
+    time.dt = Math.min(t - lastTime, MAX_FRAME);
     lastTime = t;
 
-    update(t, dt);
-    draw(t, dt);
+    update(time);
+    draw(time);
 };
-
-let x = 0;
-let y = 0;
 
 const setState = (newState: GameState): void => {
     gameState = newState;
-};
 
-const update = (t: number, dt: number): void => {
     switch (gameState) {
-        case GameState.Load:
-            break;
-
         case GameState.StartScreen: {
             waitForProgressInput().then(() => setState(GameState.Running));
             break;
         }
 
-        case GameState.Running: {
-            const newX = x + dt * 0.5;
-            const newY = y + dt * 0.6;
-            x = newX < canvas.width ? newX : 0;
-            y = newY < canvas.height ? newY : 0;
-            break;
-        }
         default:
             break;
     }
 };
 
-const draw = (t: number, _: number): void => {
+const update = (time: TimeStep): void => {
+    switch (gameState) {
+        case GameState.Running: {
+            updateControls();
+            level.update(time);
+            break;
+        }
+
+        default:
+            break;
+    }
+};
+
+const draw = (time: TimeStep): void => {
     cx.save();
 
     clearCanvas();
@@ -94,17 +105,8 @@ const draw = (t: number, _: number): void => {
             break;
 
         case GameState.Running: {
-            cx.save();
             clearCanvas("rgb(180, 180, 220)");
-
-            // DUMMY OBJECT FOR TESTING
-            cx.fillStyle = `rgb(80, 80, ${200 + Math.sin(t / 500) * 55})`;
-            cx.fillRect(x, y, 150, 150);
-            cx.fillStyle = "red";
-            cx.font = "32px Courier New";
-            cx.fillText("JS13k", x + 8, y + 40);
-
-            cx.restore();
+            level.draw(time);
             break;
         }
 
@@ -122,7 +124,7 @@ export const init = async (): Promise<void> => {
 
     initializeControls();
 
-    window.requestAnimationFrame(gameLoop);
+    requestAnimationFrame(gameLoop);
 
     // DUMMY SLEEP FOR TESTING LOAD SCREEN
     await sleep(1500);

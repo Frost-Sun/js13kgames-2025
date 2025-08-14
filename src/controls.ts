@@ -22,18 +22,56 @@
  * SOFTWARE.
  */
 
-import { initializeKeyboard, waitForEnter } from "./core/controls/keyboard";
+import {
+    getKeys,
+    initializeKeyboard,
+    waitForEnter,
+} from "./core/controls/keyboard";
 import {
     hasTouchScreen,
     initializeTouchscreen,
     waitForTap,
 } from "./core/controls/touchscreen";
+import { normalize, ZERO_VECTOR, type VectorMutable } from "./core/math/Vector";
 import { canvas } from "./graphics";
 import { renderText, TextSize } from "./text";
+
+export interface Controls {
+    movement: VectorMutable;
+}
+
+const controls: Controls = {
+    movement: { x: 0, y: 0 },
+};
 
 export const initializeControls = (): void => {
     initializeKeyboard();
     initializeTouchscreen();
+};
+
+export const updateControls = (): void => {
+    const keys = getKeys();
+
+    const left = keys.ArrowLeft || keys.KeyA;
+    const right = keys.ArrowRight || keys.KeyD;
+    const up = keys.ArrowUp || keys.KeyW;
+    const down = keys.ArrowDown || keys.KeyS;
+
+    const dx = left ? -1 : right ? 1 : 0;
+    const dy = up ? -1 : down ? 1 : 0;
+
+    if (dx === 0 && dy === 0) {
+        controls.movement = ZERO_VECTOR;
+    } else {
+        controls.movement = normalize({
+            x: dx,
+            y: dy,
+        });
+    }
+};
+
+export const getControls = (): Controls => {
+    return controls;
 };
 
 export const waitForProgressInput = async (): Promise<void> => {
