@@ -24,6 +24,7 @@
 
 import { cx } from "./graphics";
 import type { GameObject } from "./GameObject";
+import { getControls } from "./controls";
 
 export class Mouse implements GameObject {
     x: number = 0;
@@ -37,7 +38,9 @@ export class Mouse implements GameObject {
     }
 
     update(t: number, _: number): void {
-        cx.save();
+        const movement = getControls().movement;
+        this.x += movement.x;
+        this.y += movement.y;
     }
 
     draw(t: number, dt: number): void {

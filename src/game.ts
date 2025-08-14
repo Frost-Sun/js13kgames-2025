@@ -22,7 +22,11 @@
  * SOFTWARE.
  */
 
-import { initializeControls, waitForProgressInput } from "./controls";
+import {
+    initializeControls,
+    updateControls,
+    waitForProgressInput,
+} from "./controls";
 import { sleep } from "./core/time/sleep";
 import { canvas, clearCanvas, cx } from "./graphics";
 import { Level } from "./Level";
@@ -70,6 +74,7 @@ const setState = (newState: GameState): void => {
 const update = (t: number, dt: number): void => {
     switch (gameState) {
         case GameState.Running: {
+            updateControls();
             level.update(t, dt);
             break;
         }
