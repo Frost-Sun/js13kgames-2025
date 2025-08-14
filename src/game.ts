@@ -25,6 +25,7 @@
 import { initializeControls, waitForProgressInput } from "./controls";
 import { sleep } from "./core/time/sleep";
 import { canvas, clearCanvas, cx } from "./graphics";
+import { Level } from "./Level";
 import { drawLoadingView, drawStartScreen } from "./views";
 
 enum GameState {
@@ -40,6 +41,8 @@ const MAX_FRAME = TIME_STEP * 5;
 
 let lastTime = 0;
 
+const level = new Level();
+
 const gameLoop = (t: number): void => {
     requestAnimationFrame(gameLoop);
 
@@ -49,9 +52,6 @@ const gameLoop = (t: number): void => {
     update(t, dt);
     draw(t, dt);
 };
-
-let x = 0;
-let y = 0;
 
 const setState = (newState: GameState): void => {
     gameState = newState;
@@ -70,10 +70,7 @@ const setState = (newState: GameState): void => {
 const update = (t: number, dt: number): void => {
     switch (gameState) {
         case GameState.Running: {
-            const newX = x + dt * 0.5;
-            const newY = y + dt * 0.6;
-            x = newX < canvas.width ? newX : 0;
-            y = newY < canvas.height ? newY : 0;
+            level.update(t, dt);
             break;
         }
 
@@ -82,7 +79,7 @@ const update = (t: number, dt: number): void => {
     }
 };
 
-const draw = (t: number, _: number): void => {
+const draw = (t: number, dt: number): void => {
     cx.save();
 
     clearCanvas();
@@ -97,17 +94,8 @@ const draw = (t: number, _: number): void => {
             break;
 
         case GameState.Running: {
-            cx.save();
             clearCanvas("rgb(180, 180, 220)");
-
-            // DUMMY OBJECT FOR TESTING
-            cx.fillStyle = `rgb(80, 80, ${200 + Math.sin(t / 500) * 55})`;
-            cx.fillRect(x, y, 150, 150);
-            cx.fillStyle = "red";
-            cx.font = "32px Courier New";
-            cx.fillText("JS13k", x + 8, y + 40);
-
-            cx.restore();
+            level.draw(t, dt);
             break;
         }
 
