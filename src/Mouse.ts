@@ -302,7 +302,7 @@ export class Mouse implements GameObject {
                 cx.stroke();
             } else {
                 cx.beginPath();
-                cx.ellipse(6, 7 + legLiftFB(0), 5.2, 2.6, 0, 0, Math.PI * 2);
+                cx.ellipse(6, 10 + legLiftFB(0), 5.2, 2.6, 0, 0, Math.PI * 2);
                 cx.fill();
                 cx.stroke();
                 cx.beginPath();
@@ -405,7 +405,7 @@ export class Mouse implements GameObject {
                 cx.stroke();
                 cx.beginPath();
                 cx.ellipse(
-                    -10,
+                    -8,
                     9 + legLiftFB(Math.PI),
                     4.2,
                     2.1,
