@@ -53,7 +53,7 @@ export class Mouse implements GameObject {
         this.y = y;
     }
 
-    update(_: TimeStep): void {
+    update(): void {
         const movement = getControls().movement;
         this.x += movement.x;
         this.y += movement.y;
