@@ -323,14 +323,12 @@ export class Mouse implements GameObject {
             fillStrokeEllipse(isDiagonal ? 1.5 : 0, 0, 18, 10, "#ffffff");
 
             if (!isDiagonal) {
-                // Far ear
                 fillStrokeEllipse(-6, -14, 5, 5, "#ffe2e6");
                 fillStrokeEllipse(-6, -14, 3, 3, "#ffc8d0", "#eec3c9");
-                // Head
-                fillStrokeEllipse(0, -12, 9, 7, "#ffffff");
-                // Near ear
                 fillStrokeEllipse(6, -14, 5, 5, "#ffe2e6");
                 fillStrokeEllipse(6, -14, 3, 3, "#ffc8d0", "#eec3c9");
+                // Head
+                fillStrokeEllipse(0, -12, 9, 7, "#ffffff");
             } else {
                 // Far ear (smaller/higher)
                 fillStrokeEllipse(-4, -15, 4.2, 4.2, "#ffe2e6");
@@ -342,28 +340,10 @@ export class Mouse implements GameObject {
                 fillStrokeEllipse(7.5, -14, 3.1, 3.1, "#ffc8d0", "#eec3c9");
             }
         } else {
-            // === FRONT/BACK POSE FOR UP/DOWN FACING ===
-
-            // Tail: vertical behind the body with gentle sway
-            cx.save();
-            const sign = -1; // down facing
-            const tailSwayFB =
-                Math.sin(t / 260 + this.step * 1.6) * (6 + moveFactor * 4);
-            cx.strokeStyle = "#f0c2c2";
-            cx.lineWidth = 2;
-            cx.lineCap = "round";
-            cx.beginPath();
-            cx.moveTo(0, 6);
-            cx.bezierCurveTo(
-                4,
-                6 + sign * 8,
-                2,
-                12 + sign * tailSwayFB,
-                0,
-                20 + sign * (tailSwayFB + 6),
-            );
-            cx.stroke();
-            cx.restore();
+            const isDiagonal =
+                facing === "down-left" || facing === "down-right";
+            const flip = facing.endsWith("left") ? -1 : 1;
+            cx.scale(flip, 1);
 
             // Legs: four little paws alternating
             const legLiftFB = (phase: number) =>
@@ -371,37 +351,101 @@ export class Mouse implements GameObject {
             cx.fillStyle = "#ededed";
             cx.strokeStyle = "#d7d7d7";
 
-            // Rear paws
-            cx.beginPath();
-            cx.ellipse(-8, 8 + legLiftFB(0), 5, 2.5, 0, 0, Math.PI * 2);
-            cx.fill();
-            cx.stroke();
-            cx.beginPath();
-            cx.ellipse(8, 8 + legLiftFB(Math.PI), 5, 2.5, 0, 0, Math.PI * 2);
-            cx.fill();
-            cx.stroke();
+            if (!isDiagonal) {
+                // Rear paws
+                cx.beginPath();
+                cx.ellipse(-8, 8 + legLiftFB(0), 5, 2.5, 0, 0, Math.PI * 2);
+                cx.fill();
+                cx.stroke();
+                cx.beginPath();
+                cx.ellipse(
+                    8,
+                    8 + legLiftFB(Math.PI),
+                    5,
+                    2.5,
+                    0,
+                    0,
+                    Math.PI * 2,
+                );
+                cx.fill();
+                cx.stroke();
 
-            // Front paws (closer to the head side)
-            const frontY = 8;
-            cx.beginPath();
-            cx.ellipse(
-                -7,
-                frontY + legLiftFB(Math.PI),
-                4.5,
-                2.2,
-                0,
-                0,
-                Math.PI * 2,
-            );
-            cx.fill();
-            cx.stroke();
-            cx.beginPath();
-            cx.ellipse(7, frontY + legLiftFB(0), 4.5, 2.2, 0, 0, Math.PI * 2);
-            cx.fill();
-            cx.stroke();
+                // Front paws (closer to the head side)
+                const frontY = 8;
+                cx.beginPath();
+                cx.ellipse(
+                    -7,
+                    frontY + legLiftFB(Math.PI),
+                    4.5,
+                    2.2,
+                    0,
+                    0,
+                    Math.PI * 2,
+                );
+                cx.fill();
+                cx.stroke();
+                cx.beginPath();
+                cx.ellipse(
+                    7,
+                    frontY + legLiftFB(0),
+                    4.5,
+                    2.2,
+                    0,
+                    0,
+                    Math.PI * 2,
+                );
+                cx.fill();
+                cx.stroke();
+            } else {
+                // Diagonal: near paws slightly larger/closer; far paws smaller/farther
+                // Rear paws
+                cx.beginPath();
+                cx.ellipse(6, 7 + legLiftFB(0), 5.2, 2.6, 0, 0, Math.PI * 2); // near
+                cx.fill();
+                cx.stroke();
+                cx.beginPath();
+                cx.ellipse(
+                    -10,
+                    9 + legLiftFB(Math.PI),
+                    4.2,
+                    2.1,
+                    0,
+                    0,
+                    Math.PI * 2,
+                ); // far
+                cx.fill();
+                cx.stroke();
+
+                // Front paws
+                const frontY = 8;
+                cx.beginPath();
+                cx.ellipse(
+                    7.5,
+                    frontY + legLiftFB(0),
+                    4.9,
+                    2.4,
+                    0,
+                    0,
+                    Math.PI * 2,
+                ); // near
+                cx.fill();
+                cx.stroke();
+                cx.beginPath();
+                cx.ellipse(
+                    -8.5,
+                    frontY + legLiftFB(Math.PI),
+                    4.1,
+                    2.0,
+                    0,
+                    0,
+                    Math.PI * 2,
+                ); // far
+                cx.fill();
+                cx.stroke();
+            }
 
             // Body
-            fillStrokeEllipse(0, 0, 18, 10, "#ffffff");
+            fillStrokeEllipse(isDiagonal ? 1.5 : 0, 0, 18, 10, "#ffffff");
 
             // Subtle belly shading
             cx.save();
@@ -414,17 +458,20 @@ export class Mouse implements GameObject {
             cx.fill();
             cx.restore();
 
-            // Head at the leading side (top for up, bottom for down)
+            // Head/ears layering: far ear -> head -> near ear so both ears stay visible
             const headY = 12;
-            fillStrokeEllipse(0, headY, 9, 7, "#ffffff");
+            const headX = isDiagonal ? 3.5 : 0;
 
-            // Ears (symmetrical)
-            fillStrokeEllipse(-6, headY - 6, 5, 5, "#ffe2e6");
-            fillStrokeEllipse(6, headY - 6, 5, 5, "#ffe2e6");
-            fillStrokeEllipse(-6, headY - 6, 3, 3, "#ffc8d0", "#eec3c9");
-            fillStrokeEllipse(6, headY - 6, 3, 3, "#ffc8d0", "#eec3c9");
+            fillStrokeEllipse(headX - 6, headY - 6, 5, 5, "#ffe2e6");
+            fillStrokeEllipse(headX - 6, headY - 6, 3, 3, "#ffc8d0", "#eec3c9");
 
-            // Eyes (two) with synced blink
+            fillStrokeEllipse(headX + 6, headY - 6, 5, 5, "#ffe2e6");
+            fillStrokeEllipse(headX + 6, headY - 6, 3, 3, "#ffc8d0", "#eec3c9");
+
+            // Head at the leading side (bottom for down), slightly shifted for diagonal
+            fillStrokeEllipse(headX, headY, 9, 7, "#ffffff");
+
+            // Eyes with synced blink (near eye slightly larger on diagonals)
             const blinkPhase = (t / 1400) % 1;
             let eyeOpen = 1;
             if (blinkPhase < 0.06)
@@ -432,25 +479,14 @@ export class Mouse implements GameObject {
             else if (blinkPhase < 0.12)
                 eyeOpen = Math.max(0.15, (blinkPhase - 0.06) / 0.06);
 
-            cx.beginPath();
-            cx.ellipse(-3.2, headY - 2, 1.6, 1.6 * eyeOpen, 0, 0, Math.PI * 2);
             cx.fillStyle = "#222";
-            cx.fill();
-
-            cx.beginPath();
-            cx.ellipse(3.2, headY - 2, 1.6, 1.6 * eyeOpen, 0, 0, Math.PI * 2);
-            cx.fillStyle = "#222";
-            cx.fill();
-
-            // tiny highlights when open
-            if (eyeOpen > 0.3) {
-                cx.fillStyle = "rgba(255,255,255,0.9)";
+            if (!isDiagonal) {
                 cx.beginPath();
                 cx.ellipse(
-                    -3.7,
-                    headY - 2.6 * eyeOpen,
-                    0.4,
-                    0.3 * eyeOpen,
+                    headX - 3.2,
+                    headY - 2,
+                    1.6,
+                    1.6 * eyeOpen,
                     0,
                     0,
                     Math.PI * 2,
@@ -458,22 +494,102 @@ export class Mouse implements GameObject {
                 cx.fill();
                 cx.beginPath();
                 cx.ellipse(
-                    2.7,
-                    headY - 2.6 * eyeOpen,
-                    0.4,
-                    0.3 * eyeOpen,
+                    headX + 3.2,
+                    headY - 2,
+                    1.6,
+                    1.6 * eyeOpen,
                     0,
                     0,
                     Math.PI * 2,
                 );
                 cx.fill();
+
+                // tiny highlights when open
+                if (eyeOpen > 0.3) {
+                    cx.fillStyle = "rgba(255,255,255,0.9)";
+                    cx.beginPath();
+                    cx.ellipse(
+                        headX - 3.7,
+                        headY - 2.6 * eyeOpen,
+                        0.4,
+                        0.3 * eyeOpen,
+                        0,
+                        0,
+                        Math.PI * 2,
+                    );
+                    cx.fill();
+                    cx.beginPath();
+                    cx.ellipse(
+                        headX + 2.7,
+                        headY - 2.6 * eyeOpen,
+                        0.4,
+                        0.3 * eyeOpen,
+                        0,
+                        0,
+                        Math.PI * 2,
+                    );
+                    cx.fill();
+                }
+            } else {
+                // Far eye (smaller)
+                cx.beginPath();
+                cx.ellipse(
+                    headX - 2.6,
+                    headY - 2.1,
+                    1.3,
+                    1.3 * eyeOpen,
+                    0,
+                    0,
+                    Math.PI * 2,
+                );
+                cx.fill();
+                // Near eye (larger)
+                cx.beginPath();
+                cx.ellipse(
+                    headX + 3.8,
+                    headY - 1.9,
+                    1.8,
+                    1.8 * eyeOpen,
+                    0,
+                    0,
+                    Math.PI * 2,
+                );
+                cx.fill();
+
+                if (eyeOpen > 0.3) {
+                    cx.fillStyle = "rgba(255,255,255,0.9)";
+                    // Far highlight
+                    cx.beginPath();
+                    cx.ellipse(
+                        headX - 3.0,
+                        headY - 2.4 * eyeOpen,
+                        0.35,
+                        0.25 * eyeOpen,
+                        0,
+                        0,
+                        Math.PI * 2,
+                    );
+                    cx.fill();
+                    // Near highlight
+                    cx.beginPath();
+                    cx.ellipse(
+                        headX + 3.3,
+                        headY - 2.4 * eyeOpen,
+                        0.45,
+                        0.32 * eyeOpen,
+                        0,
+                        0,
+                        Math.PI * 2,
+                    );
+                    cx.fill();
+                }
             }
 
             // Nose wiggle at the tip
             const noseWiggle = Math.sin(t / 120) * 0.6;
             const noseY = headY + 6;
             fillStrokeEllipse(
-                0 + noseWiggle,
+                headX + noseWiggle,
                 noseY,
                 1.6,
                 1.4,
@@ -491,13 +607,13 @@ export class Mouse implements GameObject {
                 const wy = whiskerY[i];
                 // left
                 cx.beginPath();
-                cx.moveTo(-2, wy);
-                cx.lineTo(-10, wy - 1 + i);
+                cx.moveTo(headX - 2, wy);
+                cx.lineTo(headX - 10, wy - 1 + i);
                 cx.stroke();
                 // right
                 cx.beginPath();
-                cx.moveTo(2, wy);
-                cx.lineTo(10, wy - 1 + i);
+                cx.moveTo(headX + 2, wy);
+                cx.lineTo(headX + 10, wy - 1 + i);
                 cx.stroke();
             }
             cx.restore();
