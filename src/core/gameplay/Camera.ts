@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import { Area, Dimensions } from "../math/Area";
+import type { Area, Dimensions } from "../math/Area";
 import { easeInOutExpo } from "../math/easings";
 
 export interface Transition {
