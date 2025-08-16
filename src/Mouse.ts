@@ -27,6 +27,14 @@ import { cx } from "./graphics";
 import type { GameObject } from "./GameObject";
 import { getControls } from "./controls";
 
+type Facing =
+    | "side"
+    | "up"
+    | "down"
+    | "up-left"
+    | "up-right"
+    | "down-left"
+    | "down-right";
 export class Mouse implements GameObject {
     x: number = 0;
     y: number = 0;
@@ -67,8 +75,21 @@ export class Mouse implements GameObject {
         const mv = getControls().movement || { x: 0, y: 0 };
         const ax = Math.abs(mv.x),
             ay = Math.abs(mv.y);
-        let facing: "side" | "up" | "down" = "side";
-        if (ay > ax && ay > 0.01) facing = mv.y < 0 ? "up" : "down";
+
+        let facing: Facing = "side";
+
+        if (ax > 0.01 && ay > 0.01) {
+            // diagonal
+            if (mv.y < 0) facing = mv.x > 0 ? "up-right" : "up-left";
+            else facing = mv.x > 0 ? "down-right" : "down-left";
+        } else if (ay > ax && ay > 0.01) {
+            // pure vertical
+            facing = mv.y < 0 ? "up" : "down";
+        } else {
+            // pure horizontal
+            facing = "side";
+            this.dir = mv.x >= 0 ? 1 : -1;
+        }
 
         cx.save();
 
@@ -108,7 +129,7 @@ export class Mouse implements GameObject {
         cx.beginPath();
         cx.ellipse(
             0,
-            this.height * (facing === "down" ? 0.6 : 0.5),
+            this.height * (facing.startsWith("down") ? 0.7 : 0.5),
             this.width * 0.45,
             this.height * 0.24,
             0,
@@ -119,8 +140,6 @@ export class Mouse implements GameObject {
         cx.restore();
 
         if (facing === "side") {
-            // === YOUR ORIGINAL SIDE-VIEW ANIMATION (unchanged) ===
-
             // Tail sway
             cx.save();
             const tailSway =
@@ -229,8 +248,12 @@ export class Mouse implements GameObject {
                 cx.stroke();
             }
             cx.restore();
-        } else if (facing === "up") {
-            // Tail at bottom (since mouse is moving up)
+        } else if (facing.startsWith("up")) {
+            const isDiagonal = facing === "up-left" || facing === "up-right";
+            const flip = facing.endsWith("left") ? -1 : 1;
+            cx.scale(flip, 1);
+
+            // Tail
             cx.save();
             const tailSwayFB =
                 Math.sin(t / 260 + this.step * 1.6) * (6 + moveFactor * 4);
@@ -238,36 +261,86 @@ export class Mouse implements GameObject {
             cx.lineWidth = 2;
             cx.lineCap = "round";
             cx.beginPath();
-            cx.moveTo(0, 6);
-            cx.bezierCurveTo(4, 14, 2, 16 + tailSwayFB, 0, 20 + tailSwayFB);
+            if (!isDiagonal) {
+                cx.moveTo(0, 6);
+                cx.bezierCurveTo(4, 14, 2, 16 + tailSwayFB, 0, 20 + tailSwayFB);
+            } else {
+                cx.moveTo(-2, 6);
+                cx.bezierCurveTo(
+                    -10,
+                    12,
+                    -14,
+                    14 + tailSwayFB * 0.7,
+                    -20,
+                    20 + tailSwayFB,
+                );
+            }
             cx.stroke();
             cx.restore();
 
-            // Paws (rear)
+            // Rear paws
             const legLiftFB = (phase: number) =>
                 Math.sin(this.step * 6 + phase) * (1.5 * (0.3 + moveFactor));
             cx.fillStyle = "#ededed";
             cx.strokeStyle = "#d7d7d7";
-            cx.beginPath();
-            cx.ellipse(-8, 8 + legLiftFB(0), 5, 2.5, 0, 0, Math.PI * 2);
-            cx.fill();
-            cx.stroke();
-            cx.beginPath();
-            cx.ellipse(8, 8 + legLiftFB(Math.PI), 5, 2.5, 0, 0, Math.PI * 2);
-            cx.fill();
-            cx.stroke();
+            if (!isDiagonal) {
+                cx.beginPath();
+                cx.ellipse(-8, 8 + legLiftFB(0), 5, 2.5, 0, 0, Math.PI * 2);
+                cx.fill();
+                cx.stroke();
+                cx.beginPath();
+                cx.ellipse(
+                    8,
+                    8 + legLiftFB(Math.PI),
+                    5,
+                    2.5,
+                    0,
+                    0,
+                    Math.PI * 2,
+                );
+                cx.fill();
+                cx.stroke();
+            } else {
+                cx.beginPath();
+                cx.ellipse(6, 7 + legLiftFB(0), 5.2, 2.6, 0, 0, Math.PI * 2);
+                cx.fill();
+                cx.stroke();
+                cx.beginPath();
+                cx.ellipse(
+                    -10,
+                    9 + legLiftFB(Math.PI),
+                    4.2,
+                    2.1,
+                    0,
+                    0,
+                    Math.PI * 2,
+                );
+                cx.fill();
+                cx.stroke();
+            }
 
             // Body
-            fillStrokeEllipse(0, 0, 18, 10, "#ffffff");
+            fillStrokeEllipse(isDiagonal ? 1.5 : 0, 0, 18, 10, "#ffffff");
 
-            // Ears (visible from behind)
-            fillStrokeEllipse(-6, -14, 5, 5, "#ffe2e6");
-            fillStrokeEllipse(6, -14, 5, 5, "#ffe2e6");
-            fillStrokeEllipse(-6, -14, 3, 3, "#ffc8d0", "#eec3c9");
-            fillStrokeEllipse(6, -14, 3, 3, "#ffc8d0", "#eec3c9");
-
-            // Back of head (no eyes/nose)
-            fillStrokeEllipse(0, -12, 9, 7, "#ffffff");
+            if (!isDiagonal) {
+                // Far ear
+                fillStrokeEllipse(-6, -14, 5, 5, "#ffe2e6");
+                fillStrokeEllipse(-6, -14, 3, 3, "#ffc8d0", "#eec3c9");
+                // Head
+                fillStrokeEllipse(0, -12, 9, 7, "#ffffff");
+                // Near ear
+                fillStrokeEllipse(6, -14, 5, 5, "#ffe2e6");
+                fillStrokeEllipse(6, -14, 3, 3, "#ffc8d0", "#eec3c9");
+            } else {
+                // Far ear (smaller/higher)
+                fillStrokeEllipse(-4, -15, 4.2, 4.2, "#ffe2e6");
+                fillStrokeEllipse(-4, -15, 2.4, 2.4, "#ffc8d0", "#eec3c9");
+                // Head
+                fillStrokeEllipse(4, -12, 9, 7, "#ffffff");
+                // Near ear (larger/lower)
+                fillStrokeEllipse(7.5, -14, 5.2, 5.2, "#ffe2e6");
+                fillStrokeEllipse(7.5, -14, 3.1, 3.1, "#ffc8d0", "#eec3c9");
+            }
         } else {
             // === FRONT/BACK POSE FOR UP/DOWN FACING ===
 
@@ -309,7 +382,7 @@ export class Mouse implements GameObject {
             cx.stroke();
 
             // Front paws (closer to the head side)
-            const frontY = facing === "up" ? -8 : 8;
+            const frontY = 8;
             cx.beginPath();
             cx.ellipse(
                 -7,
@@ -342,7 +415,7 @@ export class Mouse implements GameObject {
             cx.restore();
 
             // Head at the leading side (top for up, bottom for down)
-            const headY = facing === "up" ? -12 : 12;
+            const headY = 12;
             fillStrokeEllipse(0, headY, 9, 7, "#ffffff");
 
             // Ears (symmetrical)
@@ -398,7 +471,7 @@ export class Mouse implements GameObject {
 
             // Nose wiggle at the tip
             const noseWiggle = Math.sin(t / 120) * 0.6;
-            const noseY = headY + (facing === "up" ? -6 : 6);
+            const noseY = headY + 6;
             fillStrokeEllipse(
                 0 + noseWiggle,
                 noseY,
