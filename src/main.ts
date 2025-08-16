@@ -23,12 +23,14 @@
  */
 
 import "./style.css";
-import { canvas } from "./graphics";
+import { canvas, generateFlowerPositions } from "./graphics";
 import { init } from "./game";
 
 const resize = (): void => {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+
+    generateFlowerPositions();
 };
 
 window.addEventListener("resize", resize, false);

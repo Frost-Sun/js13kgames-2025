@@ -29,7 +29,7 @@ import {
 } from "./controls";
 import { sleep } from "./core/time/sleep";
 import type { TimeStep } from "./core/time/TimeStep";
-import { canvas, clearCanvas, cx } from "./graphics";
+import { canvas, clearCanvas, cx, drawHouseGarden } from "./graphics";
 import { Level } from "./Level";
 import { drawLoadingView, drawStartScreen } from "./views";
 
@@ -106,6 +106,8 @@ const draw = (time: TimeStep): void => {
 
         case GameState.Running: {
             clearCanvas("rgb(180, 180, 220)");
+
+            drawHouseGarden();
             level.draw(time);
             break;
         }
