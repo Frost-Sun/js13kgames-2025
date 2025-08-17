@@ -22,35 +22,99 @@
  * SOFTWARE.
  */
 
-import type { TimeStep } from "./core/time/TimeStep";
-import { cx } from "./graphics";
 import type { GameObject } from "./GameObject";
 import { getControls } from "./controls";
+import type { TimeStep } from "./core/time/TimeStep";
+import { cx } from "./graphics";
+import {
+    MouseAnimation,
+    type MouseFacing,
+    renderMouse,
+} from "./MouseAnimation";
 
 export class Mouse implements GameObject {
     x: number = 0;
     y: number = 0;
-    width: number = 10;
-    height: number = 10;
+
+    // Logical bounding box for collisions/culling
+    width: number = 48;
+    height: number = 28;
+
+    // Animation state
+    private dir: number = 1; // 1 = facing right, -1 = facing left
+    private step: number = 0; // walk cycle phase
+    private lastSpeed: number = 0; // used to modulate animations
 
     constructor(x: number, y: number) {
         this.x = x;
         this.y = y;
     }
 
-    update(_: TimeStep): void {
+    update(): void {
         const movement = getControls().movement;
         this.x += movement.x;
         this.y += movement.y;
+
+        // Direction follows horizontal input
+        if (movement.x > 0.05) this.dir = 1;
+        else if (movement.x < -0.05) this.dir = -1;
+
+        // Walk cycle speed from movement magnitude
+        const speed = Math.sqrt(
+            movement.x * movement.x + movement.y * movement.y,
+        );
+        this.lastSpeed = speed;
+        this.step += speed * 0.25; // tune to taste
     }
 
     draw(time: TimeStep): void {
-        cx.save();
-        cx.fillStyle = `rgb(80, 80, ${200 + Math.sin(time.t / 500) * 55})`;
-        cx.fillRect(this.x, this.y, this.width, this.height);
-        cx.fillStyle = "red";
-        cx.font = "32px Courier New";
-        cx.fillText("JS13k", this.x + 8, this.y + 40);
-        cx.restore();
+        // Decide pose based on current input (no movement logic changed)
+        const mv = getControls().movement || { x: 0, y: 0 };
+        const ax = Math.abs(mv.x);
+        const ay = Math.abs(mv.y);
+
+        let facing: MouseFacing = "side";
+
+        if (ax > 0.01 && ay > 0.01) {
+            // diagonal
+            if (mv.y < 0) facing = mv.x > 0 ? "up-right" : "up-left";
+            else facing = mv.x > 0 ? "down-right" : "down-left";
+        } else if (ay > ax && ay > 0.01) {
+            // pure vertical
+            facing = mv.y < 0 ? "up" : "down";
+        } else {
+            // pure horizontal
+            facing = "side";
+            this.dir = mv.x >= 0 ? 1 : -1;
+        }
+
+        const animation = this.getAnimation();
+
+        renderMouse(
+            cx,
+            this.x,
+            this.y,
+            this.width,
+            this.height,
+            facing,
+            animation,
+            this.dir,
+            this.step,
+            this.lastSpeed,
+            time,
+        );
+    }
+
+    private getAnimation(): MouseAnimation {
+        const movement = getControls().movement || { x: 0, y: 0 };
+        const speed = Math.sqrt(
+            movement.x * movement.x + movement.y * movement.y,
+        );
+
+        if (speed > 0.01) {
+            return MouseAnimation.Walk;
+        }
+
+        return MouseAnimation.Stand;
     }
 }

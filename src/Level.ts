@@ -38,8 +38,8 @@ export class Level implements Area {
         this.y + this.height / 2,
     );
 
-    update(time: TimeStep): void {
-        this.player.update(time);
+    update(): void {
+        this.player.update();
     }
 
     draw(time: TimeStep): void {
