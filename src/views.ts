@@ -28,12 +28,12 @@ import { renderText, TextSize } from "./text";
 import { renderBlackCat } from "./BlackCatGraphic";
 
 export const drawLoadingView = (): void => {
-    clearCanvas("rgb(50, 100, 50)");
+    clearCanvas("rgb(0, 0, 0)");
     renderText("Loading...", TextSize.Normal, "Courier New");
 };
 
 export const drawStartScreen = (cx: CanvasRenderingContext2D): void => {
-    clearCanvas("rgb(10, 10, 10)");
+    clearCanvas("rgb(18, 18, 18)");
 
     renderBlackCat(
         cx,

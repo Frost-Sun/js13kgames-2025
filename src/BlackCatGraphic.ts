@@ -25,7 +25,7 @@ export function renderBlackCat(
     cx.fill();
 
     // Draw ears (move before drawing head so they are not covered)
-    const earY = height * 0.13;
+    const earY = height * 0.08;
     const earW = width * 0.16;
     const earH = height * 0.18;
     // Left ear

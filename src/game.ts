@@ -52,6 +52,8 @@ const time: TimeStep = {
 
 const level = new Level();
 
+const NIGHT_START_TIME = 5000;
+
 const gameLoop = (t: number): void => {
     requestAnimationFrame(gameLoop);
 
@@ -105,10 +107,22 @@ const draw = (time: TimeStep): void => {
             break;
 
         case GameState.Running: {
-            clearCanvas("rgb(180, 180, 220)");
+            clearCanvas("rgb(0, 0, 0)");
 
             drawHouseGarden();
             level.draw(time);
+
+            // Night overlay after NIGHT_START_TIME
+            if (time.t > NIGHT_START_TIME) {
+                cx.save();
+                cx.globalAlpha = Math.min(
+                    (time.t - NIGHT_START_TIME) / 10000,
+                    0.7,
+                ); // fade in to max 0.7
+                cx.fillStyle = "#000";
+                cx.fillRect(0, 0, cx.canvas.width, cx.canvas.height);
+                cx.restore();
+            }
             break;
         }
 
