@@ -68,7 +68,7 @@ export class Mouse implements GameObject {
     }
 
     draw(time: TimeStep): void {
-        // Decide pose based on current input (no movement logic changed)
+        // Decide pose based on current input
         const mv = getControls().movement || { x: 0, y: 0 };
         const ax = Math.abs(mv.x);
         const ay = Math.abs(mv.y);

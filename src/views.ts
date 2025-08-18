@@ -25,14 +25,23 @@
 import { renderWaitForProgressInput } from "./controls";
 import { clearCanvas } from "./graphics";
 import { renderText, TextSize } from "./text";
+import { renderBlackCat } from "./BlackCatGraphic";
 
 export const drawLoadingView = (): void => {
-    clearCanvas("rgb(50, 100, 50)");
+    clearCanvas("rgb(0, 0, 0)");
     renderText("Loading...", TextSize.Normal, "Courier New");
 };
 
-export const drawStartScreen = (): void => {
-    clearCanvas("rgb(100, 150, 100)");
+export const drawStartScreen = (cx: CanvasRenderingContext2D): void => {
+    clearCanvas("rgb(18, 18, 18)");
+
+    renderBlackCat(
+        cx,
+        cx.canvas.width / 4,
+        10,
+        cx.canvas.width / 2,
+        cx.canvas.height,
+    );
 
     renderText(
         "FROST𖤓SUN",
@@ -48,7 +57,7 @@ export const drawStartScreen = (): void => {
 
     renderText("presents", TextSize.Tiny, "Impact", 0.5, 5.25, false);
 
-    renderText("[GAME TITLE HERE]", TextSize.Xl, "Impact", 1, 1.8);
+    renderText("[THE BLACK CAT]", TextSize.Xl, "Impact", 1, 1.8);
 
     renderWaitForProgressInput("start");
 };
