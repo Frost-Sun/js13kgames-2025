@@ -59,7 +59,7 @@ const gameLoop = (t: number): void => {
     time.dt = Math.min(t - lastTime, MAX_FRAME);
     lastTime = t;
 
-    update(time);
+    update();
     draw(time);
 };
 
@@ -77,11 +77,11 @@ const setState = (newState: GameState): void => {
     }
 };
 
-const update = (time: TimeStep): void => {
+const update = (): void => {
     switch (gameState) {
         case GameState.Running: {
             updateControls();
-            level.update(time);
+            level.update();
             break;
         }
 
@@ -97,11 +97,11 @@ const draw = (time: TimeStep): void => {
 
     switch (gameState) {
         case GameState.Load:
-            drawLoadingView();
+            drawLoadingView(cx);
             break;
 
         case GameState.StartScreen:
-            drawStartScreen();
+            drawStartScreen(cx);
             break;
 
         case GameState.Running: {
