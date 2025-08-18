@@ -37,10 +37,10 @@ export const drawStartScreen = (cx: CanvasRenderingContext2D): void => {
 
     renderBlackCat(
         cx,
-        cx.canvas.width / 4, // x position (adjust as needed)
-        10, // y position (adjust as needed)
-        cx.canvas.width / 2, // width
-        cx.canvas.height, // height
+        cx.canvas.width / 4,
+        10,
+        cx.canvas.width / 2,
+        cx.canvas.height,
     );
 
     renderText(

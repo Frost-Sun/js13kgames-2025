@@ -97,7 +97,7 @@ const draw = (time: TimeStep): void => {
 
     switch (gameState) {
         case GameState.Load:
-            drawLoadingView(cx);
+            drawLoadingView();
             break;
 
         case GameState.StartScreen:
