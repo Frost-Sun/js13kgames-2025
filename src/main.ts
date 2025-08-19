@@ -25,13 +25,14 @@
 import "./style.css";
 import { generateFlowerPositions } from "./graphics";
 import { init } from "./game";
-import { resizeCanvasMaintainingAspectRatio } from "./window";
+import { resizeCanvasMaintainingAspectRatio } from "./core/platform/window";
+import { canvas } from "./graphics";
 
 const maxWidth = 1280;
 const maxHeight = 720;
 
 const resize = (): void => {
-    resizeCanvasMaintainingAspectRatio(maxWidth, maxHeight);
+    resizeCanvasMaintainingAspectRatio(canvas, maxWidth, maxHeight);
 
     generateFlowerPositions();
 };
