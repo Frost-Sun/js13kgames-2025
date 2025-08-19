@@ -22,12 +22,17 @@
  * SOFTWARE.
  */
 
+import { Camera } from "./core/gameplay/Camera";
 import type { Area } from "./core/math/Area";
 import type { TimeStep } from "./core/time/TimeStep";
 import { cx } from "./graphics";
 import { Mouse } from "./Mouse";
 
+export const canvas = document.querySelector("canvas") as HTMLCanvasElement;
+
 export class Level implements Area {
+    private camera: Camera = new Camera(this, canvas);
+
     x: number = 0;
     y: number = 0;
     width: number = 400;
@@ -38,12 +43,18 @@ export class Level implements Area {
         this.y + this.height / 2,
     );
 
-    update(): void {
+    update(t: number): void {
+        this.camera.update(t);
+
         this.player.update();
     }
 
     draw(time: TimeStep): void {
         cx.save();
+        // Apply camera - drawing in level coordinates after these lines:
+        cx.translate(canvas.width / 2, canvas.height / 2);
+        cx.scale(this.camera.zoom, this.camera.zoom);
+        cx.translate(-this.camera.x, -this.camera.y);
 
         this.player.draw(time);
 
