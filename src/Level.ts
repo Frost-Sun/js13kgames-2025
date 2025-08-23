@@ -22,29 +22,44 @@
  * SOFTWARE.
  */
 
+import { Array2D } from "./Array2D";
 import { Camera } from "./core/gameplay/Camera";
 import type { Area } from "./core/math/Area";
 import type { TimeStep } from "./core/time/TimeStep";
-import { cx } from "./graphics";
+import { canvas, cx } from "./graphics";
 import { Mouse } from "./Mouse";
-
-export const canvas = document.querySelector("canvas") as HTMLCanvasElement;
+import { drawTiles, TILE_HEIGHT, TILE_WIDTH, TileType } from "./tiles";
 
 export class Level implements Area {
-    private camera: Camera = new Camera(this, canvas);
+    private camera: Camera;
+    private grid: Array2D<TileType> = new Array2D<TileType>(10, 10);
 
     x: number = 0;
     y: number = 0;
-    width: number = 400;
-    height: number = 300;
+    width: number = this.grid.xCount * TILE_WIDTH;
+    height: number = this.grid.yCount * TILE_HEIGHT;
 
     private player = new Mouse(
         this.x + this.width / 2,
         this.y + this.height / 2,
     );
 
-    update(t: number): void {
-        this.camera.update(t);
+    constructor() {
+        this.camera = new Camera(this, canvas);
+        this.camera.zoom = 10;
+        this.camera.follow(this.player);
+
+        for (let iy = 0; iy < this.grid.yCount; iy++) {
+            for (let ix = 0; ix < this.grid.xCount; ix++) {
+                const tile =
+                    Math.random() < 0.3 ? TileType.Flower : TileType.Grass;
+                this.grid.setValue(ix, iy, tile);
+            }
+        }
+    }
+
+    update(time: TimeStep): void {
+        this.camera.update(time);
 
         this.player.update();
     }
@@ -55,6 +70,12 @@ export class Level implements Area {
         cx.translate(canvas.width / 2, canvas.height / 2);
         cx.scale(this.camera.zoom, this.camera.zoom);
         cx.translate(-this.camera.x, -this.camera.y);
+
+        // Default color for grass
+        cx.fillStyle = "rgb(100, 200, 100)";
+        cx.fillRect(this.x, this.y, this.width, this.height);
+
+        drawTiles(this.grid);
 
         this.player.draw(time);
 

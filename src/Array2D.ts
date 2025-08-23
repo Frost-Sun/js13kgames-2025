@@ -22,19 +22,30 @@
  * SOFTWARE.
  */
 
-import "./style.css";
-import { init } from "./game";
-import { resizeCanvasMaintainingAspectRatio } from "./core/platform/window";
-import { canvas } from "./graphics";
+/*
+ * A two-dimensional array.
+ */
+export class Array2D<T> {
+    private values: T[];
 
-const maxWidth = 1280;
-const maxHeight = 720;
+    constructor(
+        public xCount: number,
+        public yCount: number,
+    ) {
+        this.values = new Array<T>(xCount * yCount);
+    }
 
-const resize = (): void => {
-    resizeCanvasMaintainingAspectRatio(canvas, maxWidth, maxHeight);
-};
+    getValue(x: number, y: number): T | undefined {
+        if (x < 0 || this.xCount <= x || y < 0 || this.yCount <= y) {
+            return undefined;
+        }
+        return this.values[x * this.yCount + y];
+    }
 
-window.addEventListener("resize", resize, false);
-resize();
-
-init();
+    setValue(x: number, y: number, value: T): void {
+        if (x < 0 || this.xCount <= x || y < 0 || this.yCount <= y) {
+            return;
+        }
+        this.values[x * this.yCount + y] = value;
+    }
+}

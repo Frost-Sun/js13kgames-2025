@@ -29,7 +29,7 @@ import {
 } from "./controls";
 import { sleep } from "./core/time/sleep";
 import type { TimeStep } from "./core/time/TimeStep";
-import { canvas, clearCanvas, cx, drawHouseGarden } from "./graphics";
+import { canvas, clearCanvas, cx } from "./graphics";
 import { Level } from "./Level";
 import { drawLoadingView, drawStartScreen } from "./views";
 
@@ -50,7 +50,7 @@ const time: TimeStep = {
     dt: 0,
 };
 
-const level = new Level();
+let level = new Level();
 
 const NIGHT_START_TIME = 5000;
 let runningStartTime = 0;
@@ -62,7 +62,7 @@ const gameLoop = (t: number): void => {
     time.dt = Math.min(t - lastTime, MAX_FRAME);
     lastTime = t;
 
-    update(t);
+    update(time);
     draw(time);
 };
 
@@ -83,11 +83,11 @@ const setState = (newState: GameState): void => {
     }
 };
 
-const update = (t: number): void => {
+const update = (time: TimeStep): void => {
     switch (gameState) {
         case GameState.Running: {
             updateControls();
-            level.update(t);
+            level.update(time);
             break;
         }
 
@@ -113,7 +113,6 @@ const draw = (time: TimeStep): void => {
         case GameState.Running: {
             clearCanvas("rgb(0, 0, 0)");
 
-            drawHouseGarden();
             level.draw(time);
 
             const elapsed = time.t - runningStartTime;
@@ -148,6 +147,8 @@ export const init = async (): Promise<void> => {
 
     // DUMMY SLEEP FOR TESTING LOAD SCREEN
     await sleep(1500);
+
+    level = new Level();
 
     setState(GameState.StartScreen);
 };

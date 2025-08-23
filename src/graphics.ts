@@ -33,49 +33,6 @@ export const clearCanvas = (color: string = "black"): void => {
     cx.restore();
 };
 
-const flowerPositions: { x: number; y: number }[] = [];
-
-export function generateFlowerPositions(): void {
-    flowerPositions.length = 0; // Clear existing
-
-    const flowerCount = (canvas.width * canvas.height) / 5000;
-
-    for (let i = 0; i < flowerCount; i++) {
-        flowerPositions.push({
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height,
-        });
-    }
-}
-
-export function drawHouseGarden(): void {
-    cx.save();
-
-    // Draw grass
-    cx.fillStyle = "#3cb371";
-    cx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Draw scattered flowers
-    for (let i = 0; i < flowerPositions.length; i++) {
-        const { x, y } = flowerPositions[i];
-        // Flower stem
-        cx.fillStyle = "#228b22";
-        cx.fillRect(x - 1, y, 2, 10);
-        // Flower petals
-        cx.beginPath();
-        cx.arc(x, y, 5, 0, Math.PI * 2);
-        cx.fillStyle = ["#ff69b4", "#ffd700", "#ff4500", "#ffffff"][i % 4];
-        cx.fill();
-        // Flower center
-        cx.beginPath();
-        cx.arc(x, y, 2, 0, Math.PI * 2);
-        cx.fillStyle = "#ffffe0";
-        cx.fill();
-    }
-
-    cx.restore();
-}
-
 export function drawFarObject(): void {
     // Draw house base
     cx.fillStyle = "#deb887";
