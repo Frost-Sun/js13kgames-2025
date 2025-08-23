@@ -38,12 +38,15 @@ export type MouseFacing =
     | "down-left"
     | "down-right";
 
+const MOUSE_RENDER_WIDTH = 48;
+const MOUSE_RENDER_HEIGHT = 28;
+const MOUSE_ASPECT_RATIO = MOUSE_RENDER_WIDTH / MOUSE_RENDER_HEIGHT;
+
 export function renderMouse(
     context: CanvasRenderingContext2D,
     x: number,
     y: number,
     width: number,
-    height: number,
     facing: MouseFacing,
     _animation: MouseAnimation,
     dir: number,
@@ -52,12 +55,17 @@ export function renderMouse(
     time: TimeStep,
 ): void {
     const t = time.t;
+    const height = width / MOUSE_ASPECT_RATIO;
 
     context.save();
 
-    // Centered transform; flip only for side pose; subtle bob when moving
+    // Centered transform; flip only for side pose
     context.translate(x + width / 2, y + height / 2);
     context.scale(facing === "side" ? dir : 1, 1);
+
+    // Rendering the mouse is done at a certain size. Adjust to
+    // be drawn in the requested size.
+    context.scale(width / MOUSE_RENDER_WIDTH, height / MOUSE_RENDER_HEIGHT);
 
     const moveFactor = Math.min(1, lastSpeed * 0.8);
     const bob = Math.sin(t / 220 + step * 2.0) * (1.5 * (0.4 + moveFactor));
@@ -101,37 +109,11 @@ export function renderMouse(
     context.restore();
 
     if (facing === "side") {
-        renderSideView(
-            context,
-            width,
-            height,
-            t,
-            step,
-            moveFactor,
-            fillStrokeEllipse,
-        );
+        renderSideView(context, t, step, moveFactor, fillStrokeEllipse);
     } else if (facing.indexOf("up") === 0) {
-        renderUpView(
-            context,
-            width,
-            height,
-            t,
-            step,
-            moveFactor,
-            facing,
-            fillStrokeEllipse,
-        );
+        renderUpView(context, t, step, moveFactor, facing, fillStrokeEllipse);
     } else {
-        renderDownView(
-            context,
-            width,
-            height,
-            t,
-            step,
-            moveFactor,
-            facing,
-            fillStrokeEllipse,
-        );
+        renderDownView(context, t, step, moveFactor, facing, fillStrokeEllipse);
     }
 
     context.restore();
@@ -139,8 +121,6 @@ export function renderMouse(
 
 function renderSideView(
     context: CanvasRenderingContext2D,
-    _width: number,
-    _height: number,
     t: number,
     step: number,
     moveFactor: number,
@@ -256,8 +236,6 @@ function renderSideView(
 
 function renderUpView(
     context: CanvasRenderingContext2D,
-    _width: number,
-    _height: number,
     t: number,
     step: number,
     moveFactor: number,
@@ -356,8 +334,6 @@ function renderUpView(
 
 function renderDownView(
     context: CanvasRenderingContext2D,
-    _width: number,
-    _height: number,
     t: number,
     step: number,
     moveFactor: number,

@@ -95,7 +95,6 @@ export class Mouse implements GameObject {
             this.x,
             this.y,
             this.width,
-            this.height,
             facing,
             animation,
             this.dir,
