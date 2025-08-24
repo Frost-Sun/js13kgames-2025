@@ -36,11 +36,12 @@ export class PartialArea implements Area {
     }
 
     get height(): number {
-        return this.fullArea.height * (1 - this.fractionFromTop);
+        return this.fullArea.height * this.heightFraction;
     }
 
     constructor(
         private fullArea: Dimensions,
         private fractionFromTop: number,
+        private heightFraction: number,
     ) {}
 }

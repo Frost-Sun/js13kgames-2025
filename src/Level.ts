@@ -30,12 +30,24 @@ import { canvas, cx } from "./graphics";
 import { PartialArea } from "./PartialArea";
 import { Mouse } from "./Mouse";
 import { drawTile, TILE_HEIGHT, TILE_WIDTH, TileType } from "./tiles";
+import { drawHorizon } from "./horizon";
 
 const HORIZON_HEIGHT_OF_CANVAS = 0.25;
 
 export class Level implements Area {
-    private levelDrawArea = new PartialArea(canvas, HORIZON_HEIGHT_OF_CANVAS);
+    private horizonDrawArea = new PartialArea(
+        canvas,
+        0,
+        HORIZON_HEIGHT_OF_CANVAS,
+    );
+    private levelDrawArea = new PartialArea(
+        canvas,
+        HORIZON_HEIGHT_OF_CANVAS,
+        1 - HORIZON_HEIGHT_OF_CANVAS,
+    );
+
     private camera: Camera;
+
     private grid: Array2D<TileType> = new Array2D<TileType>(12, 20);
 
     x: number = 0;
@@ -113,10 +125,7 @@ export class Level implements Area {
 
         // The horizon is drawn after the tiles so that the tiles are sharply
         // "cut" at the horizon.
-        cx.save();
-        cx.fillStyle = "rgb(0, 150, 255)";
-        cx.fillRect(0, 0, canvas.width, this.levelDrawArea.y);
-        cx.restore();
+        drawHorizon(this.horizonDrawArea);
 
         this.camera.apply(cx, () => {
             this.player.draw(time);
