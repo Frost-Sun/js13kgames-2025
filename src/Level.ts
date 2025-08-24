@@ -68,7 +68,7 @@ export class Level implements Area {
     update(time: TimeStep): void {
         this.camera.update(time);
 
-        this.player.update();
+        this.player.update(time, this);
     }
 
     draw(time: TimeStep): void {

@@ -32,12 +32,12 @@ import {
     initializeTouchscreen,
     waitForTap,
 } from "./core/controls/touchscreen";
-import { normalize, ZERO_VECTOR, type VectorMutable } from "./core/math/Vector";
+import { normalize, ZERO_VECTOR, type Vector } from "./core/math/Vector";
 import { canvas } from "./graphics";
 import { renderText, TextSize } from "./text";
 
 export interface Controls {
-    movement: VectorMutable;
+    movement: Vector;
 }
 
 const controls: Controls = {
