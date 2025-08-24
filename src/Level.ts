@@ -72,6 +72,8 @@ export class Level implements Area {
     }
 
     draw(time: TimeStep): void {
+        const visibleArea = this.camera.getVisibleArea();
+
         cx.save();
         cx.translate(0, this.levelDrawArea.y);
 
@@ -80,7 +82,7 @@ export class Level implements Area {
             cx.fillStyle = "rgb(100, 200, 100)";
             cx.fillRect(this.x, this.y, this.width, this.height);
 
-            this.tileMap.draw(time, this.camera.getVisibleArea());
+            this.tileMap.drawTiles(time, visibleArea);
         });
         cx.restore();
 
@@ -88,8 +90,13 @@ export class Level implements Area {
         // "cut" at the horizon.
         drawHorizon(this.horizonDrawArea);
 
+        cx.save();
+        cx.translate(0, this.levelDrawArea.y);
+
         this.camera.apply(cx, () => {
+            this.tileMap.drawObjects(time, visibleArea);
             this.player.draw(time);
         });
+        cx.restore();
     }
 }

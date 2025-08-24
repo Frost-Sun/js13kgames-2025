@@ -25,7 +25,13 @@
 import { Array2D } from "./Array2D";
 import type { Area } from "./core/math/Area";
 import type { TimeStep } from "./core/time/TimeStep";
-import { drawTile, TILE_HEIGHT, TILE_WIDTH, TileType } from "./tiles";
+import {
+    drawObject,
+    drawTile,
+    TILE_HEIGHT,
+    TILE_WIDTH,
+    TileType,
+} from "./tiles";
 
 export class TileMap {
     private grid: Array2D<TileType>;
@@ -47,7 +53,7 @@ export class TileMap {
         }
     }
 
-    draw(time: TimeStep, visibleArea: Area): void {
+    drawTiles(time: TimeStep, visibleArea: Area): void {
         const tiles = this.grid;
 
         // Calculate how many tiles are visible in x- and y direction
@@ -73,6 +79,36 @@ export class TileMap {
                 const tile = tiles.getValue(ix, iy);
 
                 drawTile(tile, x, y);
+            }
+        }
+    }
+
+    drawObjects(time: TimeStep, visibleArea: Area): void {
+        const tiles = this.grid;
+
+        // Calculate how many tiles are visible in x- and y direction
+        const tilesLeftOfCamera = Math.floor(visibleArea.x / TILE_WIDTH);
+        const tilesToRightEdge = Math.ceil(
+            (visibleArea.x + visibleArea.width) / TILE_WIDTH,
+        );
+        const tilesTopOfCamera = Math.floor(visibleArea.y / TILE_HEIGHT);
+        const tilesToBottomEdge = Math.ceil(
+            (visibleArea.y + visibleArea.height) / TILE_HEIGHT,
+        );
+        const leftmostIndex = Math.max(0, tilesLeftOfCamera);
+        const rightmostIndex = Math.min(tiles.xCount, tilesToRightEdge);
+        const tommostIndex = Math.max(0, tilesTopOfCamera);
+        const bottommostIndex = Math.min(tiles.yCount, tilesToBottomEdge);
+
+        // Draw the currently visible tiles
+        for (let iy = tommostIndex; iy < bottommostIndex; iy++) {
+            const y = iy * TILE_HEIGHT;
+
+            for (let ix = leftmostIndex; ix < rightmostIndex; ix++) {
+                const x = ix * TILE_WIDTH;
+                const tile = tiles.getValue(ix, iy);
+
+                drawObject(tile, x, y, visibleArea);
             }
         }
     }

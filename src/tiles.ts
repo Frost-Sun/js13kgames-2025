@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+import type { Area } from "./core/math/Area";
 import { cx } from "./graphics";
 
 export const TILE_WIDTH = 10;
@@ -39,30 +40,9 @@ export const drawTile = (
 ): void => {
     switch (tile) {
         case TileType.Flower:
-            drawFlower(x, y, TILE_WIDTH * 0.2, TILE_HEIGHT * 0.2, "#ff69b4");
-            drawFlower(
-                x + TILE_WIDTH / 2,
-                y + TILE_HEIGHT / 2,
-                TILE_WIDTH * 0.2,
-                TILE_HEIGHT * 0.2,
-                "#ffd700",
-            );
-            drawFlower(
-                x,
-                y + TILE_HEIGHT / 2,
-                TILE_WIDTH * 0.2,
-                TILE_HEIGHT * 0.2,
-                "#ff4500",
-            );
-            drawFlower(
-                x + TILE_WIDTH / 2,
-                y,
-                TILE_WIDTH * 0.2,
-                TILE_HEIGHT * 0.2,
-                "#ffffff",
-            );
+            cx.fillStyle = "rgb(100, 190, 100)";
+            cx.fillRect(x, y, TILE_WIDTH, TILE_HEIGHT);
             break;
-
         case TileType.Grass:
             break;
 
@@ -73,26 +53,77 @@ export const drawTile = (
     }
 };
 
+export const drawObject = (
+    tile: TileType | undefined,
+    x: number,
+    y: number,
+    visibleArea: Area,
+): void => {
+    switch (tile) {
+        case TileType.Flower:
+            drawFlower(
+                x + TILE_WIDTH * 0.3,
+                y + TILE_HEIGHT * 0.3,
+                TILE_HEIGHT * 0.2,
+                "#ff69b4",
+                visibleArea,
+            );
+            drawFlower(
+                x + TILE_WIDTH * 0.7,
+                y + TILE_HEIGHT * 0.3,
+                TILE_HEIGHT * 0.2,
+                "#ffd700",
+                visibleArea,
+            );
+            drawFlower(
+                x + TILE_WIDTH * 0.3,
+                y + TILE_HEIGHT * 0.7,
+                TILE_HEIGHT * 0.2,
+                "#ff4500",
+                visibleArea,
+            );
+            drawFlower(
+                x + TILE_WIDTH * 0.7,
+                y + TILE_HEIGHT * 0.7,
+                TILE_HEIGHT * 0.2,
+                "#ffffff",
+                visibleArea,
+            );
+            break;
+
+        default:
+            break;
+    }
+};
+
 const drawFlower = (
     x: number,
     y: number,
-    w: number,
     h: number,
     color: string,
+    visibleArea: Area,
 ): void => {
+    // Skip drawing if the object is over the horizon.
+    if (y < visibleArea.y) {
+        return;
+    }
+
+    const stemWidth = TILE_WIDTH * 0.04;
+    const flowerWidth = TILE_WIDTH * 0.2;
+
     // Flower stem
     cx.fillStyle = "#228b22";
-    cx.fillRect(x + w / 2 - w * 0.1, y + h / 2, w * 0.2, h);
+    cx.fillRect(x - stemWidth * 0.5, y - h, stemWidth, h);
 
     // Flower petals
     cx.beginPath();
-    cx.arc(x + w / 2, y + h / 2, w * 0.5, 0, Math.PI * 2);
+    cx.arc(x, y - h, flowerWidth * 0.5, 0, Math.PI * 2);
     cx.fillStyle = color;
     cx.fill();
 
     // Flower center
     cx.beginPath();
-    cx.arc(x + w / 2, y + h / 2, w * 0.2, 0, Math.PI * 2);
+    cx.arc(x, y - h, flowerWidth * 0.2, 0, Math.PI * 2);
     cx.fillStyle = "#ffffe0";
     cx.fill();
 };
