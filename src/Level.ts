@@ -28,11 +28,11 @@ import type { Area } from "./core/math/Area";
 import type { TimeStep } from "./core/time/TimeStep";
 import { canvas, cx } from "./graphics";
 import { Mouse } from "./Mouse";
-import { drawTiles, TILE_HEIGHT, TILE_WIDTH, TileType } from "./tiles";
+import { drawTile, TILE_HEIGHT, TILE_WIDTH, TileType } from "./tiles";
 
 export class Level implements Area {
     private camera: Camera;
-    private grid: Array2D<TileType> = new Array2D<TileType>(10, 10);
+    private grid: Array2D<TileType> = new Array2D<TileType>(12, 20);
 
     x: number = 0;
     y: number = 0;
@@ -66,6 +66,7 @@ export class Level implements Area {
 
     draw(time: TimeStep): void {
         cx.save();
+
         // Apply camera - drawing in level coordinates after these lines:
         cx.translate(canvas.width / 2, canvas.height / 2);
         cx.scale(this.camera.zoom, this.camera.zoom);
@@ -75,7 +76,37 @@ export class Level implements Area {
         cx.fillStyle = "rgb(100, 200, 100)";
         cx.fillRect(this.x, this.y, this.width, this.height);
 
-        drawTiles(this.grid);
+        const tiles = this.grid;
+        const visibleArea = this.camera.getVisibleArea();
+
+        const tilesLeftOfCamera = Math.floor(
+            (visibleArea.x - this.x) / TILE_WIDTH,
+        );
+        const tilesToRightEdge = Math.ceil(
+            (visibleArea.x + visibleArea.width - this.x) / TILE_WIDTH,
+        );
+        const tilesTopOfCamera = Math.floor(
+            (visibleArea.y - this.y) / TILE_HEIGHT,
+        );
+        const tilesToBottomEdge = Math.ceil(
+            (visibleArea.y + visibleArea.height - this.y) / TILE_HEIGHT,
+        );
+
+        const leftmostIndex = Math.max(0, tilesLeftOfCamera);
+        const rightmostIndex = Math.min(tiles.xCount, tilesToRightEdge);
+        const tommostIndex = Math.max(0, tilesTopOfCamera);
+        const bottommostIndex = Math.min(tiles.yCount, tilesToBottomEdge);
+
+        for (let iy = tommostIndex; iy < bottommostIndex; iy++) {
+            const y = iy * TILE_HEIGHT;
+
+            for (let ix = leftmostIndex; ix < rightmostIndex; ix++) {
+                const x = ix * TILE_WIDTH;
+                const tile = tiles.getValue(ix, iy);
+
+                drawTile(tile, x, y);
+            }
+        }
 
         this.player.draw(time);
 

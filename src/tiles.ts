@@ -22,7 +22,6 @@
  * SOFTWARE.
  */
 
-import type { Array2D } from "./Array2D";
 import { cx } from "./graphics";
 
 export const TILE_WIDTH = 10;
@@ -33,24 +32,11 @@ export enum TileType {
     Flower,
 }
 
-export const drawTiles = (tiles: Array2D<TileType>): void => {
-    cx.save();
-
-    for (let iy = 0; iy < tiles.yCount; iy++) {
-        const y = iy * TILE_HEIGHT;
-
-        for (let ix = 0; ix < tiles.xCount; ix++) {
-            const x = ix * TILE_WIDTH;
-            const tile = tiles.getValue(ix, iy);
-
-            drawTile(tile, x, y);
-        }
-    }
-
-    cx.restore();
-};
-
-const drawTile = (tile: TileType | undefined, x: number, y: number): void => {
+export const drawTile = (
+    tile: TileType | undefined,
+    x: number,
+    y: number,
+): void => {
     switch (tile) {
         case TileType.Flower:
             drawFlower(x, y, TILE_WIDTH * 0.2, TILE_HEIGHT * 0.2, "#ff69b4");
