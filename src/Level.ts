@@ -22,15 +22,14 @@
  * SOFTWARE.
  */
 
-import { Array2D } from "./Array2D";
 import { Camera } from "./core/gameplay/Camera";
 import type { Area } from "./core/math/Area";
 import type { TimeStep } from "./core/time/TimeStep";
 import { canvas, cx } from "./graphics";
 import { PartialArea } from "./PartialArea";
 import { Mouse } from "./Mouse";
-import { drawTile, TILE_HEIGHT, TILE_WIDTH, TileType } from "./tiles";
 import { drawHorizon } from "./horizon";
+import { TileMap } from "./TileMap";
 
 const HORIZON_HEIGHT_OF_CANVAS = 0.25;
 
@@ -46,14 +45,14 @@ export class Level implements Area {
         1 - HORIZON_HEIGHT_OF_CANVAS,
     );
 
-    private camera: Camera;
+    private tileMap: TileMap = new TileMap(12, 20);
 
-    private grid: Array2D<TileType> = new Array2D<TileType>(12, 20);
+    private camera: Camera;
 
     x: number = 0;
     y: number = 0;
-    width: number = this.grid.xCount * TILE_WIDTH;
-    height: number = this.grid.yCount * TILE_HEIGHT;
+    width: number = this.tileMap.width;
+    height: number = this.tileMap.height;
 
     private player = new Mouse(
         this.x + this.width / 2,
@@ -64,14 +63,6 @@ export class Level implements Area {
         this.camera = new Camera(this, this.levelDrawArea);
         this.camera.zoom = 10;
         this.camera.follow(this.player);
-
-        for (let iy = 0; iy < this.grid.yCount; iy++) {
-            for (let ix = 0; ix < this.grid.xCount; ix++) {
-                const tile =
-                    Math.random() < 0.3 ? TileType.Flower : TileType.Grass;
-                this.grid.setValue(ix, iy, tile);
-            }
-        }
     }
 
     update(time: TimeStep): void {
@@ -89,37 +80,7 @@ export class Level implements Area {
             cx.fillStyle = "rgb(100, 200, 100)";
             cx.fillRect(this.x, this.y, this.width, this.height);
 
-            const tiles = this.grid;
-            const visibleArea = this.camera.getVisibleArea();
-
-            const tilesLeftOfCamera = Math.floor(
-                (visibleArea.x - this.x) / TILE_WIDTH,
-            );
-            const tilesToRightEdge = Math.ceil(
-                (visibleArea.x + visibleArea.width - this.x) / TILE_WIDTH,
-            );
-            const tilesTopOfCamera = Math.floor(
-                (visibleArea.y - this.y) / TILE_HEIGHT,
-            );
-            const tilesToBottomEdge = Math.ceil(
-                (visibleArea.y + visibleArea.height - this.y) / TILE_HEIGHT,
-            );
-
-            const leftmostIndex = Math.max(0, tilesLeftOfCamera);
-            const rightmostIndex = Math.min(tiles.xCount, tilesToRightEdge);
-            const tommostIndex = Math.max(0, tilesTopOfCamera);
-            const bottommostIndex = Math.min(tiles.yCount, tilesToBottomEdge);
-
-            for (let iy = tommostIndex; iy < bottommostIndex; iy++) {
-                const y = iy * TILE_HEIGHT;
-
-                for (let ix = leftmostIndex; ix < rightmostIndex; ix++) {
-                    const x = ix * TILE_WIDTH;
-                    const tile = tiles.getValue(ix, iy);
-
-                    drawTile(tile, x, y);
-                }
-            }
+            this.tileMap.draw(time, this.camera.getVisibleArea());
         });
         cx.restore();
 
