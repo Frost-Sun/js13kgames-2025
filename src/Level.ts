@@ -65,51 +65,44 @@ export class Level implements Area {
     }
 
     draw(time: TimeStep): void {
-        cx.save();
+        this.camera.apply(cx, () => {
+            // Default color for grass
+            cx.fillStyle = "rgb(100, 200, 100)";
+            cx.fillRect(this.x, this.y, this.width, this.height);
 
-        // Apply camera - drawing in level coordinates after these lines:
-        cx.translate(canvas.width / 2, canvas.height / 2);
-        cx.scale(this.camera.zoom, this.camera.zoom);
-        cx.translate(-this.camera.x, -this.camera.y);
+            const tiles = this.grid;
+            const visibleArea = this.camera.getVisibleArea();
 
-        // Default color for grass
-        cx.fillStyle = "rgb(100, 200, 100)";
-        cx.fillRect(this.x, this.y, this.width, this.height);
+            const tilesLeftOfCamera = Math.floor(
+                (visibleArea.x - this.x) / TILE_WIDTH,
+            );
+            const tilesToRightEdge = Math.ceil(
+                (visibleArea.x + visibleArea.width - this.x) / TILE_WIDTH,
+            );
+            const tilesTopOfCamera = Math.floor(
+                (visibleArea.y - this.y) / TILE_HEIGHT,
+            );
+            const tilesToBottomEdge = Math.ceil(
+                (visibleArea.y + visibleArea.height - this.y) / TILE_HEIGHT,
+            );
 
-        const tiles = this.grid;
-        const visibleArea = this.camera.getVisibleArea();
+            const leftmostIndex = Math.max(0, tilesLeftOfCamera);
+            const rightmostIndex = Math.min(tiles.xCount, tilesToRightEdge);
+            const tommostIndex = Math.max(0, tilesTopOfCamera);
+            const bottommostIndex = Math.min(tiles.yCount, tilesToBottomEdge);
 
-        const tilesLeftOfCamera = Math.floor(
-            (visibleArea.x - this.x) / TILE_WIDTH,
-        );
-        const tilesToRightEdge = Math.ceil(
-            (visibleArea.x + visibleArea.width - this.x) / TILE_WIDTH,
-        );
-        const tilesTopOfCamera = Math.floor(
-            (visibleArea.y - this.y) / TILE_HEIGHT,
-        );
-        const tilesToBottomEdge = Math.ceil(
-            (visibleArea.y + visibleArea.height - this.y) / TILE_HEIGHT,
-        );
+            for (let iy = tommostIndex; iy < bottommostIndex; iy++) {
+                const y = iy * TILE_HEIGHT;
 
-        const leftmostIndex = Math.max(0, tilesLeftOfCamera);
-        const rightmostIndex = Math.min(tiles.xCount, tilesToRightEdge);
-        const tommostIndex = Math.max(0, tilesTopOfCamera);
-        const bottommostIndex = Math.min(tiles.yCount, tilesToBottomEdge);
+                for (let ix = leftmostIndex; ix < rightmostIndex; ix++) {
+                    const x = ix * TILE_WIDTH;
+                    const tile = tiles.getValue(ix, iy);
 
-        for (let iy = tommostIndex; iy < bottommostIndex; iy++) {
-            const y = iy * TILE_HEIGHT;
-
-            for (let ix = leftmostIndex; ix < rightmostIndex; ix++) {
-                const x = ix * TILE_WIDTH;
-                const tile = tiles.getValue(ix, iy);
-
-                drawTile(tile, x, y);
+                    drawTile(tile, x, y);
+                }
             }
-        }
 
-        this.player.draw(time);
-
-        cx.restore();
+            this.player.draw(time);
+        });
     }
 }

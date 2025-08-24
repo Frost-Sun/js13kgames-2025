@@ -94,6 +94,23 @@ export class Camera {
         this.target = null;
     }
 
+    /**
+     * Applies camera view when drawing. Drawing within this
+     * method is done in level coordinates. On the other hand,
+     * drawing outside of this method happens in the pixel
+     * coordinates of the screen.
+     */
+    apply(cx: CanvasRenderingContext2D, draw: () => void): void {
+        cx.save();
+        cx.translate(this.view.width / 2, this.view.height / 2);
+        cx.scale(this.zoom, this.zoom);
+        cx.translate(-this.x, -this.y);
+
+        draw();
+
+        cx.restore();
+    }
+
     update(time: TimeStep): void {
         if (this.visibleAreaHeight != null) {
             this.zoom = this.view.height / this.visibleAreaHeight;
