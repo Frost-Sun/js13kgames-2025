@@ -27,10 +27,14 @@ import { Camera } from "./core/gameplay/Camera";
 import type { Area } from "./core/math/Area";
 import type { TimeStep } from "./core/time/TimeStep";
 import { canvas, cx } from "./graphics";
+import { PartialArea } from "./PartialArea";
 import { Mouse } from "./Mouse";
 import { drawTile, TILE_HEIGHT, TILE_WIDTH, TileType } from "./tiles";
 
+const HORIZON_HEIGHT_OF_CANVAS = 0.25;
+
 export class Level implements Area {
+    private levelDrawArea = new PartialArea(canvas, HORIZON_HEIGHT_OF_CANVAS);
     private camera: Camera;
     private grid: Array2D<TileType> = new Array2D<TileType>(12, 20);
 
@@ -45,7 +49,7 @@ export class Level implements Area {
     );
 
     constructor() {
-        this.camera = new Camera(this, canvas);
+        this.camera = new Camera(this, this.levelDrawArea);
         this.camera.zoom = 10;
         this.camera.follow(this.player);
 
@@ -65,6 +69,9 @@ export class Level implements Area {
     }
 
     draw(time: TimeStep): void {
+        cx.save();
+        cx.translate(0, this.levelDrawArea.y);
+
         this.camera.apply(cx, () => {
             // Default color for grass
             cx.fillStyle = "rgb(100, 200, 100)";
@@ -101,7 +108,17 @@ export class Level implements Area {
                     drawTile(tile, x, y);
                 }
             }
+        });
+        cx.restore();
 
+        // The horizon is drawn after the tiles so that the tiles are sharply
+        // "cut" at the horizon.
+        cx.save();
+        cx.fillStyle = "rgb(0, 150, 255)";
+        cx.fillRect(0, 0, canvas.width, this.levelDrawArea.y);
+        cx.restore();
+
+        this.camera.apply(cx, () => {
             this.player.draw(time);
         });
     }
