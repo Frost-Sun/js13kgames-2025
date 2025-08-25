@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+import { random } from "./core/math/random";
 import { Flower } from "./Flower";
 import type { GameObject } from "./GameObject";
 import { cx } from "./graphics";
@@ -49,23 +50,23 @@ export const createTile = (type: TileType, x: number, y: number): Tile => {
                 objects: [
                     new Flower(
                         "#ff69b4",
-                        x + TILE_SIZE * 0.3,
-                        y + TILE_DRAW_HEIGHT * 0.3,
+                        x + TILE_SIZE * random(),
+                        y + TILE_DRAW_HEIGHT * random(),
                     ),
                     new Flower(
                         "#ffd700",
-                        x + TILE_SIZE * 0.7,
-                        y + TILE_DRAW_HEIGHT * 0.3,
+                        x + TILE_SIZE * random(),
+                        y + TILE_DRAW_HEIGHT * random(),
                     ),
                     new Flower(
                         "#ff4500",
-                        x + TILE_SIZE * 0.3,
-                        y + TILE_DRAW_HEIGHT * 0.7,
+                        x + TILE_SIZE * random(),
+                        y + TILE_DRAW_HEIGHT * random(),
                     ),
                     new Flower(
                         "#ffffff",
-                        x + TILE_SIZE * 0.7,
-                        y + TILE_DRAW_HEIGHT * 0.7,
+                        x + TILE_SIZE * random(),
+                        y + TILE_DRAW_HEIGHT * random(),
                     ),
                 ],
             };
