@@ -25,14 +25,16 @@
 import type { Area } from "./core/math/Area";
 import { cx } from "./graphics";
 
-export function drawHorizon(area: Area): void {
+export function drawHorizon(area: Area, blur: number): void {
     cx.save();
 
     // Draw sky
     cx.fillStyle = "rgb(0, 150, 255)";
     cx.fillRect(area.x, area.y, area.width, area.height);
 
-    // Draw house base
+    cx.filter = `blur(${blur}px)`;
+
+    // House base
     cx.fillStyle = "#deb887";
     cx.fillRect(
         area.width * 0.3,
@@ -41,7 +43,7 @@ export function drawHorizon(area: Area): void {
         area.height * 0.6,
     );
 
-    // Draw roof
+    // Roof
     cx.beginPath();
     cx.moveTo(area.width * 0.28, area.height * 0.4);
     cx.lineTo(area.width * 0.425, area.height * 0.1);
@@ -50,7 +52,7 @@ export function drawHorizon(area: Area): void {
     cx.fillStyle = "#8b0000";
     cx.fill();
 
-    // Draw door
+    // Door
     cx.fillStyle = "#654321";
     cx.fillRect(
         area.width * 0.42,
@@ -59,7 +61,7 @@ export function drawHorizon(area: Area): void {
         area.height * 0.4,
     );
 
-    // Draw window
+    // Window
     cx.fillStyle = "#add8e6";
     cx.fillRect(
         area.width * 0.33,
@@ -68,7 +70,7 @@ export function drawHorizon(area: Area): void {
         area.height * 0.3,
     );
 
-    // Draw tree trunk
+    // Tree trunk
     cx.fillStyle = "#8b5a2b";
     cx.fillRect(
         area.width * 0.7,
@@ -77,7 +79,7 @@ export function drawHorizon(area: Area): void {
         area.height * 0.4,
     );
 
-    // Draw tree foliage
+    // Tree foliage
     cx.beginPath();
     cx.arc(
         area.width * 0.715,

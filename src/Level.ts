@@ -92,7 +92,7 @@ export class Level implements Area {
 
         // The horizon is drawn after the tiles so that the tiles are sharply
         // "cut" at the horizon.
-        drawHorizon(this.horizonDrawArea);
+        drawHorizon(this.horizonDrawArea, 4); // TODO: Change based on y location in map
 
         cx.save();
         cx.translate(0, this.levelDrawArea.y);
@@ -122,5 +122,20 @@ export class Level implements Area {
 
             o.draw(time);
         }
+    }
+
+    private getBlurOpacity(worldY: number, visibleArea: Area): number {
+        // Horizon in world coordinates
+        const horizonY = visibleArea.y; // top of visible area is the horizon
+        const farthestY = visibleArea.y + visibleArea.height; // bottom of visible area
+
+        // Distance from horizon (0 at horizon, 1 at farthest point)
+        let t = (worldY - horizonY) / (farthestY - horizonY);
+
+        // Clamp between 0 and 1
+        t = Math.max(0, Math.min(1, t));
+
+        // Invert if you want more blur further away from horizon
+        return t;
     }
 }
