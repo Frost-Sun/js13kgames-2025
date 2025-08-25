@@ -37,8 +37,8 @@ import { multiply } from "./core/math/Vector";
 const SPEED = 0.01;
 
 export class Mouse implements GameObject {
-    x: number = 0;
-    y: number = 0;
+    x: number;
+    y: number;
 
     // Logical bounding box for collisions/culling
     width: number = 3;

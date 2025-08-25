@@ -30,6 +30,7 @@ import { PartialArea } from "./PartialArea";
 import { Mouse } from "./Mouse";
 import { drawHorizon } from "./horizon";
 import { TileMap } from "./TileMap";
+import type { GameObject } from "./GameObject";
 
 const HORIZON_HEIGHT_OF_CANVAS = 0.25;
 
@@ -59,6 +60,8 @@ export class Level implements Area {
         this.y + this.height / 2,
     );
 
+    private gameObjects: GameObject[] = [this.player];
+
     constructor() {
         this.camera = new Camera(this, this.levelDrawArea);
         this.camera.zoom = 15;
@@ -73,6 +76,7 @@ export class Level implements Area {
 
     draw(time: TimeStep): void {
         const visibleArea = this.camera.getVisibleArea();
+        const objectsToDraw = [...this.gameObjects];
 
         cx.save();
         cx.translate(0, this.levelDrawArea.y);
@@ -82,7 +86,7 @@ export class Level implements Area {
             cx.fillStyle = "rgb(100, 200, 100)";
             cx.fillRect(this.x, this.y, this.width, this.height);
 
-            this.tileMap.drawTiles(time, visibleArea);
+            this.tileMap.drawTiles(visibleArea, objectsToDraw);
         });
         cx.restore();
 
@@ -94,9 +98,29 @@ export class Level implements Area {
         cx.translate(0, this.levelDrawArea.y);
 
         this.camera.apply(cx, () => {
-            this.tileMap.drawObjects(time, visibleArea);
-            this.player.draw(time);
+            this.drawObjects(time, visibleArea, objectsToDraw);
         });
         cx.restore();
+    }
+
+    private drawObjects(
+        time: TimeStep,
+        visibleArea: Area,
+        objectsToDraw: GameObject[],
+    ): void {
+        // Sort the objects so that objects in front get drawn after
+        // objects behind them.
+        objectsToDraw.sort((a, b) => a.y + a.height / 2 - (b.y + b.height / 2));
+
+        for (let i = 0; i < objectsToDraw.length; i++) {
+            const o = objectsToDraw[i];
+
+            if (o.y + o.height * 0.5 < visibleArea.y) {
+                // Skip objects that are over the horizon.
+                continue;
+            }
+
+            o.draw(time);
+        }
     }
 }

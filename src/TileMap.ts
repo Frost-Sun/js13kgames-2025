@@ -24,66 +24,42 @@
 
 import { Array2D } from "./Array2D";
 import type { Area } from "./core/math/Area";
-import type { TimeStep } from "./core/time/TimeStep";
+import type { GameObject } from "./GameObject";
 import {
-    drawObject,
+    createTile,
     drawTile,
     TILE_DRAW_HEIGHT,
     TILE_SIZE,
     TileType,
+    type Tile,
 } from "./tiles";
 
 export class TileMap {
-    private grid: Array2D<TileType>;
+    private grid: Array2D<Tile>;
 
     width: number;
     height: number;
 
     constructor(xCount: number, yCount: number) {
-        this.grid = new Array2D<TileType>(xCount, yCount);
+        this.grid = new Array2D<Tile>(xCount, yCount);
         this.width = this.grid.xCount * TILE_SIZE;
         this.height = this.grid.yCount * TILE_DRAW_HEIGHT;
 
         for (let iy = 0; iy < this.grid.yCount; iy++) {
+            const y = iy * TILE_DRAW_HEIGHT;
+
             for (let ix = 0; ix < this.grid.xCount; ix++) {
-                const tile =
+                const x = ix * TILE_SIZE;
+
+                const tileType =
                     Math.random() < 0.3 ? TileType.Flower : TileType.Grass;
+                const tile = createTile(tileType, x, y);
                 this.grid.setValue(ix, iy, tile);
             }
         }
     }
 
-    drawTiles(time: TimeStep, visibleArea: Area): void {
-        const tiles = this.grid;
-
-        // Calculate how many tiles are visible in x- and y direction
-        const tilesLeftOfCamera = Math.floor(visibleArea.x / TILE_SIZE);
-        const tilesToRightEdge = Math.ceil(
-            (visibleArea.x + visibleArea.width) / TILE_SIZE,
-        );
-        const tilesTopOfCamera = Math.floor(visibleArea.y / TILE_DRAW_HEIGHT);
-        const tilesToBottomEdge = Math.ceil(
-            (visibleArea.y + visibleArea.height) / TILE_DRAW_HEIGHT,
-        );
-        const leftmostIndex = Math.max(0, tilesLeftOfCamera);
-        const rightmostIndex = Math.min(tiles.xCount, tilesToRightEdge);
-        const tommostIndex = Math.max(0, tilesTopOfCamera);
-        const bottommostIndex = Math.min(tiles.yCount, tilesToBottomEdge);
-
-        // Draw the currently visible tiles
-        for (let iy = tommostIndex; iy < bottommostIndex; iy++) {
-            const y = iy * TILE_DRAW_HEIGHT;
-
-            for (let ix = leftmostIndex; ix < rightmostIndex; ix++) {
-                const x = ix * TILE_SIZE;
-                const tile = tiles.getValue(ix, iy);
-
-                drawTile(tile, x, y);
-            }
-        }
-    }
-
-    drawObjects(time: TimeStep, visibleArea: Area): void {
+    drawTiles(visibleArea: Area, objectsToDraw: GameObject[]): void {
         const tiles = this.grid;
 
         // Calculate how many tiles are visible in x- and y direction
@@ -94,7 +70,7 @@ export class TileMap {
         const tilesTopOfCamera = Math.floor(visibleArea.y / TILE_DRAW_HEIGHT);
         const tilesToBottomEdge =
             Math.ceil((visibleArea.y + visibleArea.height) / TILE_DRAW_HEIGHT) +
-            1; // + 1 so that objects from a non-visible tile at the bottom are drawn.
+            1; // +1 so that objects get drawn from a tile that is just below the edge
         const leftmostIndex = Math.max(0, tilesLeftOfCamera);
         const rightmostIndex = Math.min(tiles.xCount, tilesToRightEdge);
         const tommostIndex = Math.max(0, tilesTopOfCamera);
@@ -108,7 +84,10 @@ export class TileMap {
                 const x = ix * TILE_SIZE;
                 const tile = tiles.getValue(ix, iy);
 
-                drawObject(tile, x, y, visibleArea);
+                const objects = tile?.objects ?? [];
+                objectsToDraw.push(...objects);
+
+                drawTile(tile?.type, x, y);
             }
         }
     }

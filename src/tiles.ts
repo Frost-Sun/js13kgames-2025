@@ -22,7 +22,8 @@
  * SOFTWARE.
  */
 
-import type { Area } from "./core/math/Area";
+import { Flower } from "./Flower";
+import type { GameObject } from "./GameObject";
 import { cx } from "./graphics";
 
 export const TILE_SIZE = 10;
@@ -34,6 +35,44 @@ export enum TileType {
     Grass,
     Flower,
 }
+
+export interface Tile {
+    readonly type: TileType;
+    readonly objects: readonly GameObject[];
+}
+
+export const createTile = (type: TileType, x: number, y: number): Tile => {
+    switch (type) {
+        case TileType.Flower:
+            return {
+                type: TileType.Flower,
+                objects: [
+                    new Flower(
+                        "#ff69b4",
+                        x + TILE_SIZE * 0.3,
+                        y + TILE_DRAW_HEIGHT * 0.3,
+                    ),
+                    new Flower(
+                        "#ffd700",
+                        x + TILE_SIZE * 0.7,
+                        y + TILE_DRAW_HEIGHT * 0.3,
+                    ),
+                    new Flower(
+                        "#ff4500",
+                        x + TILE_SIZE * 0.3,
+                        y + TILE_DRAW_HEIGHT * 0.7,
+                    ),
+                    new Flower(
+                        "#ffffff",
+                        x + TILE_SIZE * 0.7,
+                        y + TILE_DRAW_HEIGHT * 0.7,
+                    ),
+                ],
+            };
+        default:
+            return { type: TileType.Grass, objects: [] };
+    }
+};
 
 export const drawTile = (
     tile: TileType | undefined,
@@ -53,79 +92,4 @@ export const drawTile = (
             cx.fillRect(x, y, TILE_SIZE, TILE_DRAW_HEIGHT);
             break;
     }
-};
-
-export const drawObject = (
-    tile: TileType | undefined,
-    x: number,
-    y: number,
-    visibleArea: Area,
-): void => {
-    switch (tile) {
-        case TileType.Flower:
-            drawFlower(
-                x + TILE_SIZE * 0.3,
-                y + TILE_DRAW_HEIGHT * 0.3,
-                TILE_SIZE * 0.2,
-                "#ff69b4",
-                visibleArea,
-            );
-            drawFlower(
-                x + TILE_SIZE * 0.7,
-                y + TILE_DRAW_HEIGHT * 0.3,
-                TILE_SIZE * 0.2,
-                "#ffd700",
-                visibleArea,
-            );
-            drawFlower(
-                x + TILE_SIZE * 0.3,
-                y + TILE_DRAW_HEIGHT * 0.7,
-                TILE_SIZE * 0.2,
-                "#ff4500",
-                visibleArea,
-            );
-            drawFlower(
-                x + TILE_SIZE * 0.7,
-                y + TILE_DRAW_HEIGHT * 0.7,
-                TILE_SIZE * 0.2,
-                "#ffffff",
-                visibleArea,
-            );
-            break;
-
-        default:
-            break;
-    }
-};
-
-const drawFlower = (
-    x: number,
-    y: number,
-    h: number,
-    color: string,
-    visibleArea: Area,
-): void => {
-    // Skip drawing if the object is over the horizon.
-    if (y < visibleArea.y) {
-        return;
-    }
-
-    const stemWidth = TILE_SIZE * 0.04;
-    const flowerWidth = TILE_SIZE * 0.2;
-
-    // Flower stem
-    cx.fillStyle = "#228b22";
-    cx.fillRect(x - stemWidth * 0.5, y - h, stemWidth, h);
-
-    // Flower petals
-    cx.beginPath();
-    cx.arc(x, y - h, flowerWidth * 0.5, 0, Math.PI * 2);
-    cx.fillStyle = color;
-    cx.fill();
-
-    // Flower center
-    cx.beginPath();
-    cx.arc(x, y - h, flowerWidth * 0.2, 0, Math.PI * 2);
-    cx.fillStyle = "#ffffe0";
-    cx.fill();
 };
