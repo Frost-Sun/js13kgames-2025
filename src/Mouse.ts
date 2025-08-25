@@ -31,14 +31,18 @@ import {
     type MouseFacing,
     renderMouse,
 } from "./MouseAnimation";
+import { type Area } from "./core/math/Area";
+import { multiply } from "./core/math/Vector";
+
+const SPEED = 0.01;
 
 export class Mouse implements GameObject {
-    x: number = 0;
-    y: number = 0;
+    x: number;
+    y: number;
 
     // Logical bounding box for collisions/culling
-    width: number = 48;
-    height: number = 28;
+    width: number = 3;
+    height: number = 1;
 
     // Animation state
     private dir: number = 1; // 1 = facing right, -1 = facing left
@@ -50,10 +54,27 @@ export class Mouse implements GameObject {
         this.y = y;
     }
 
-    update(): void {
-        const movement = getControls().movement;
-        this.x += movement.x;
-        this.y += movement.y;
+    update(time: TimeStep, bounds: Area): void {
+        const movementDirection = getControls().movement;
+        const movement = multiply(movementDirection, time.dt * SPEED);
+
+        if (movement.x < 0 && bounds.x <= this.x + movement.x) {
+            this.x += movement.x;
+        } else if (
+            movement.x > 0 &&
+            this.x + movement.x + this.width < bounds.x + bounds.width
+        ) {
+            this.x += movement.x;
+        }
+
+        if (movement.y < 0 && bounds.y <= this.y + movement.y) {
+            this.y += movement.y;
+        } else if (
+            movement.y > 0 &&
+            this.y + movement.y + this.height < bounds.y + bounds.height
+        ) {
+            this.y += movement.y;
+        }
 
         // Direction follows horizontal input
         if (movement.x > 0.05) this.dir = 1;
@@ -95,7 +116,6 @@ export class Mouse implements GameObject {
             this.x,
             this.y,
             this.width,
-            this.height,
             facing,
             animation,
             this.dir,

@@ -22,19 +22,26 @@
  * SOFTWARE.
  */
 
-import "./style.css";
-import { init } from "./game";
-import { resizeCanvasMaintainingAspectRatio } from "./core/platform/window";
-import { canvas } from "./graphics";
+import type { Area, Dimensions } from "./core/math/Area";
 
-const maxWidth = 1280;
-const maxHeight = 720;
+export class PartialArea implements Area {
+    x = 0;
 
-const resize = (): void => {
-    resizeCanvasMaintainingAspectRatio(canvas, maxWidth, maxHeight);
-};
+    get y(): number {
+        return this.fullArea.height * this.fractionFromTop;
+    }
 
-window.addEventListener("resize", resize, false);
-resize();
+    get width(): number {
+        return this.fullArea.width;
+    }
 
-init();
+    get height(): number {
+        return this.fullArea.height * this.heightFraction;
+    }
+
+    constructor(
+        private fullArea: Dimensions,
+        private fractionFromTop: number,
+        private heightFraction: number,
+    ) {}
+}

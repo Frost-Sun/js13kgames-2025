@@ -25,39 +25,102 @@
 import { Camera } from "./core/gameplay/Camera";
 import type { Area } from "./core/math/Area";
 import type { TimeStep } from "./core/time/TimeStep";
-import { cx } from "./graphics";
+import { canvas, cx } from "./graphics";
+import { PartialArea } from "./PartialArea";
 import { Mouse } from "./Mouse";
+import { drawHorizon } from "./horizon";
+import { TileMap } from "./TileMap";
+import type { GameObject } from "./GameObject";
 
-export const canvas = document.querySelector("canvas") as HTMLCanvasElement;
+const HORIZON_HEIGHT_OF_CANVAS = 0.25;
 
 export class Level implements Area {
-    private camera: Camera = new Camera(this, canvas);
+    private horizonDrawArea = new PartialArea(
+        canvas,
+        0,
+        HORIZON_HEIGHT_OF_CANVAS,
+    );
+    private levelDrawArea = new PartialArea(
+        canvas,
+        HORIZON_HEIGHT_OF_CANVAS,
+        1 - HORIZON_HEIGHT_OF_CANVAS,
+    );
+
+    private tileMap: TileMap = new TileMap(12, 20);
+
+    private camera: Camera;
 
     x: number = 0;
     y: number = 0;
-    width: number = 400;
-    height: number = 300;
+    width: number = this.tileMap.width;
+    height: number = this.tileMap.height;
 
     private player = new Mouse(
         this.x + this.width / 2,
         this.y + this.height / 2,
     );
 
-    update(t: number): void {
-        this.camera.update(t);
+    private gameObjects: GameObject[] = [this.player];
 
-        this.player.update();
+    constructor() {
+        this.camera = new Camera(this, this.levelDrawArea);
+        this.camera.zoom = 15;
+        this.camera.follow(this.player);
+    }
+
+    update(time: TimeStep): void {
+        this.camera.update(time);
+
+        this.player.update(time, this);
     }
 
     draw(time: TimeStep): void {
+        const visibleArea = this.camera.getVisibleArea();
+        const objectsToDraw = [...this.gameObjects];
+
         cx.save();
-        // Apply camera - drawing in level coordinates after these lines:
-        cx.translate(canvas.width / 2, canvas.height / 2);
-        cx.scale(this.camera.zoom, this.camera.zoom);
-        cx.translate(-this.camera.x, -this.camera.y);
+        cx.translate(0, this.levelDrawArea.y);
 
-        this.player.draw(time);
+        this.camera.apply(cx, () => {
+            // Default color for grass
+            cx.fillStyle = "rgb(100, 200, 100)";
+            cx.fillRect(this.x, this.y, this.width, this.height);
 
+            this.tileMap.drawTiles(visibleArea, objectsToDraw);
+        });
         cx.restore();
+
+        // The horizon is drawn after the tiles so that the tiles are sharply
+        // "cut" at the horizon.
+        drawHorizon(this.horizonDrawArea);
+
+        cx.save();
+        cx.translate(0, this.levelDrawArea.y);
+
+        this.camera.apply(cx, () => {
+            this.drawObjects(time, visibleArea, objectsToDraw);
+        });
+        cx.restore();
+    }
+
+    private drawObjects(
+        time: TimeStep,
+        visibleArea: Area,
+        objectsToDraw: GameObject[],
+    ): void {
+        // Sort the objects so that objects in front get drawn after
+        // objects behind them.
+        objectsToDraw.sort((a, b) => a.y + a.height / 2 - (b.y + b.height / 2));
+
+        for (let i = 0; i < objectsToDraw.length; i++) {
+            const o = objectsToDraw[i];
+
+            if (o.y + o.height * 0.5 < visibleArea.y) {
+                // Skip objects that are over the horizon.
+                continue;
+            }
+
+            o.draw(time);
+        }
     }
 }

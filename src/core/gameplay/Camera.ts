@@ -24,6 +24,7 @@
 
 import type { Area, Dimensions } from "../math/Area";
 import { easeInOutExpo } from "../math/easings";
+import type { TimeStep } from "../time/TimeStep";
 
 export interface Transition {
     startY: number;
@@ -52,16 +53,32 @@ export class Camera {
 
     // Returns the area of the level that is currently visible on the
     // camera.
-    getViewArea(): Area {
-        const viewAreaWidth = this.view.width / this.zoom;
-        const viewAreaHeight = this.view.height / this.zoom;
+    getVisibleArea(): Area {
+        const width = this.view.width / this.zoom;
+        const height = this.view.height / this.zoom;
 
         return {
-            x: this.x - viewAreaWidth / 2,
-            y: this.y - viewAreaHeight / 2,
-            width: viewAreaWidth,
-            height: viewAreaHeight,
+            x: this.x - width / 2,
+            y: this.y - height / 2,
+            width,
+            height,
         };
+    }
+
+    zoomToLevel(): void {
+        this.target = null;
+
+        this.x = this.level.x + this.level.width / 2;
+        this.y = this.level.y + this.level.height / 2;
+
+        if (
+            this.level.width / this.level.height >=
+            this.view.width / this.view.height
+        ) {
+            this.zoom = this.view.width / this.level.width;
+        } else {
+            this.zoom = this.view.height / this.level.height;
+        }
     }
 
     follow(target: Area): void {
@@ -77,7 +94,24 @@ export class Camera {
         this.target = null;
     }
 
-    update(t: number): void {
+    /**
+     * Applies camera view when drawing. Drawing within this
+     * method is done in level coordinates. On the other hand,
+     * drawing outside of this method happens in the pixel
+     * coordinates of the screen.
+     */
+    apply(cx: CanvasRenderingContext2D, draw: () => void): void {
+        cx.save();
+        cx.translate(this.view.width / 2, this.view.height / 2);
+        cx.scale(this.zoom, this.zoom);
+        cx.translate(-this.x, -this.y);
+
+        draw();
+
+        cx.restore();
+    }
+
+    update(time: TimeStep): void {
         if (this.visibleAreaHeight != null) {
             this.zoom = this.view.height / this.visibleAreaHeight;
         }
@@ -85,8 +119,8 @@ export class Camera {
         if (this.transition != null) {
             const { startY, endY, startTime, duration } = this.transition;
 
-            if (t < startTime + duration) {
-                const elapsedTime = t - this.transition.startTime;
+            if (time.t < startTime + duration) {
+                const elapsedTime = time.t - this.transition.startTime;
                 const progress = elapsedTime / this.transition.duration;
 
                 this.y = startY + easeInOutExpo(progress) * (endY - startY);
@@ -99,27 +133,27 @@ export class Camera {
     }
 
     private followFrame(gameObject: Area): void {
+        let x = gameObject.x + gameObject.width;
+        let y = gameObject.y + gameObject.height;
+
         const viewAreaWidth = this.view.width / this.zoom;
         const viewAreaHeight = this.view.height / this.zoom;
 
-        if (viewAreaWidth < this.level.width) {
-            let x = gameObject.x + gameObject.width;
-
-            // Keep camera within level in x-direction.
-            if (x - viewAreaWidth / 2 < this.level.x) {
-                x = this.level.x + viewAreaWidth / 2;
-            } else if (
-                x + viewAreaWidth / 2 >
-                this.level.x + this.level.width
-            ) {
-                x = this.level.x + this.level.width - viewAreaWidth / 2;
-            }
-
-            this.x = x;
-        } else {
-            this.x = 0;
+        // Keep camera within level in x-direction.
+        if (x - viewAreaWidth / 2 < this.level.x) {
+            x = this.level.x + viewAreaWidth / 2;
+        } else if (x + viewAreaWidth / 2 > this.level.width) {
+            x = this.level.width - viewAreaWidth / 2;
         }
 
-        this.y = gameObject.y + viewAreaHeight * this.yAdjust;
+        // Keep camera within level in y-direction.
+        if (y - viewAreaHeight / 2 < this.level.y) {
+            y = this.level.y + viewAreaHeight / 2;
+        } else if (y + viewAreaHeight / 2 > this.level.height) {
+            y = this.level.height - viewAreaHeight / 2;
+        }
+
+        this.x = x;
+        this.y = y;
     }
 }
