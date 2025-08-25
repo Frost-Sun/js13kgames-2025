@@ -42,7 +42,7 @@ export class Mouse implements GameObject {
 
     // Logical bounding box for collisions/culling
     width: number = 3;
-    height: number = 3;
+    height: number = 1;
 
     // Animation state
     private dir: number = 1; // 1 = facing right, -1 = facing left

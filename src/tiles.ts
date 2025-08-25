@@ -25,8 +25,10 @@
 import type { Area } from "./core/math/Area";
 import { cx } from "./graphics";
 
-export const TILE_WIDTH = 10;
-export const TILE_HEIGHT = 10;
+export const TILE_SIZE = 10;
+
+// Tiles are drawn lower than what they are wide for a pseudo-3D effect.
+export const TILE_DRAW_HEIGHT = TILE_SIZE * 0.3;
 
 export enum TileType {
     Grass,
@@ -41,14 +43,14 @@ export const drawTile = (
     switch (tile) {
         case TileType.Flower:
             cx.fillStyle = "rgb(100, 190, 100)";
-            cx.fillRect(x, y, TILE_WIDTH, TILE_HEIGHT);
+            cx.fillRect(x, y, TILE_SIZE, TILE_DRAW_HEIGHT);
             break;
         case TileType.Grass:
             break;
 
         default:
             cx.fillStyle = "black";
-            cx.fillRect(x, y, TILE_WIDTH, TILE_HEIGHT);
+            cx.fillRect(x, y, TILE_SIZE, TILE_DRAW_HEIGHT);
             break;
     }
 };
@@ -62,30 +64,30 @@ export const drawObject = (
     switch (tile) {
         case TileType.Flower:
             drawFlower(
-                x + TILE_WIDTH * 0.3,
-                y + TILE_HEIGHT * 0.3,
-                TILE_HEIGHT * 0.2,
+                x + TILE_SIZE * 0.3,
+                y + TILE_DRAW_HEIGHT * 0.3,
+                TILE_SIZE * 0.2,
                 "#ff69b4",
                 visibleArea,
             );
             drawFlower(
-                x + TILE_WIDTH * 0.7,
-                y + TILE_HEIGHT * 0.3,
-                TILE_HEIGHT * 0.2,
+                x + TILE_SIZE * 0.7,
+                y + TILE_DRAW_HEIGHT * 0.3,
+                TILE_SIZE * 0.2,
                 "#ffd700",
                 visibleArea,
             );
             drawFlower(
-                x + TILE_WIDTH * 0.3,
-                y + TILE_HEIGHT * 0.7,
-                TILE_HEIGHT * 0.2,
+                x + TILE_SIZE * 0.3,
+                y + TILE_DRAW_HEIGHT * 0.7,
+                TILE_SIZE * 0.2,
                 "#ff4500",
                 visibleArea,
             );
             drawFlower(
-                x + TILE_WIDTH * 0.7,
-                y + TILE_HEIGHT * 0.7,
-                TILE_HEIGHT * 0.2,
+                x + TILE_SIZE * 0.7,
+                y + TILE_DRAW_HEIGHT * 0.7,
+                TILE_SIZE * 0.2,
                 "#ffffff",
                 visibleArea,
             );
@@ -108,8 +110,8 @@ const drawFlower = (
         return;
     }
 
-    const stemWidth = TILE_WIDTH * 0.04;
-    const flowerWidth = TILE_WIDTH * 0.2;
+    const stemWidth = TILE_SIZE * 0.04;
+    const flowerWidth = TILE_SIZE * 0.2;
 
     // Flower stem
     cx.fillStyle = "#228b22";

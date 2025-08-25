@@ -61,7 +61,7 @@ export class Level implements Area {
 
     constructor() {
         this.camera = new Camera(this, this.levelDrawArea);
-        this.camera.zoom = 10;
+        this.camera.zoom = 15;
         this.camera.follow(this.player);
     }
 

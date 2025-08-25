@@ -59,6 +59,10 @@ export function renderMouse(
 
     context.save();
 
+    // For a pseudo-3D effect, the bounding box should be
+    // on the ground and the mouse figure "rise" from there.
+    context.translate(0, -height * 0.6);
+
     // Centered transform; flip only for side pose
     context.translate(x + width / 2, y + height / 2);
     context.scale(facing === "side" ? dir : 1, 1);
