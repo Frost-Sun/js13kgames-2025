@@ -30,5 +30,30 @@ export const clearCanvas = (color: string = "black"): void => {
     cx.save();
     cx.fillStyle = color;
     cx.fillRect(0, 0, canvas.width, canvas.height);
+
     cx.restore();
+};
+
+const raindrops = Array.from({ length: 200 }, () => ({
+    x: Math.random(),
+    y: Math.random(),
+    speed: 2 + Math.random() * 3,
+    drift: (Math.random() - 0.5) * 0.3, // slight horizontal drift
+    length: 12 + Math.random() * 10,
+}));
+
+export const drawRain = (time: number, width: number, height: number) => {
+    const rainColor = "rgba(255,255,255,0.6)";
+    cx.strokeStyle = rainColor;
+    cx.lineWidth = 1;
+
+    for (const drop of raindrops) {
+        const x = (drop.x * width + drop.drift * time) % width;
+        const y = (drop.y * height + drop.speed * time) % height;
+
+        cx.beginPath();
+        cx.moveTo(x, y);
+        cx.lineTo(x, y + drop.length);
+        cx.stroke();
+    }
 };
