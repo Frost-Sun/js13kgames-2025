@@ -73,11 +73,11 @@ export class TileMap {
             1; // +1 so that objects get drawn from a tile that is just below the edge
         const leftmostIndex = Math.max(0, tilesLeftOfCamera);
         const rightmostIndex = Math.min(tiles.xCount, tilesToRightEdge);
-        const tommostIndex = Math.max(0, tilesTopOfCamera);
+        const topmostIndex = Math.max(0, tilesTopOfCamera);
         const bottommostIndex = Math.min(tiles.yCount, tilesToBottomEdge);
 
         // Draw the currently visible tiles
-        for (let iy = tommostIndex; iy < bottommostIndex; iy++) {
+        for (let iy = topmostIndex; iy < bottommostIndex; iy++) {
             const y = iy * TILE_DRAW_HEIGHT;
 
             for (let ix = leftmostIndex; ix < rightmostIndex; ix++) {
@@ -88,6 +88,37 @@ export class TileMap {
                 objectsToDraw.push(...objects);
 
                 drawTile(tile?.type, x, y);
+            }
+        }
+    }
+
+    /**
+     * Returns objects from the given tile and the tiles next to it.
+     */
+    *getNearbyObjects(
+        tileX: number,
+        tileY: number,
+    ): IterableIterator<GameObject> {
+        const tiles = this.grid;
+
+        const leftmostIndex = Math.max(0, tileX - 1);
+        const rightmostIndex = Math.min(tileX + 1, tiles.xCount);
+        const topmostIndex = Math.max(0, tileY - 1);
+        const bottommostIndex = Math.min(tileY + 1, tiles.yCount);
+
+        for (let iy = topmostIndex; iy < bottommostIndex; iy++) {
+            for (let ix = leftmostIndex; ix < rightmostIndex; ix++) {
+                const tile = tiles.getValue(ix, iy);
+
+                if (tile) {
+                    for (
+                        let iObject = 0;
+                        iObject < tile.objects.length;
+                        iObject++
+                    ) {
+                        yield tile.objects[iObject];
+                    }
+                }
             }
         }
     }

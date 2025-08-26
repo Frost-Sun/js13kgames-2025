@@ -28,7 +28,10 @@ import type { GameObject } from "./GameObject";
 import { cx } from "./graphics";
 import { TILE_DRAW_HEIGHT, TILE_SIZE } from "./tiles";
 
-const MAX_WOBBLE_ANGLE = Math.PI / 32;
+const MAX_WOBBLE_ANGLE = Math.PI / 64;
+
+const HIT_WOBBLE_TIME = 2000;
+const HIT_WOBBLE_ANGLE_MULTIPLIER = 10;
 
 export class Flower implements GameObject {
     x: number;
@@ -38,6 +41,8 @@ export class Flower implements GameObject {
 
     // So that all the flowers don't wobble in sync
     wobblePhase: number;
+
+    hitStartTime: number = -Infinity;
 
     constructor(
         private color: string,
@@ -51,13 +56,26 @@ export class Flower implements GameObject {
         this.wobblePhase = random(2 * Math.PI);
     }
 
+    hit(time: TimeStep): void {
+        if (time.t - this.hitStartTime > HIT_WOBBLE_TIME) {
+            this.hitStartTime = time.t;
+        }
+    }
+
     draw(time: TimeStep): void {
         cx.save();
 
         cx.translate(this.x + this.width * 0.5, this.y + this.height * 0.5);
 
+        const hitAngleMultiplier =
+            time.t - this.hitStartTime < HIT_WOBBLE_TIME
+                ? HIT_WOBBLE_ANGLE_MULTIPLIER -
+                  (time.t - this.hitStartTime) / HIT_WOBBLE_TIME
+                : 1;
         const rotateAngle =
-            Math.sin(time.t * 0.001 + this.wobblePhase) * MAX_WOBBLE_ANGLE;
+            Math.sin(time.t * 0.001 + this.wobblePhase) *
+            MAX_WOBBLE_ANGLE *
+            hitAngleMultiplier;
         cx.rotate(rotateAngle);
 
         const heightUp = TILE_SIZE * 0.2;
