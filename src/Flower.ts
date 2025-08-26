@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import { random } from "./core/math/random";
+import { random, randomMinMax } from "./core/math/random";
 import type { TimeStep } from "./core/time/TimeStep";
 import type { GameObject } from "./GameObject";
 import { cx } from "./graphics";
@@ -51,8 +51,8 @@ export class Flower implements GameObject {
     ) {
         this.x = x;
         this.y = y;
-        this.width = TILE_SIZE * 0.2;
-        this.height = TILE_DRAW_HEIGHT * 0.2;
+        this.width = TILE_SIZE * randomMinMax(0.15, 0.25);
+        this.height = TILE_DRAW_HEIGHT * randomMinMax(0.15, 0.25);
         this.wobblePhase = random(2 * Math.PI);
     }
 
