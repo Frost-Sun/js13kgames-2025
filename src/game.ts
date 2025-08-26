@@ -29,7 +29,7 @@ import {
 } from "./controls";
 import { sleep } from "./core/time/sleep";
 import type { TimeStep } from "./core/time/TimeStep";
-import { canvas, clearCanvas, cx } from "./graphics";
+import { canvas, clearCanvas, cx, drawRain } from "./graphics";
 import { Level } from "./Level";
 import { drawLoadingView, drawStartScreen } from "./views";
 
@@ -114,6 +114,8 @@ const draw = (time: TimeStep): void => {
             clearCanvas("rgb(0, 0, 0)");
 
             level.draw(time);
+
+            drawRain(time.t, cx.canvas.width, cx.canvas.height);
 
             const elapsed = time.t - runningStartTime;
             if (elapsed > NIGHT_START_TIME) {
