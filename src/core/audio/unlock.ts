@@ -23,7 +23,7 @@
  */
 
 import { isDesktop, isIPad } from "../platform/deviceDetection";
-import { Tune } from "./music";
+import type { Tune } from "./music";
 
 let audioUnlocked = false;
 

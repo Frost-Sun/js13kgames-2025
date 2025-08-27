@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+import { playTune, SFX_KB } from "../../audio/sfx";
+
 // These must match the definitions in KeyboardEvent.code
 export type Key =
     | "ArrowLeft"
@@ -73,6 +75,7 @@ export const initializeKeyboard = (): void => {
 export const waitForEnter = (): Promise<void> => {
     return new Promise((resolve) => {
         const listener = (event: KeyboardEvent): void => {
+            playTune(SFX_KB);
             if (event.code === "Enter") {
                 window.removeEventListener("keydown", listener);
                 resolve();

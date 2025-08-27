@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+import { initialize } from "./audio/sfx";
 import {
     initializeControls,
     updateControls,
@@ -152,5 +153,6 @@ export const init = async (): Promise<void> => {
 
     level = new Level();
 
+    initialize();
     setState(GameState.StartScreen);
 };
