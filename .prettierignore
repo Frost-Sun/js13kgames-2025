@@ -4,3 +4,5 @@ package.json
 package-lock.json
 src/core/audio/musicplayer.js
 src/core/audio/sfxPlayer.js
+src/audio/sfxData.ts
+
