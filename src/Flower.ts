@@ -22,16 +22,27 @@
  * SOFTWARE.
  */
 
+import { random, randomMinMax } from "./core/math/random";
 import type { TimeStep } from "./core/time/TimeStep";
 import type { GameObject } from "./GameObject";
 import { cx } from "./graphics";
 import { TILE_DRAW_HEIGHT, TILE_SIZE } from "./tiles";
+
+const MAX_WOBBLE_ANGLE = Math.PI / 64;
+
+const HIT_WOBBLE_TIME = 2000;
+const HIT_WOBBLE_ANGLE_MULTIPLIER = 10;
 
 export class Flower implements GameObject {
     x: number;
     y: number;
     width: number;
     height: number;
+
+    // So that all the flowers don't wobble in sync
+    wobblePhase: number;
+
+    hitStartTime: number = -Infinity;
 
     constructor(
         private color: string,
@@ -40,25 +51,42 @@ export class Flower implements GameObject {
     ) {
         this.x = x;
         this.y = y;
-        this.width = TILE_SIZE * 0.2;
-        this.height = TILE_DRAW_HEIGHT * 0.2;
+        this.width = TILE_SIZE * randomMinMax(0.15, 0.25);
+        this.height = TILE_DRAW_HEIGHT * randomMinMax(0.15, 0.25);
+        this.wobblePhase = random(2 * Math.PI);
+    }
+
+    hit(time: TimeStep): void {
+        if (time.t - this.hitStartTime > HIT_WOBBLE_TIME) {
+            this.hitStartTime = time.t;
+        }
     }
 
     draw(time: TimeStep): void {
+        cx.save();
+
+        cx.translate(this.x + this.width * 0.5, this.y + this.height * 0.5);
+
+        const hitAngleMultiplier =
+            time.t - this.hitStartTime < HIT_WOBBLE_TIME
+                ? HIT_WOBBLE_ANGLE_MULTIPLIER -
+                  (time.t - this.hitStartTime) / HIT_WOBBLE_TIME
+                : 1;
+        const rotateAngle =
+            Math.sin(time.t * 0.001 + this.wobblePhase) *
+            MAX_WOBBLE_ANGLE *
+            hitAngleMultiplier;
+        cx.rotate(rotateAngle);
+
         const heightUp = TILE_SIZE * 0.2;
         const stemWidth = TILE_SIZE * 0.04;
         const flowerRadius = this.width * 0.5;
-        const flowerX = this.x + this.width * 0.5;
-        const flowerY = this.y + this.height * 0.5 - heightUp;
+        const flowerX = 0;
+        const flowerY = -heightUp;
 
         // Flower stem
         cx.fillStyle = "#228b22";
-        cx.fillRect(
-            this.x + this.width * 0.5 - stemWidth * 0.5,
-            this.y + this.height * 0.5 - heightUp,
-            stemWidth,
-            heightUp,
-        );
+        cx.fillRect(-stemWidth * 0.5, -heightUp, stemWidth, heightUp);
 
         // Flower petals
         cx.beginPath();
@@ -71,5 +99,7 @@ export class Flower implements GameObject {
         cx.arc(flowerX, flowerY, flowerRadius * 0.3, 0, Math.PI * 2);
         cx.fillStyle = "#ffffe0";
         cx.fill();
+
+        cx.restore();
     }
 }

@@ -23,7 +23,7 @@
  */
 
 import { Camera } from "./core/gameplay/Camera";
-import type { Area } from "./core/math/Area";
+import { type Area } from "./core/math/Area";
 import type { TimeStep } from "./core/time/TimeStep";
 import { canvas, cx } from "./graphics";
 import { PartialArea } from "./PartialArea";
@@ -31,6 +31,9 @@ import { Mouse } from "./Mouse";
 import { drawHorizon } from "./horizon";
 import { TileMap } from "./TileMap";
 import type { GameObject } from "./GameObject";
+import { Flower } from "./Flower";
+import { distance, type Vector } from "./core/math/Vector";
+import { TILE_DRAW_HEIGHT, TILE_SIZE } from "./tiles";
 
 const HORIZON_HEIGHT_OF_CANVAS = 0.25;
 
@@ -72,6 +75,38 @@ export class Level implements Area {
         this.camera.update(time);
 
         this.player.update(time, this);
+
+        this.checkCollisionsWithPlants(time);
+    }
+
+    private checkCollisionsWithPlants(time: TimeStep): void {
+        const playerTileX = Math.floor((this.player.x - this.x) / TILE_SIZE);
+        const playerTileY = Math.floor(
+            (this.player.y - this.y) / TILE_DRAW_HEIGHT,
+        );
+
+        for (const o of this.tileMap.getNearbyObjects(
+            playerTileX,
+            playerTileY,
+        )) {
+            if (o instanceof Flower) {
+                const playerCenter: Vector = {
+                    x: this.player.x + this.player.width,
+                    y: this.player.y + this.player.height,
+                };
+                const flowerCenter: Vector = {
+                    x: o.x + o.width,
+                    y: o.y + o.height,
+                };
+
+                if (
+                    distance(playerCenter, flowerCenter) <
+                    (this.player.width + o.width) * 0.4
+                ) {
+                    o.hit(time);
+                }
+            }
+        }
     }
 
     draw(time: TimeStep): void {
