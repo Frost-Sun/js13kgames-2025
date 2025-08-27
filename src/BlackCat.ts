@@ -37,7 +37,7 @@ export class BlackCat implements GameObject {
     y: number = 0;
 
     width: number = 6;
-    height: number = 8;
+    height: number = 3;
 
     private dir: number = 1;
     private step: number = 0;
@@ -86,7 +86,6 @@ export class BlackCat implements GameObject {
             this.x,
             this.y,
             this.width,
-            this.height,
             facing,
             animation,
             this.dir,

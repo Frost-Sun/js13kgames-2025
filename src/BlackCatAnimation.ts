@@ -14,12 +14,13 @@ export enum BlackCatAnimation {
 
 import type { TimeStep } from "./core/time/TimeStep";
 
+const CAT_ASPECT_RATIO = 3 / 4;
+
 export function renderBlackCat(
     cx: CanvasRenderingContext2D,
     x: number,
     y: number,
     width: number,
-    height: number,
     facing: BlackCatFacing,
     animation: BlackCatAnimation,
     dir: number,
@@ -28,7 +29,13 @@ export function renderBlackCat(
     time: TimeStep,
 ) {
     const t = time.t;
+    const height = width / CAT_ASPECT_RATIO;
+
     cx.save();
+
+    // For a pseudo-3D effect, the bounding box should be
+    // on the ground and the figure "rise" from there.
+    cx.translate(0, -height * 0.7);
 
     // Centered transform; flip only for side pose; subtle bob when moving
     cx.translate(x + width / 2, y + height / 2);
