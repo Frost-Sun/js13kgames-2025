@@ -34,6 +34,7 @@ import type { GameObject } from "./GameObject";
 import { Flower } from "./Flower";
 import { distance, type Vector } from "./core/math/Vector";
 import { TILE_DRAW_HEIGHT, TILE_SIZE } from "./tiles";
+import { BlackCat } from "./BlackCat";
 
 const HORIZON_HEIGHT_OF_CANVAS = 0.25;
 
@@ -58,14 +59,14 @@ export class Level implements Area {
     width: number = this.tileMap.width;
     height: number = this.tileMap.height;
 
-    private player = new Mouse(
-        this.x + this.width / 2,
-        this.y + this.height / 2,
-    );
+    private player = new Mouse(this.width * 0.5, this.height * 0.5);
 
     private gameObjects: GameObject[] = [this.player];
 
     constructor() {
+        const cat = new BlackCat(this.width * 0.4, this.height * 0.3);
+        this.gameObjects.push(cat);
+
         this.camera = new Camera(this, this.levelDrawArea);
         this.camera.zoom = 15;
         this.camera.follow(this.player);

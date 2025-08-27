@@ -36,8 +36,8 @@ export class BlackCat implements GameObject {
     x: number = 0;
     y: number = 0;
 
-    width: number = 48;
-    height: number = 64;
+    width: number = 6;
+    height: number = 8;
 
     private dir: number = 1;
     private step: number = 0;
