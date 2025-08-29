@@ -23,9 +23,9 @@
  */
 
 import { Camera } from "./core/gameplay/Camera";
-import { type Area } from "./core/math/Area";
+import { getCenter, type Area } from "./core/math/Area";
 import type { TimeStep } from "./core/time/TimeStep";
-import { canvas, cx } from "./graphics";
+import { canvas, clearCanvas, cx, drawRain } from "./graphics";
 import { PartialArea } from "./PartialArea";
 import { Mouse } from "./Mouse";
 import { drawHorizon } from "./horizon";
@@ -37,6 +37,13 @@ import { TILE_DRAW_HEIGHT, TILE_SIZE } from "./tiles";
 import { BlackCat } from "./BlackCat";
 
 const HORIZON_HEIGHT_OF_CANVAS = 0.25;
+
+const NIGHT_START_TIME = 5000;
+
+export enum LevelState {
+    Running,
+    Lose,
+}
 
 export class Level implements Area {
     private horizonDrawArea = new PartialArea(
@@ -54,18 +61,23 @@ export class Level implements Area {
 
     private camera: Camera;
 
+    private startTime: number;
+
+    state: LevelState = LevelState.Running;
+
     x: number = 0;
     y: number = 0;
     width: number = this.tileMap.width;
     height: number = this.tileMap.height;
 
     private player = new Mouse(this.width * 0.5, this.height * 0.5);
+    private cat = new BlackCat(this.width * 0.4, this.height * 0.3);
 
     private gameObjects: GameObject[] = [this.player];
 
     constructor() {
-        const cat = new BlackCat(this.width * 0.4, this.height * 0.3);
-        this.gameObjects.push(cat);
+        this.startTime = performance.now();
+        this.gameObjects.push(this.cat);
 
         this.camera = new Camera(this, this.levelDrawArea);
         this.camera.zoom = 15;
@@ -77,7 +89,20 @@ export class Level implements Area {
 
         this.player.update(time, this);
 
+        this.checkCollisionsWithCat();
         this.checkCollisionsWithPlants(time);
+    }
+
+    private checkCollisionsWithCat(): void {
+        const playerCenter = getCenter(this.player);
+        const catCenter = getCenter(this.cat);
+
+        if (
+            distance(playerCenter, catCenter) <
+            (this.player.width + this.cat.width) * 0.3
+        ) {
+            this.state = LevelState.Lose;
+        }
     }
 
     private checkCollisionsWithPlants(time: TimeStep): void {
@@ -85,20 +110,14 @@ export class Level implements Area {
         const playerTileY = Math.floor(
             (this.player.y - this.y) / TILE_DRAW_HEIGHT,
         );
+        const playerCenter: Vector = getCenter(this.player);
 
         for (const o of this.tileMap.getNearbyObjects(
             playerTileX,
             playerTileY,
         )) {
             if (o instanceof Flower) {
-                const playerCenter: Vector = {
-                    x: this.player.x + this.player.width,
-                    y: this.player.y + this.player.height,
-                };
-                const flowerCenter: Vector = {
-                    x: o.x + o.width,
-                    y: o.y + o.height,
-                };
+                const flowerCenter: Vector = getCenter(o);
 
                 if (
                     distance(playerCenter, flowerCenter) <
@@ -113,6 +132,8 @@ export class Level implements Area {
     draw(time: TimeStep): void {
         const visibleArea = this.camera.getVisibleArea();
         const objectsToDraw = [...this.gameObjects];
+
+        clearCanvas("rgb(0, 0, 0)");
 
         cx.save();
         cx.translate(0, this.levelDrawArea.y);
@@ -136,6 +157,21 @@ export class Level implements Area {
         this.camera.apply(cx, () => {
             this.drawObjects(time, visibleArea, objectsToDraw);
         });
+
+        drawRain(time.t, cx.canvas.width, cx.canvas.height);
+
+        const elapsed = time.t - this.startTime;
+        if (elapsed > NIGHT_START_TIME) {
+            cx.save();
+            cx.globalAlpha = Math.min(
+                (elapsed - NIGHT_START_TIME) / 10000,
+                0.7,
+            ); // fade in to max 0.7
+            cx.fillStyle = "#000";
+            cx.fillRect(0, 0, cx.canvas.width, cx.canvas.height);
+            cx.restore();
+        }
+
         cx.restore();
     }
 
