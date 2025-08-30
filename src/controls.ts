@@ -74,8 +74,12 @@ export const getControls = (): Controls => {
     return controls;
 };
 
-export const waitForProgressInput = async (): Promise<void> => {
-    await (hasTouchScreen ? waitForTap(canvas) : waitForEnter());
+export const waitForProgressInput = async (
+    soundToPlay?: string,
+): Promise<void> => {
+    await (hasTouchScreen
+        ? waitForTap(canvas, undefined, soundToPlay)
+        : waitForEnter(soundToPlay));
 };
 
 export const renderWaitForProgressInput = (

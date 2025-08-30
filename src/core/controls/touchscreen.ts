@@ -71,6 +71,7 @@ export const listenTouch = (
 export const waitForTap = (
     canvas: HTMLCanvasElement,
     area?: Area,
+    soundToPlay?: string,
 ): Promise<void> => {
     return new Promise((resolve) => {
         const listener = (e: TouchEvent): void => {
@@ -89,6 +90,16 @@ export const waitForTap = (
 
             if (!area || includesPoint(area, point)) {
                 canvas.removeEventListener("touchstart", listener);
+
+                // Play sound if specified
+                if (soundToPlay !== undefined) {
+                    try {
+                        console.log(`Playing sound ID: ${soundToPlay}`);
+                        playTune(soundToPlay);
+                    } catch (err) {
+                        console.error("Error playing sound:", err);
+                    }
+                }
 
                 resolve();
             }

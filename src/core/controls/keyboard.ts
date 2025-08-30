@@ -72,11 +72,14 @@ export const initializeKeyboard = (): void => {
     });
 };
 
-export const waitForEnter = (): Promise<void> => {
+export const waitForEnter = (soundToPlay?: string): Promise<void> => {
     return new Promise((resolve) => {
         const listener = (event: KeyboardEvent): void => {
             playTune(SFX_KB);
             if (event.code === "Enter") {
+                if (soundToPlay) {
+                    playTune(soundToPlay);
+                }
                 window.removeEventListener("keydown", listener);
                 resolve();
             }
