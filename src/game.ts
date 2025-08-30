@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import { initialize } from "./audio/sfx";
+import { initialize, SFX_RUNNING, SFX_START } from "./audio/sfx";
 import {
     initializeControls,
     renderWaitForProgressInput,
@@ -34,10 +34,11 @@ import type { TimeStep } from "./core/time/TimeStep";
 import { canvas, clearCanvas, cx } from "./graphics";
 import { Level, LevelState } from "./Level";
 import { renderText, TextSize } from "./text";
-import { drawLoadingView, drawStartScreen } from "./views";
+import { drawLoadingView, drawReadyView, drawStartScreen } from "./views";
 
-enum GameState {
+export enum GameState {
     Load,
+    Ready,
     StartScreen,
     Running,
     GameOver,
@@ -71,8 +72,20 @@ const setState = (newState: GameState): void => {
     gameState = newState;
 
     switch (gameState) {
+        case GameState.Load: {
+            waitForProgressInput().then(() => setState(GameState.Ready));
+            break;
+        }
+        case GameState.Ready: {
+            waitForProgressInput(SFX_START).then(() =>
+                setState(GameState.StartScreen),
+            );
+            break;
+        }
         case GameState.StartScreen: {
-            waitForProgressInput().then(() => setState(GameState.Running));
+            waitForProgressInput(SFX_RUNNING).then(() =>
+                setState(GameState.Running),
+            );
             break;
         }
         case GameState.Running: {
@@ -80,7 +93,9 @@ const setState = (newState: GameState): void => {
             break;
         }
         case GameState.GameOver: {
-            waitForProgressInput().then(() => setState(GameState.StartScreen));
+            waitForProgressInput(SFX_START).then(() =>
+                setState(GameState.StartScreen),
+            );
             break;
         }
         default:
@@ -113,6 +128,10 @@ const draw = (time: TimeStep): void => {
     switch (gameState) {
         case GameState.Load:
             drawLoadingView();
+            break;
+
+        case GameState.Ready:
+            drawReadyView();
             break;
 
         case GameState.StartScreen:
@@ -151,5 +170,6 @@ export const init = async (): Promise<void> => {
     await sleep(1500);
 
     initialize();
-    setState(GameState.StartScreen);
+
+    setState(GameState.Ready);
 };

@@ -32,6 +32,11 @@ export const drawLoadingView = (): void => {
     renderText("Loading...", TextSize.Normal, "Courier New");
 };
 
+export const drawReadyView = (): void => {
+    clearCanvas("rgb(0, 0, 0)");
+    renderText("Press ENTER to start", TextSize.Normal, "Courier New");
+};
+
 export const drawStartScreen = (cx: CanvasRenderingContext2D): void => {
     clearCanvas("rgb(18, 18, 18)");
 

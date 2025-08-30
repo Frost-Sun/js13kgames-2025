@@ -31,6 +31,12 @@ export interface Tune extends HTMLAudioElement {
     _fadeOutInTimeout?: number;
 }
 
+export type SongData = {
+    i: number[];
+    p: (number | undefined)[];
+    c: { n: (number | undefined)[]; f: never[] }[];
+};
+
 export const createTune = (): Tune => document.createElement("audio") as Tune;
 
 export const initTune = (
