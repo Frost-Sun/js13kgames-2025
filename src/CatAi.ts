@@ -22,14 +22,22 @@
  * SOFTWARE.
  */
 
-import { type Vector } from "./core/math/Vector";
+import { normalize, subtract, type Vector } from "./core/math/Vector";
 import type { TimeStep } from "./core/time/TimeStep";
 import type { GameObject } from "./GameObject";
+import type { Space } from "./Space";
 
 export class CatAi {
-    constructor(private host: GameObject) {}
+    constructor(
+        private host: GameObject,
+        private space: Space,
+    ) {}
 
     getMovement(time: TimeStep): Vector {
-        return { x: 1, y: 0 };
+        const mouse = this.space.getMouse();
+
+        const directionToMouse = normalize(subtract(mouse, this.host));
+
+        return directionToMouse;
     }
 }

@@ -33,6 +33,7 @@ import {
 } from "././BlackCatAnimation";
 import { CatAi } from "./CatAi";
 import { length, multiply, ZERO_VECTOR, type Vector } from "./core/math/Vector";
+import type { Space } from "./Space";
 
 const SPEED = 0.01;
 
@@ -48,11 +49,12 @@ export class BlackCat implements GameObject {
     private step: number = 0;
     private lastSpeed: number = 0;
 
-    private ai: CatAi = new CatAi(this);
+    private ai: CatAi;
 
-    constructor(x: number, y: number) {
+    constructor(x: number, y: number, space: Space) {
         this.x = x;
         this.y = y;
+        this.ai = new CatAi(this, space);
     }
 
     getMovement(time: TimeStep): Vector {

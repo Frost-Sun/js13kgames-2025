@@ -35,6 +35,7 @@ import { Flower } from "./Flower";
 import { distance, type Vector } from "./core/math/Vector";
 import { TILE_DRAW_HEIGHT, TILE_SIZE } from "./tiles";
 import { BlackCat } from "./BlackCat";
+import type { Space } from "./Space";
 
 const HORIZON_HEIGHT_OF_CANVAS = 0.25;
 
@@ -45,7 +46,7 @@ export enum LevelState {
     Lose,
 }
 
-export class Level implements Area {
+export class Level implements Area, Space {
     private horizonDrawArea = new PartialArea(
         canvas,
         0,
@@ -70,8 +71,8 @@ export class Level implements Area {
     width: number = this.tileMap.width;
     height: number = this.tileMap.height;
 
-    private player = new Mouse(this.width * 0.5, this.height * 0.5);
-    private cat = new BlackCat(this.width * 0.4, this.height * 0.3);
+    private player = new Mouse(this.width * 0.8, this.height * 0.6);
+    private cat = new BlackCat(this.width * 0.4, this.height * 0.3, this);
 
     private gameObjects: GameObject[] = [this.player];
 
@@ -82,6 +83,10 @@ export class Level implements Area {
         this.camera = new Camera(this, this.levelDrawArea);
         this.camera.zoom = 15;
         this.camera.follow(this.player);
+    }
+
+    getMouse(): GameObject {
+        return this.player;
     }
 
     update(time: TimeStep): void {
