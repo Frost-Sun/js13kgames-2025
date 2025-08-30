@@ -14,12 +14,13 @@ export enum BlackCatAnimation {
 
 import type { TimeStep } from "./core/time/TimeStep";
 
+const CAT_ASPECT_RATIO = 3 / 4;
+
 export function renderBlackCat(
     cx: CanvasRenderingContext2D,
     x: number,
     y: number,
     width: number,
-    height: number,
     facing: BlackCatFacing,
     animation: BlackCatAnimation,
     dir: number,
@@ -28,14 +29,21 @@ export function renderBlackCat(
     time: TimeStep,
 ) {
     const t = time.t;
+    const height = width / CAT_ASPECT_RATIO;
+
     cx.save();
+
+    // For a pseudo-3D effect, the bounding box should be
+    // on the ground and the figure "rise" from there.
+    cx.translate(0, -height * 0.7);
 
     // Centered transform; flip only for side pose; subtle bob when moving
     cx.translate(x + width / 2, y + height / 2);
     cx.scale(facing === "side" ? dir : 1, 1);
 
     const moveFactor = Math.min(1, lastSpeed * 0.8);
-    const bob = Math.sin(t / 220 + step * 2.0) * (1.5 * (0.4 + moveFactor));
+    const bob =
+        Math.sin(t / 220 + step * 2.0) * (height * 0.05 * (0.4 + moveFactor));
     cx.translate(0, bob);
 
     // Body
@@ -137,37 +145,6 @@ export function renderBlackCat(
     cx.closePath();
     cx.fillStyle = "#e6d6e6";
     cx.fill();
-
-    // Whiskers
-    cx.strokeStyle = "#e6d6e6";
-    cx.lineWidth = 1;
-    for (const dy of [-2, 0, 2]) {
-        // Left
-        cx.beginPath();
-        cx.moveTo(-4, -height * 0.07 + dy);
-        cx.lineTo(-16, -height * 0.07 + dy - 2);
-        cx.stroke();
-        // Right
-        cx.beginPath();
-        cx.moveTo(4, -height * 0.07 + dy);
-        cx.lineTo(16, -height * 0.07 + dy - 2);
-        cx.stroke();
-    }
-
-    // Tail
-    cx.beginPath();
-    cx.moveTo(width * 0.35, height * 0.2);
-    cx.bezierCurveTo(
-        width * 0.55,
-        height * 0.1,
-        width * 0.45,
-        height * 0.45,
-        width * 0.2,
-        height * 0.45,
-    );
-    cx.strokeStyle = "#181818";
-    cx.lineWidth = 5;
-    cx.stroke();
 
     cx.restore();
 }

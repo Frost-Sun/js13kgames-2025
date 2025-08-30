@@ -25,19 +25,22 @@
 import { initialize } from "./audio/sfx";
 import {
     initializeControls,
+    renderWaitForProgressInput,
     updateControls,
     waitForProgressInput,
 } from "./controls";
 import { sleep } from "./core/time/sleep";
 import type { TimeStep } from "./core/time/TimeStep";
-import { canvas, clearCanvas, cx, drawRain } from "./graphics";
-import { Level } from "./Level";
+import { canvas, clearCanvas, cx } from "./graphics";
+import { Level, LevelState } from "./Level";
+import { renderText, TextSize } from "./text";
 import { drawLoadingView, drawStartScreen } from "./views";
 
 enum GameState {
     Load,
     StartScreen,
     Running,
+    GameOver,
 }
 
 let gameState: GameState = GameState.Load;
@@ -52,9 +55,6 @@ const time: TimeStep = {
 };
 
 let level = new Level();
-
-const NIGHT_START_TIME = 5000;
-let runningStartTime = 0;
 
 const gameLoop = (t: number): void => {
     requestAnimationFrame(gameLoop);
@@ -76,7 +76,11 @@ const setState = (newState: GameState): void => {
             break;
         }
         case GameState.Running: {
-            runningStartTime = performance.now();
+            level = new Level();
+            break;
+        }
+        case GameState.GameOver: {
+            waitForProgressInput().then(() => setState(GameState.StartScreen));
             break;
         }
         default:
@@ -89,6 +93,10 @@ const update = (time: TimeStep): void => {
         case GameState.Running: {
             updateControls();
             level.update(time);
+
+            if (level.state === LevelState.Lose) {
+                setState(GameState.GameOver);
+            }
             break;
         }
 
@@ -112,23 +120,14 @@ const draw = (time: TimeStep): void => {
             break;
 
         case GameState.Running: {
-            clearCanvas("rgb(0, 0, 0)");
-
             level.draw(time);
+            break;
+        }
 
-            drawRain(time.t, cx.canvas.width, cx.canvas.height);
-
-            const elapsed = time.t - runningStartTime;
-            if (elapsed > NIGHT_START_TIME) {
-                cx.save();
-                cx.globalAlpha = Math.min(
-                    (elapsed - NIGHT_START_TIME) / 10000,
-                    0.7,
-                ); // fade in to max 0.7
-                cx.fillStyle = "#000";
-                cx.fillRect(0, 0, cx.canvas.width, cx.canvas.height);
-                cx.restore();
-            }
+        case GameState.GameOver: {
+            level.draw(time);
+            renderText("GAME OVER ☹", TextSize.Huge, "Courier New");
+            renderWaitForProgressInput("try again");
             break;
         }
 
@@ -150,8 +149,6 @@ export const init = async (): Promise<void> => {
 
     // DUMMY SLEEP FOR TESTING LOAD SCREEN
     await sleep(1500);
-
-    level = new Level();
 
     initialize();
     setState(GameState.StartScreen);
