@@ -87,10 +87,39 @@ export class Level implements Area {
     update(time: TimeStep): void {
         this.camera.update(time);
 
-        this.player.update(time, this);
+        this.calculateMovement(time);
 
         this.checkCollisionsWithCat();
         this.checkCollisionsWithPlants(time);
+    }
+
+    private calculateMovement(time: TimeStep): void {
+        for (let i = 0; i < this.gameObjects.length; i++) {
+            const o = this.gameObjects[i];
+            const movement = o.getMovement(time);
+
+            {
+                if (movement.x < 0 && this.x <= o.x + movement.x) {
+                    o.x += movement.x;
+                } else if (
+                    movement.x > 0 &&
+                    o.x + movement.x + o.width < this.x + this.width
+                ) {
+                    o.x += movement.x;
+                }
+
+                if (movement.y < 0 && this.y <= o.y + movement.y) {
+                    o.y += movement.y;
+                } else if (
+                    movement.y > 0 &&
+                    o.y + movement.y + o.height < this.y + this.height
+                ) {
+                    o.y += movement.y;
+                }
+            }
+
+            o.setActualMovement(movement);
+        }
     }
 
     private checkCollisionsWithCat(): void {

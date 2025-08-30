@@ -22,18 +22,14 @@
  * SOFTWARE.
  */
 
-import { type Area } from "./core/math/Area";
-import type { Vector } from "./core/math/Vector";
+import { type Vector } from "./core/math/Vector";
 import type { TimeStep } from "./core/time/TimeStep";
+import type { GameObject } from "./GameObject";
 
-export interface GameObject extends Area {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
+export class CatAi {
+    constructor(private host: GameObject) {}
 
-    getMovement(time: TimeStep): Vector;
-    setActualMovement(movement: Vector): void;
-
-    draw(time: TimeStep): void;
+    getMovement(time: TimeStep): Vector {
+        return { x: 1, y: 0 };
+    }
 }

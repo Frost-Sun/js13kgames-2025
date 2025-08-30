@@ -31,6 +31,10 @@ import {
     type BlackCatFacing,
     renderBlackCat,
 } from "././BlackCatAnimation";
+import { CatAi } from "./CatAi";
+import { length, multiply, ZERO_VECTOR, type Vector } from "./core/math/Vector";
+
+const SPEED = 0.01;
 
 export class BlackCat implements GameObject {
     x: number = 0;
@@ -39,32 +43,36 @@ export class BlackCat implements GameObject {
     width: number = 6;
     height: number = 3;
 
+    private movement: Vector = ZERO_VECTOR;
     private dir: number = 1;
     private step: number = 0;
     private lastSpeed: number = 0;
+
+    private ai: CatAi = new CatAi(this);
 
     constructor(x: number, y: number) {
         this.x = x;
         this.y = y;
     }
 
-    update(): void {
-        const movement = getControls().movement;
-        this.x += movement.x;
-        this.y += movement.y;
+    getMovement(time: TimeStep): Vector {
+        const movementDirection = this.ai.getMovement(time);
+        return multiply(movementDirection, time.dt * SPEED);
+    }
+
+    setActualMovement(movement: Vector): void {
+        this.movement = movement;
 
         if (movement.x > 0.05) this.dir = 1;
         else if (movement.x < -0.05) this.dir = -1;
 
-        const speed = Math.sqrt(
-            movement.x * movement.x + movement.y * movement.y,
-        );
+        const speed = length(movement);
         this.lastSpeed = speed;
         this.step += speed * 0.25;
     }
 
     draw(time: TimeStep): void {
-        const mv = getControls().movement || { x: 0, y: 0 };
+        const mv = this.movement;
         const ax = Math.abs(mv.x);
         const ay = Math.abs(mv.y);
 
