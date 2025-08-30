@@ -7,11 +7,6 @@ export type BlackCatFacing =
     | "down-left"
     | "down-right";
 
-export enum BlackCatAnimation {
-    Stand,
-    Walk,
-}
-
 import type { TimeStep } from "./core/time/TimeStep";
 
 const CAT_ASPECT_RATIO = 3 / 4;
@@ -22,7 +17,7 @@ export function renderBlackCat(
     y: number,
     width: number,
     facing: BlackCatFacing,
-    animation: BlackCatAnimation,
+    eyesOpen: boolean,
     dir: number,
     step: number,
     lastSpeed: number,
@@ -88,7 +83,7 @@ export function renderBlackCat(
     cx.fill();
 
     // Eyes
-    const eyeOpen = animation === BlackCatAnimation.Walk ? 1 : 0.7;
+    const eyeOpenRatio = eyesOpen ? 1 : 0.7;
     cx.save();
     cx.translate(0, -height * 0.15);
     for (const dx of [-width * 0.09, width * 0.09]) {
@@ -97,7 +92,7 @@ export function renderBlackCat(
             dx,
             0,
             width * 0.07,
-            width * 0.04 * eyeOpen,
+            width * 0.04 * eyeOpenRatio,
             0,
             0,
             Math.PI * 2,
@@ -109,7 +104,7 @@ export function renderBlackCat(
             dx,
             0,
             width * 0.06,
-            width * 0.03 * eyeOpen,
+            width * 0.03 * eyeOpenRatio,
             0,
             0,
             Math.PI * 2,
@@ -122,7 +117,7 @@ export function renderBlackCat(
             dx,
             0,
             width * 0.025,
-            width * 0.018 * eyeOpen,
+            width * 0.018 * eyeOpenRatio,
             0,
             0,
             Math.PI * 2,

@@ -22,22 +22,84 @@
  * SOFTWARE.
  */
 
-import { normalize, subtract, type Vector } from "./core/math/Vector";
+import { getCenter } from "./core/math/Area";
+import { clamp } from "./core/math/number";
+import { randomBool } from "./core/math/random";
+import {
+    distance,
+    normalize,
+    subtract,
+    ZERO_VECTOR,
+    type Vector,
+} from "./core/math/Vector";
 import type { TimeStep } from "./core/time/TimeStep";
 import type { GameObject } from "./GameObject";
 import type { Space } from "./Space";
+import { TILE_SIZE } from "./tiles";
+
+const LOOK_PERIOD = 1000;
+const NOTICE_PROPABILITY_LOWERING_DISTANCE = 5 * TILE_SIZE;
+
+const getPropabilityToNoticeByDistance = (distance: number): number =>
+    clamp(1 - distance / NOTICE_PROPABILITY_LOWERING_DISTANCE, 0.1, 0.9);
+
+export enum CatState {
+    Idle,
+    Follow,
+}
 
 export class CatAi {
+    state: CatState = CatState.Idle;
+
+    private lastLookTime: number = 0;
+    private mouseLastSightPosition: Vector | null = null;
+
     constructor(
         private host: GameObject,
         private space: Space,
     ) {}
 
     getMovement(time: TimeStep): Vector {
+        if (LOOK_PERIOD < time.t - this.lastLookTime) {
+            this.lastLookTime = time.t;
+            const mousePosition = this.lookForMouse();
+            if (mousePosition) {
+                this.mouseLastSightPosition = mousePosition;
+                if (this.state === CatState.Idle) {
+                    this.state = CatState.Follow;
+                }
+            }
+        }
+
+        if (this.state === CatState.Follow && this.mouseLastSightPosition) {
+            return this.follow(this.mouseLastSightPosition);
+        }
+
+        return ZERO_VECTOR;
+    }
+
+    private lookForMouse(): Vector | null {
         const mouse = this.space.getMouse();
+        const mouseCenter = getCenter(mouse);
+        const hostCenter = getCenter(this.host);
 
-        const directionToMouse = normalize(subtract(mouse, this.host));
+        const distanceToMouse = distance(hostCenter, mouseCenter);
 
-        return directionToMouse;
+        return randomBool(getPropabilityToNoticeByDistance(distanceToMouse))
+            ? mouseCenter
+            : null;
+    }
+
+    private follow(target: Vector): Vector {
+        const hostCenter = getCenter(this.host);
+        const distanceToMousePosition = distance(hostCenter, target);
+
+        if (distanceToMousePosition <= this.host.width * 0.4) {
+            this.state = CatState.Idle;
+            return ZERO_VECTOR;
+        }
+
+        const direction: Vector = normalize(subtract(target, hostCenter));
+        return direction;
     }
 }

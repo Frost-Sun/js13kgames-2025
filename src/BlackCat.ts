@@ -23,15 +23,10 @@
  */
 
 import type { GameObject } from "./GameObject";
-import { getControls } from "./controls";
 import type { TimeStep } from "./core/time/TimeStep";
 import { cx } from "./graphics";
-import {
-    BlackCatAnimation,
-    type BlackCatFacing,
-    renderBlackCat,
-} from "././BlackCatAnimation";
-import { CatAi } from "./CatAi";
+import { type BlackCatFacing, renderBlackCat } from "././BlackCatAnimation";
+import { CatAi, CatState } from "./CatAi";
 import { length, multiply, ZERO_VECTOR, type Vector } from "./core/math/Vector";
 import type { Space } from "./Space";
 
@@ -89,7 +84,7 @@ export class BlackCat implements GameObject {
             this.dir = mv.x >= 0 ? 1 : -1;
         }
 
-        const animation = this.getAnimation();
+        const eyesOpen: boolean = this.ai.state === CatState.Follow;
 
         renderBlackCat(
             cx,
@@ -97,22 +92,11 @@ export class BlackCat implements GameObject {
             this.y,
             this.width,
             facing,
-            animation,
+            eyesOpen,
             this.dir,
             this.step,
             this.lastSpeed,
             time,
         );
-    }
-
-    private getAnimation(): BlackCatAnimation {
-        const movement = getControls().movement || { x: 0, y: 0 };
-        const speed = Math.sqrt(
-            movement.x * movement.x + movement.y * movement.y,
-        );
-        if (speed > 0.01) {
-            return BlackCatAnimation.Walk;
-        }
-        return BlackCatAnimation.Stand;
     }
 }
