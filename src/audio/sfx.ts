@@ -32,7 +32,12 @@ import {
     startSong,
 } from "./sfxData.ts";
 
-import { createTune, FadeIn, FadeOut } from "../core/audio/music.js";
+import {
+    createTune,
+    FadeIn,
+    FadeOut,
+    type SongData,
+} from "../core/audio/music.js";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -54,23 +59,21 @@ export const SFX_RESTART = "restart";
 export const SFX_COUNT = "count";
 export const SFX_GO = "go";
 
+type Tune = {
+    songData: SongData[];
+    rowLen: number;
+    patternLen: number;
+    endPattern: number;
+    numChannels: number;
+};
+
 const startTune = createTune();
 const gameTune = createTune();
 const gameoverFx = createTune();
 
 export const initMusicPlayer = (
     audioTrack: { src: string; loop: boolean },
-    tune: {
-        songData: {
-            i: number[];
-            p: (number | undefined)[];
-            c: { n: (number | undefined)[]; f: never[] }[];
-        }[];
-        rowLen: number;
-        patternLen: number;
-        endPattern: number;
-        numChannels: number;
-    },
+    tune: Tune,
     isLooped: boolean,
 ) => {
     return new Promise<void>((resolve) => {
