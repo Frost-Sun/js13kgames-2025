@@ -158,6 +158,8 @@ export class Level implements Area {
             this.drawObjects(time, visibleArea, objectsToDraw);
         });
 
+        cx.restore();
+
         drawRain(time.t, cx.canvas.width, cx.canvas.height);
 
         const elapsed = time.t - this.startTime;
@@ -171,8 +173,6 @@ export class Level implements Area {
             cx.fillRect(0, 0, cx.canvas.width, cx.canvas.height);
             cx.restore();
         }
-
-        cx.restore();
     }
 
     private drawObjects(
