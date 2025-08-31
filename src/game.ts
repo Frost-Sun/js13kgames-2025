@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import { initialize, SFX_RUNNING, SFX_START } from "./audio/sfx";
+import { initializeAudio, SFX_RUNNING, SFX_START } from "./audio/sfx";
 import { propabilityToNoticeDebug } from "./CatAi";
 import {
     initializeControls,
@@ -30,7 +30,6 @@ import {
     updateControls,
     waitForProgressInput,
 } from "./controls";
-import { sleep } from "./core/time/sleep";
 import type { TimeStep } from "./core/time/TimeStep";
 import { canvas, clearCanvas, cx } from "./graphics";
 import { Level, LevelState } from "./Level";
@@ -175,10 +174,7 @@ export const init = async (): Promise<void> => {
 
     requestAnimationFrame(gameLoop);
 
-    // DUMMY SLEEP FOR TESTING LOAD SCREEN
-    await sleep(1500);
-
-    initialize();
+    await initializeAudio();
 
     setState(GameState.Ready);
 };
