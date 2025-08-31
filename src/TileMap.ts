@@ -24,6 +24,7 @@
 
 import { Array2D } from "./Array2D";
 import type { Area } from "./core/math/Area";
+import { random } from "./core/math/random";
 import type { GameObject } from "./GameObject";
 import {
     createTile,
@@ -68,8 +69,13 @@ export class TileMap {
             for (let ix = 0; ix < this.grid.xCount; ix++) {
                 const x = ix * TILE_SIZE;
 
+                const r = random();
                 const tileType =
-                    Math.random() < 0.3 ? TileType.Flower : TileType.Grass;
+                    r < 0.3
+                        ? TileType.Grass
+                        : r < 0.6
+                          ? TileType.Flower
+                          : TileType.Slate;
                 const tile = createTile(tileType, x, y);
                 this.grid.setValue(ix, iy, tile);
             }
