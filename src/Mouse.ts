@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import type { GameObject } from "./GameObject";
+import type { Animal } from "./Animal";
 import { getControls } from "./controls";
 import type { TimeStep } from "./core/time/TimeStep";
 import { cx } from "./graphics";
@@ -35,7 +35,7 @@ import { length, multiply, ZERO_VECTOR, type Vector } from "./core/math/Vector";
 
 const SPEED = 0.01;
 
-export class Mouse implements GameObject {
+export class Mouse implements Animal {
     x: number;
     y: number;
 

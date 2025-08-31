@@ -36,6 +36,7 @@ import { distance, type Vector } from "./core/math/Vector";
 import { TILE_DRAW_HEIGHT, TILE_SIZE } from "./tiles";
 import { BlackCat } from "./BlackCat";
 import type { Space } from "./Space";
+import type { Animal } from "./Animal";
 
 const HORIZON_HEIGHT_OF_CANVAS = 0.25;
 
@@ -74,11 +75,11 @@ export class Level implements Area, Space {
     private player = new Mouse(this.width * 0.8, this.height * 0.6);
     private cat = new BlackCat(this.width * 0.4, this.height * 0.3, this);
 
-    private gameObjects: GameObject[] = [this.player];
+    private animals: Animal[] = [this.player];
 
     constructor() {
         this.startTime = performance.now();
-        this.gameObjects.push(this.cat);
+        this.animals.push(this.cat);
 
         this.camera = new Camera(this, this.levelDrawArea);
         this.camera.zoom = 15;
@@ -99,28 +100,26 @@ export class Level implements Area, Space {
     }
 
     private calculateMovement(time: TimeStep): void {
-        for (let i = 0; i < this.gameObjects.length; i++) {
-            const o = this.gameObjects[i];
+        for (let i = 0; i < this.animals.length; i++) {
+            const o = this.animals[i];
             const movement = o.getMovement(time);
 
-            {
-                if (movement.x < 0 && this.x <= o.x + movement.x) {
-                    o.x += movement.x;
-                } else if (
-                    movement.x > 0 &&
-                    o.x + movement.x + o.width < this.x + this.width
-                ) {
-                    o.x += movement.x;
-                }
+            if (movement.x < 0 && this.x <= o.x + movement.x) {
+                o.x += movement.x;
+            } else if (
+                movement.x > 0 &&
+                o.x + movement.x + o.width < this.x + this.width
+            ) {
+                o.x += movement.x;
+            }
 
-                if (movement.y < 0 && this.y <= o.y + movement.y) {
-                    o.y += movement.y;
-                } else if (
-                    movement.y > 0 &&
-                    o.y + movement.y + o.height < this.y + this.height
-                ) {
-                    o.y += movement.y;
-                }
+            if (movement.y < 0 && this.y <= o.y + movement.y) {
+                o.y += movement.y;
+            } else if (
+                movement.y > 0 &&
+                o.y + movement.y + o.height < this.y + this.height
+            ) {
+                o.y += movement.y;
             }
 
             o.setActualMovement(movement);
@@ -165,7 +164,7 @@ export class Level implements Area, Space {
 
     draw(time: TimeStep): void {
         const visibleArea = this.camera.getVisibleArea();
-        const objectsToDraw = [...this.gameObjects];
+        const objectsToDraw: GameObject[] = [...this.animals];
 
         clearCanvas("rgb(0, 0, 0)");
 

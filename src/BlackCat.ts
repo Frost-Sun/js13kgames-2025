@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import type { GameObject } from "./GameObject";
+import type { Animal } from "./Animal";
 import type { TimeStep } from "./core/time/TimeStep";
 import { cx } from "./graphics";
 import { type BlackCatFacing, renderBlackCat } from "././BlackCatAnimation";
@@ -32,7 +32,7 @@ import type { Space } from "./Space";
 
 const SPEED = 0.01;
 
-export class BlackCat implements GameObject {
+export class BlackCat implements Animal {
     x: number = 0;
     y: number = 0;
 

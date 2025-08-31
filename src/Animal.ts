@@ -22,14 +22,11 @@
  * SOFTWARE.
  */
 
-import { type Area } from "./core/math/Area";
+import type { Vector } from "./core/math/Vector";
 import type { TimeStep } from "./core/time/TimeStep";
+import type { GameObject } from "./GameObject";
 
-export interface GameObject extends Area {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-
-    draw(time: TimeStep): void;
+export interface Animal extends GameObject {
+    getMovement(time: TimeStep): Vector;
+    setActualMovement(movement: Vector): void;
 }
