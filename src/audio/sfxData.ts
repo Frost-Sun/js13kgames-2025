@@ -8,6 +8,8 @@ export const finishSfx = [.01,,523.2511,.1,3,3,4,0,,,2250,,.04,,10,.01,,.82,1,,3
 export const hitSfx = [2,,185,,,,3,1.6,-7,,,,,,,.2,.19,.1,,.38,985];
 export const countSfx = [1.5,,688,.02,.01,.007,1,2.6,,,,,.01,,85,,.01,.85,.03,.11,-818];
 export const goSfx = [1.5,,1376,.02,.01,.007,1,2.6,,,,,.01,,85,,.01,.85,.8,.11,-818];
+export const mouseSfx = [,.2,1e3,.02,,.01,2,,18,,475,.02,.01];
+export const mouseWalkNormalSfx = [1.4,,185,,,,3,1.6,-7,,,,,,,,.19,.1,,.38,985]
 
 export const startSong = {
       songData: [

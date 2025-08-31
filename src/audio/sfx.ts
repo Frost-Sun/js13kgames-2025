@@ -30,6 +30,8 @@ import {
     countSfx,
     goSfx,
     startSong,
+    mouseSfx,
+    mouseWalkNormalSfx,
 } from "./sfxData.ts";
 
 import {
@@ -58,6 +60,7 @@ export const SFX_GAMEOVER = "gameover";
 export const SFX_RESTART = "restart";
 export const SFX_COUNT = "count";
 export const SFX_GO = "go";
+export const SFX_MOUSE_WALK_NORMAL = "mousewalknormal";
 
 type Tune = {
     songData: SongData[];
@@ -133,6 +136,8 @@ export const playTune = async (tune: string, vol: number = 1) => {
             break;
         }
         case SFX_GAMEOVER: {
+            zzfx(1, ...mouseSfx);
+
             if (startTune.paused || startTune.volume < 1) {
                 startTune.currentTime = 0;
                 FadeIn(startTune);
@@ -173,6 +178,10 @@ export const playTune = async (tune: string, vol: number = 1) => {
         }
         case SFX_GO: {
             zzfx(0.5, ...goSfx);
+            break;
+        }
+        case SFX_MOUSE_WALK_NORMAL: {
+            zzfx(0.5, ...mouseWalkNormalSfx);
             break;
         }
     }
