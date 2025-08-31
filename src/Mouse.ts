@@ -33,6 +33,7 @@ import {
 } from "./MouseAnimation";
 import { length, multiply, ZERO_VECTOR, type Vector } from "./core/math/Vector";
 import { playTune, SFX_MOUSE_WALK_NORMAL } from "./audio/sfx";
+import { stepVolumeByTile, type Tile } from "./tiles";
 
 const SPEED = 0.01;
 
@@ -65,7 +66,7 @@ export class Mouse implements Animal {
         return movement;
     }
 
-    setActualMovement(movement: Vector): void {
+    setActualMovement(movement: Vector, tile: Tile): void {
         this.movement = movement;
         // Direction follows horizontal input
         if (movement.x > 0.05) this.dir = 1;
@@ -89,7 +90,7 @@ export class Mouse implements Animal {
             // Play step sound on each step cycle (including the first)
             const currentStep = Math.floor(this.step);
             if (currentStep !== this.lastStep) {
-                playTune(SFX_MOUSE_WALK_NORMAL);
+                playTune(SFX_MOUSE_WALK_NORMAL, stepVolumeByTile[tile.type]);
                 this.lastStep = currentStep;
             }
         }

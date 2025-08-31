@@ -138,7 +138,11 @@ export class Level implements Area, Space {
                 o.y += movement.y;
             }
 
-            o.setActualMovement(movement);
+            const tile = this.tileMap.getTile(
+                getTileIndexOfObject(this.player),
+            );
+
+            o.setActualMovement(movement, tile!);
         }
     }
 

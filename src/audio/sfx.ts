@@ -181,7 +181,7 @@ export const playTune = async (tune: string, vol: number = 1) => {
             break;
         }
         case SFX_MOUSE_WALK_NORMAL: {
-            zzfx(0.5, ...mouseWalkNormalSfx);
+            zzfx(vol, ...mouseWalkNormalSfx);
             break;
         }
     }

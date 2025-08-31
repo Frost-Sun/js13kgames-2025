@@ -25,8 +25,9 @@
 import type { Vector } from "./core/math/Vector";
 import type { TimeStep } from "./core/time/TimeStep";
 import type { GameObject } from "./GameObject";
+import type { Tile } from "./tiles";
 
 export interface Animal extends GameObject {
     getMovement(time: TimeStep): Vector;
-    setActualMovement(movement: Vector): void;
+    setActualMovement(movement: Vector, tile: Tile): void;
 }

@@ -52,6 +52,12 @@ export const visibilityByTile: Readonly<Record<TileType, number>> = {
     [TileType.Slate]: 1,
 };
 
+export const stepVolumeByTile: Readonly<Record<TileType, number>> = {
+    [TileType.Grass]: 0.7,
+    [TileType.Flower]: 1,
+    [TileType.Slate]: 0.1,
+};
+
 export const createTile = (type: TileType, x: number, y: number): Tile => {
     switch (type) {
         case TileType.Flower:
@@ -100,7 +106,7 @@ export const drawTile = (
             cx.fillStyle = "rgb(100, 190, 100)";
             cx.fillRect(x, y, TILE_SIZE, TILE_DRAW_HEIGHT);
             break;
-        case TileType.Slate:
+        case TileType.Slate: {
             cx.fillStyle = "rgb(130, 130, 130)";
             cx.fillRect(x, y, TILE_SIZE, TILE_DRAW_HEIGHT);
             const edgeThickness = TILE_DRAW_HEIGHT * 0.1;
@@ -113,6 +119,7 @@ export const drawTile = (
             );
             cx.fillRect(x, y, edgeThickness, TILE_DRAW_HEIGHT);
             break;
+        }
         case TileType.Grass:
             break;
 
