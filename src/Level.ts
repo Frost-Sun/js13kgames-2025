@@ -36,6 +36,8 @@ import { distance, type Vector } from "./core/math/Vector";
 import { BlackCat } from "./BlackCat";
 import type { Sighting, Space } from "./Space";
 import type { Animal } from "./Animal";
+import { createMapWithRoad } from "./maps";
+import { TILE_DRAW_HEIGHT } from "./tiles";
 
 const HORIZON_HEIGHT_OF_CANVAS = 0.25;
 
@@ -58,7 +60,7 @@ export class Level implements Area, Space {
         1 - HORIZON_HEIGHT_OF_CANVAS,
     );
 
-    private tileMap: TileMap = new TileMap(12, 20);
+    private tileMap: TileMap;
 
     private camera: Camera;
 
@@ -68,21 +70,31 @@ export class Level implements Area, Space {
 
     x: number = 0;
     y: number = 0;
-    width: number = this.tileMap.width;
-    height: number = this.tileMap.height;
+    width: number;
+    height: number;
 
-    private player = new Mouse(this.width * 0.8, this.height * 0.6);
-    private cat = new BlackCat(this.width * 0.4, this.height * 0.3, this);
+    private player;
+    private cat;
 
-    private animals: Animal[] = [this.player];
+    private animals: Animal[];
 
     constructor() {
-        this.startTime = performance.now();
-        this.animals.push(this.cat);
+        this.tileMap = new TileMap(createMapWithRoad());
+        this.width = this.tileMap.width;
+        this.height = this.tileMap.height;
+
+        this.player = new Mouse(
+            this.width * 0.5,
+            this.height - TILE_DRAW_HEIGHT,
+        );
+        this.cat = new BlackCat(this.width * 0.4, this.height * 0.3, this);
+        this.animals = [this.player, this.cat];
 
         this.camera = new Camera(this, this.levelDrawArea);
         this.camera.zoom = 15;
         this.camera.follow(this.player);
+
+        this.startTime = performance.now();
     }
 
     lookForMouse(): Sighting {

@@ -24,10 +24,8 @@
 
 import { Array2D } from "./Array2D";
 import type { Area } from "./core/math/Area";
-import { random } from "./core/math/random";
 import type { GameObject } from "./GameObject";
 import {
-    createTile,
     drawTile,
     TILE_DRAW_HEIGHT,
     TILE_SIZE,
@@ -58,28 +56,10 @@ export class TileMap {
     width: number;
     height: number;
 
-    constructor(xCount: number, yCount: number) {
-        this.grid = new Array2D<Tile>(xCount, yCount);
+    constructor(tiles: Array2D<Tile>) {
+        this.grid = tiles;
         this.width = this.grid.xCount * TILE_SIZE;
         this.height = this.grid.yCount * TILE_DRAW_HEIGHT;
-
-        for (let iy = 0; iy < this.grid.yCount; iy++) {
-            const y = iy * TILE_DRAW_HEIGHT;
-
-            for (let ix = 0; ix < this.grid.xCount; ix++) {
-                const x = ix * TILE_SIZE;
-
-                const r = random();
-                const tileType =
-                    r < 0.3
-                        ? TileType.Grass
-                        : r < 0.6
-                          ? TileType.Flower
-                          : TileType.Slate;
-                const tile = createTile(tileType, x, y);
-                this.grid.setValue(ix, iy, tile);
-            }
-        }
     }
 
     getTile(index: TileIndex): Tile | undefined {
