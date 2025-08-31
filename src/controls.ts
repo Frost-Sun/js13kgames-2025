@@ -22,7 +22,6 @@
  * SOFTWARE.
  */
 
-import { playTune, SFX_MOUSE_WALK_NORMAL } from "./audio/sfx";
 import {
     getKeys,
     initializeKeyboard,
@@ -45,8 +44,6 @@ const controls: Controls = {
     movement: { x: 0, y: 0 },
 };
 
-let frameCounter = 0;
-
 export const initializeControls = (): void => {
     initializeKeyboard();
     initializeTouchscreen();
@@ -65,17 +62,11 @@ export const updateControls = (): void => {
 
     if (dx === 0 && dy === 0) {
         controls.movement = ZERO_VECTOR;
-        frameCounter = 0;
     } else {
         controls.movement = normalize({
             x: dx,
             y: dy,
         });
-
-        if (frameCounter % 60 === 0) {
-            playTune(SFX_MOUSE_WALK_NORMAL);
-        }
-        frameCounter++;
     }
 };
 
