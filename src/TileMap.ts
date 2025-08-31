@@ -40,10 +40,16 @@ export interface TileIndex {
     iy: number;
 }
 
-export const getTileIndex = (object: GameObject): TileIndex => ({
-    ix: Math.floor((object.x + object.width / 2) / TILE_SIZE),
-    iy: Math.floor((object.y + object.height / 2) / TILE_DRAW_HEIGHT),
+const average = (a: number, b: number, c: number, d: number): number =>
+    (a + b + c + d) / 4;
+
+const getTileIndex = (x: number, y: number): TileIndex => ({
+    ix: Math.floor(x / TILE_SIZE),
+    iy: Math.floor(y / TILE_DRAW_HEIGHT),
 });
+
+export const getTileIndexOfObject = (object: GameObject): TileIndex =>
+    getTileIndex(object.x + object.width / 2, object.y + object.height / 2);
 
 export class TileMap {
     private grid: Array2D<Tile>;
@@ -70,18 +76,34 @@ export class TileMap {
         }
     }
 
+    getTile(index: TileIndex): Tile | undefined {
+        return this.grid.getValue(index.ix, index.iy);
+    }
+
     /**
      * Returns visibility of the object, a number between 0-1.
      */
     getVisibility(o: GameObject): number {
-        const index = getTileIndex(o);
-        const tile = this.grid.getValue(index.ix, index.iy);
+        // In case the object is between several tiles, calculate average
+        // of visibilities of each corner of the bounding box.
+        const topLeft =
+            this.getTile(getTileIndex(o.x, o.y))?.type ?? TileType.Grass;
+        const topRight =
+            this.getTile(getTileIndex(o.x + o.width, o.y))?.type ??
+            TileType.Grass;
+        const bottomLeft =
+            this.getTile(getTileIndex(o.x, o.y + o.height))?.type ??
+            TileType.Grass;
+        const bottomRight =
+            this.getTile(getTileIndex(o.x + o.width, o.y + o.height))?.type ??
+            TileType.Grass;
 
-        if (!tile) {
-            return 0;
-        }
-
-        return visibilityByTile[tile.type];
+        return average(
+            visibilityByTile[topLeft],
+            visibilityByTile[topRight],
+            visibilityByTile[bottomLeft],
+            visibilityByTile[bottomRight],
+        );
     }
 
     draw(visibleArea: Area, objectsToDraw: GameObject[]): void {

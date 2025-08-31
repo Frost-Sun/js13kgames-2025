@@ -29,7 +29,7 @@ import { canvas, clearCanvas, cx, drawRain } from "./graphics";
 import { PartialArea } from "./PartialArea";
 import { Mouse } from "./Mouse";
 import { drawHorizon } from "./horizon";
-import { getTileIndex, TileMap } from "./TileMap";
+import { getTileIndexOfObject, TileMap } from "./TileMap";
 import type { GameObject } from "./GameObject";
 import { Flower } from "./Flower";
 import { distance, type Vector } from "./core/math/Vector";
@@ -143,7 +143,7 @@ export class Level implements Area, Space {
     }
 
     private checkCollisionsWithPlants(time: TimeStep): void {
-        const playerTileIndex = getTileIndex(this.player);
+        const playerTileIndex = getTileIndexOfObject(this.player);
         const playerCenter: Vector = getCenter(this.player);
 
         for (const o of this.tileMap.getNearbyObjects(playerTileIndex)) {
