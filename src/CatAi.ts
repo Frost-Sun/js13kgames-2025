@@ -39,6 +39,8 @@ import type { Mouse } from "./Mouse";
 import type { Space } from "./Space";
 import { TILE_SIZE } from "./tiles";
 
+export let propabilityToNoticeDebug: number = 0;
+
 const LOOK_PERIOD = 500;
 const NOTICE_PROPABILITY_LOWERING_DISTANCE = 5 * TILE_SIZE;
 
@@ -97,6 +99,8 @@ export class CatAi {
             sighting.visibility *
             getPropabilityToNoticeByDistance(distanceToMouse) *
             getMovementFactor(mouse);
+
+        propabilityToNoticeDebug = propabilityToNotice;
 
         return randomBool(propabilityToNotice) ? mouseCenter : null;
     }
