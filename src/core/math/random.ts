@@ -25,20 +25,22 @@
 /*
  * Returns a random number between [0, max).
  */
-export const random = (max = 1): number => {
-    return Math.random() * max;
-};
+export const random = (max = 1): number => Math.random() * max;
+
+/**
+ * Random boolean with a propability.
+ */
+export const randomBool = (propabilityForTrue: number = 0.5): boolean =>
+    random() < propabilityForTrue;
 
 /*
  * Random number between [0, max).
  */
-export const randomInt = (max: number): number => {
-    return Math.floor(Math.random() * max);
-};
+export const randomInt = (max: number): number =>
+    Math.floor(Math.random() * max);
 
 /*
  * Random number between [min, max).
  */
-export const randomMinMax = (min: number, max: number): number => {
-    return Math.random() * (max - min) + min;
-};
+export const randomMinMax = (min: number, max: number): number =>
+    Math.random() * (max - min) + min;

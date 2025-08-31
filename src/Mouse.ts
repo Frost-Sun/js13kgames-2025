@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import type { GameObject } from "./GameObject";
+import type { Animal } from "./Animal";
 import { getControls } from "./controls";
 import type { TimeStep } from "./core/time/TimeStep";
 import { cx } from "./graphics";
@@ -31,18 +31,19 @@ import {
     type MouseFacing,
     renderMouse,
 } from "./MouseAnimation";
-import { type Area } from "./core/math/Area";
-import { multiply } from "./core/math/Vector";
+import { length, multiply, ZERO_VECTOR, type Vector } from "./core/math/Vector";
 
 const SPEED = 0.01;
 
-export class Mouse implements GameObject {
+export class Mouse implements Animal {
     x: number;
     y: number;
 
     // Logical bounding box for collisions/culling
     width: number = 3;
     height: number = 1;
+
+    movement: Vector = ZERO_VECTOR;
 
     // Animation state
     private dir: number = 1; // 1 = facing right, -1 = facing left
@@ -54,43 +55,26 @@ export class Mouse implements GameObject {
         this.y = y;
     }
 
-    update(time: TimeStep, bounds: Area): void {
+    getMovement(time: TimeStep): Vector {
         const movementDirection = getControls().movement;
-        const movement = multiply(movementDirection, time.dt * SPEED);
+        return multiply(movementDirection, time.dt * SPEED);
+    }
 
-        if (movement.x < 0 && bounds.x <= this.x + movement.x) {
-            this.x += movement.x;
-        } else if (
-            movement.x > 0 &&
-            this.x + movement.x + this.width < bounds.x + bounds.width
-        ) {
-            this.x += movement.x;
-        }
-
-        if (movement.y < 0 && bounds.y <= this.y + movement.y) {
-            this.y += movement.y;
-        } else if (
-            movement.y > 0 &&
-            this.y + movement.y + this.height < bounds.y + bounds.height
-        ) {
-            this.y += movement.y;
-        }
-
+    setActualMovement(movement: Vector): void {
+        this.movement = movement;
         // Direction follows horizontal input
         if (movement.x > 0.05) this.dir = 1;
         else if (movement.x < -0.05) this.dir = -1;
 
         // Walk cycle speed from movement magnitude
-        const speed = Math.sqrt(
-            movement.x * movement.x + movement.y * movement.y,
-        );
+        const speed = length(movement);
         this.lastSpeed = speed;
         this.step += speed * 0.25; // tune to taste
     }
 
     draw(time: TimeStep): void {
-        // Decide pose based on current input
-        const mv = getControls().movement || { x: 0, y: 0 };
+        // Decide pose based on current movement
+        const mv = this.movement;
         const ax = Math.abs(mv.x);
         const ay = Math.abs(mv.y);
 

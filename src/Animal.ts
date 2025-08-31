@@ -22,30 +22,11 @@
  * SOFTWARE.
  */
 
-/*
- * A two-dimensional array.
- */
-export class Array2D<T> {
-    private values: T[];
+import type { Vector } from "./core/math/Vector";
+import type { TimeStep } from "./core/time/TimeStep";
+import type { GameObject } from "./GameObject";
 
-    constructor(
-        public xCount: number,
-        public yCount: number,
-    ) {
-        this.values = new Array<T>(xCount * yCount);
-    }
-
-    getValue(ix: number, iy: number): T | undefined {
-        if (ix < 0 || this.xCount <= ix || iy < 0 || this.yCount <= iy) {
-            return undefined;
-        }
-        return this.values[ix * this.yCount + iy];
-    }
-
-    setValue(ix: number, iy: number, value: T): void {
-        if (ix < 0 || this.xCount <= ix || iy < 0 || this.yCount <= iy) {
-            return;
-        }
-        this.values[ix * this.yCount + iy] = value;
-    }
+export interface Animal extends GameObject {
+    getMovement(time: TimeStep): Vector;
+    setActualMovement(movement: Vector): void;
 }

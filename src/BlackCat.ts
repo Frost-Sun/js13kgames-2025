@@ -22,49 +22,54 @@
  * SOFTWARE.
  */
 
-import type { GameObject } from "./GameObject";
-import { getControls } from "./controls";
+import type { Animal } from "./Animal";
 import type { TimeStep } from "./core/time/TimeStep";
 import { cx } from "./graphics";
-import {
-    BlackCatAnimation,
-    type BlackCatFacing,
-    renderBlackCat,
-} from "././BlackCatAnimation";
+import { type BlackCatFacing, renderBlackCat } from "././BlackCatAnimation";
+import { CatAi, CatState } from "./CatAi";
+import { length, multiply, ZERO_VECTOR, type Vector } from "./core/math/Vector";
+import type { Space } from "./Space";
 
-export class BlackCat implements GameObject {
+const SPEED = 0.01;
+
+export class BlackCat implements Animal {
     x: number = 0;
     y: number = 0;
 
     width: number = 6;
     height: number = 3;
 
+    private movement: Vector = ZERO_VECTOR;
     private dir: number = 1;
     private step: number = 0;
     private lastSpeed: number = 0;
 
-    constructor(x: number, y: number) {
+    private ai: CatAi;
+
+    constructor(x: number, y: number, space: Space) {
         this.x = x;
         this.y = y;
+        this.ai = new CatAi(this, space);
     }
 
-    update(): void {
-        const movement = getControls().movement;
-        this.x += movement.x;
-        this.y += movement.y;
+    getMovement(time: TimeStep): Vector {
+        const movementDirection = this.ai.getMovement(time);
+        return multiply(movementDirection, time.dt * SPEED);
+    }
+
+    setActualMovement(movement: Vector): void {
+        this.movement = movement;
 
         if (movement.x > 0.05) this.dir = 1;
         else if (movement.x < -0.05) this.dir = -1;
 
-        const speed = Math.sqrt(
-            movement.x * movement.x + movement.y * movement.y,
-        );
+        const speed = length(movement);
         this.lastSpeed = speed;
         this.step += speed * 0.25;
     }
 
     draw(time: TimeStep): void {
-        const mv = getControls().movement || { x: 0, y: 0 };
+        const mv = this.movement;
         const ax = Math.abs(mv.x);
         const ay = Math.abs(mv.y);
 
@@ -79,7 +84,7 @@ export class BlackCat implements GameObject {
             this.dir = mv.x >= 0 ? 1 : -1;
         }
 
-        const animation = this.getAnimation();
+        const eyesOpen: boolean = this.ai.state === CatState.Follow;
 
         renderBlackCat(
             cx,
@@ -87,22 +92,11 @@ export class BlackCat implements GameObject {
             this.y,
             this.width,
             facing,
-            animation,
+            eyesOpen,
             this.dir,
             this.step,
             this.lastSpeed,
             time,
         );
-    }
-
-    private getAnimation(): BlackCatAnimation {
-        const movement = getControls().movement || { x: 0, y: 0 };
-        const speed = Math.sqrt(
-            movement.x * movement.x + movement.y * movement.y,
-        );
-        if (speed > 0.01) {
-            return BlackCatAnimation.Walk;
-        }
-        return BlackCatAnimation.Stand;
     }
 }

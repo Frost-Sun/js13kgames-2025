@@ -29,12 +29,13 @@ import { canvas, clearCanvas, cx, drawRain } from "./graphics";
 import { PartialArea } from "./PartialArea";
 import { Mouse } from "./Mouse";
 import { drawHorizon } from "./horizon";
-import { TileMap } from "./TileMap";
+import { getTileIndexOfObject, TileMap } from "./TileMap";
 import type { GameObject } from "./GameObject";
 import { Flower } from "./Flower";
 import { distance, type Vector } from "./core/math/Vector";
-import { TILE_DRAW_HEIGHT, TILE_SIZE } from "./tiles";
 import { BlackCat } from "./BlackCat";
+import type { Sighting, Space } from "./Space";
+import type { Animal } from "./Animal";
 
 const HORIZON_HEIGHT_OF_CANVAS = 0.25;
 
@@ -45,7 +46,7 @@ export enum LevelState {
     Lose,
 }
 
-export class Level implements Area {
+export class Level implements Area, Space {
     private horizonDrawArea = new PartialArea(
         canvas,
         0,
@@ -70,27 +71,63 @@ export class Level implements Area {
     width: number = this.tileMap.width;
     height: number = this.tileMap.height;
 
-    private player = new Mouse(this.width * 0.5, this.height * 0.5);
-    private cat = new BlackCat(this.width * 0.4, this.height * 0.3);
+    private player = new Mouse(this.width * 0.8, this.height * 0.6);
+    private cat = new BlackCat(this.width * 0.4, this.height * 0.3, this);
 
-    private gameObjects: GameObject[] = [this.player];
+    private animals: Animal[] = [this.player];
 
     constructor() {
         this.startTime = performance.now();
-        this.gameObjects.push(this.cat);
+        this.animals.push(this.cat);
 
         this.camera = new Camera(this, this.levelDrawArea);
         this.camera.zoom = 15;
         this.camera.follow(this.player);
     }
 
+    lookForMouse(): Sighting {
+        const mouse = this.player;
+
+        return {
+            target: mouse,
+            visibility: this.tileMap.getVisibility(mouse),
+        };
+    }
+
     update(time: TimeStep): void {
         this.camera.update(time);
 
-        this.player.update(time, this);
+        this.calculateMovement(time);
 
         this.checkCollisionsWithCat();
         this.checkCollisionsWithPlants(time);
+    }
+
+    private calculateMovement(time: TimeStep): void {
+        for (let i = 0; i < this.animals.length; i++) {
+            const o = this.animals[i];
+            const movement = o.getMovement(time);
+
+            if (movement.x < 0 && this.x <= o.x + movement.x) {
+                o.x += movement.x;
+            } else if (
+                movement.x > 0 &&
+                o.x + movement.x + o.width < this.x + this.width
+            ) {
+                o.x += movement.x;
+            }
+
+            if (movement.y < 0 && this.y <= o.y + movement.y) {
+                o.y += movement.y;
+            } else if (
+                movement.y > 0 &&
+                o.y + movement.y + o.height < this.y + this.height
+            ) {
+                o.y += movement.y;
+            }
+
+            o.setActualMovement(movement);
+        }
     }
 
     private checkCollisionsWithCat(): void {
@@ -106,16 +143,10 @@ export class Level implements Area {
     }
 
     private checkCollisionsWithPlants(time: TimeStep): void {
-        const playerTileX = Math.floor((this.player.x - this.x) / TILE_SIZE);
-        const playerTileY = Math.floor(
-            (this.player.y - this.y) / TILE_DRAW_HEIGHT,
-        );
+        const playerTileIndex = getTileIndexOfObject(this.player);
         const playerCenter: Vector = getCenter(this.player);
 
-        for (const o of this.tileMap.getNearbyObjects(
-            playerTileX,
-            playerTileY,
-        )) {
+        for (const o of this.tileMap.getNearbyObjects(playerTileIndex)) {
             if (o instanceof Flower) {
                 const flowerCenter: Vector = getCenter(o);
 
@@ -131,7 +162,7 @@ export class Level implements Area {
 
     draw(time: TimeStep): void {
         const visibleArea = this.camera.getVisibleArea();
-        const objectsToDraw = [...this.gameObjects];
+        const objectsToDraw: GameObject[] = [...this.animals];
 
         clearCanvas("rgb(0, 0, 0)");
 
@@ -143,7 +174,7 @@ export class Level implements Area {
             cx.fillStyle = "rgb(100, 200, 100)";
             cx.fillRect(this.x, this.y, this.width, this.height);
 
-            this.tileMap.drawTiles(visibleArea, objectsToDraw);
+            this.tileMap.draw(visibleArea, objectsToDraw);
         });
         cx.restore();
 
@@ -158,6 +189,8 @@ export class Level implements Area {
             this.drawObjects(time, visibleArea, objectsToDraw);
         });
 
+        cx.restore();
+
         drawRain(time.t, cx.canvas.width, cx.canvas.height);
 
         const elapsed = time.t - this.startTime;
@@ -171,8 +204,6 @@ export class Level implements Area {
             cx.fillRect(0, 0, cx.canvas.width, cx.canvas.height);
             cx.restore();
         }
-
-        cx.restore();
     }
 
     private drawObjects(

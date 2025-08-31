@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import { random } from "./core/math/random";
+import { randomMinMax } from "./core/math/random";
 import { Flower } from "./Flower";
 import type { GameObject } from "./GameObject";
 import { cx } from "./graphics";
@@ -42,6 +42,14 @@ export interface Tile {
     readonly objects: readonly GameObject[];
 }
 
+/**
+ * Visibility when being on a tile, a number between 0-1.
+ */
+export const visibilityByTile: Readonly<Record<TileType, number>> = {
+    [TileType.Grass]: 1,
+    [TileType.Flower]: 0.6,
+};
+
 export const createTile = (type: TileType, x: number, y: number): Tile => {
     switch (type) {
         case TileType.Flower:
@@ -50,23 +58,23 @@ export const createTile = (type: TileType, x: number, y: number): Tile => {
                 objects: [
                     new Flower(
                         "#ff69b4",
-                        x + TILE_SIZE * random(),
-                        y + TILE_DRAW_HEIGHT * random(),
+                        x + TILE_SIZE * randomMinMax(0.0, 0.4),
+                        y + TILE_DRAW_HEIGHT * randomMinMax(0.0, 0.4),
                     ),
                     new Flower(
                         "#ffd700",
-                        x + TILE_SIZE * random(),
-                        y + TILE_DRAW_HEIGHT * random(),
+                        x + TILE_SIZE * randomMinMax(0.4, 0.9),
+                        y + TILE_DRAW_HEIGHT * randomMinMax(0.0, 0.4),
                     ),
                     new Flower(
                         "#ff4500",
-                        x + TILE_SIZE * random(),
-                        y + TILE_DRAW_HEIGHT * random(),
+                        x + TILE_SIZE * randomMinMax(0.0, 0.4),
+                        y + TILE_DRAW_HEIGHT * randomMinMax(0.4, 0.9),
                     ),
                     new Flower(
                         "#ffffff",
-                        x + TILE_SIZE * random(),
-                        y + TILE_DRAW_HEIGHT * random(),
+                        x + TILE_SIZE * randomMinMax(0.4, 0.9),
+                        y + TILE_DRAW_HEIGHT * randomMinMax(0.4, 0.9),
                     ),
                 ],
             };

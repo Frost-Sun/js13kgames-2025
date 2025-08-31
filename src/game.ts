@@ -22,14 +22,14 @@
  * SOFTWARE.
  */
 
-import { initialize, SFX_RUNNING, SFX_START } from "./audio/sfx";
+import { initializeAudio, SFX_RUNNING, SFX_START } from "./audio/sfx";
+import { propabilityToNoticeDebug } from "./CatAi";
 import {
     initializeControls,
     renderWaitForProgressInput,
     updateControls,
     waitForProgressInput,
 } from "./controls";
-import { sleep } from "./core/time/sleep";
 import type { TimeStep } from "./core/time/TimeStep";
 import { canvas, clearCanvas, cx } from "./graphics";
 import { Level, LevelState } from "./Level";
@@ -140,6 +140,14 @@ const draw = (time: TimeStep): void => {
 
         case GameState.Running: {
             level.draw(time);
+
+            // Debug drawing of the propability of the cat to notice the mouse.
+            cx.save();
+            cx.fillStyle = "red";
+            cx.font = "32px Courier New";
+            cx.fillText(propabilityToNoticeDebug.toFixed(2), 10, 40);
+            cx.restore();
+
             break;
         }
 
@@ -166,10 +174,7 @@ export const init = async (): Promise<void> => {
 
     requestAnimationFrame(gameLoop);
 
-    // DUMMY SLEEP FOR TESTING LOAD SCREEN
-    await sleep(1500);
-
-    initialize();
+    await initializeAudio();
 
     setState(GameState.Ready);
 };

@@ -31,8 +31,25 @@ import {
     TILE_DRAW_HEIGHT,
     TILE_SIZE,
     TileType,
+    visibilityByTile,
     type Tile,
 } from "./tiles";
+
+export interface TileIndex {
+    ix: number;
+    iy: number;
+}
+
+const average = (a: number, b: number, c: number, d: number): number =>
+    (a + b + c + d) / 4;
+
+const getTileIndex = (x: number, y: number): TileIndex => ({
+    ix: Math.floor(x / TILE_SIZE),
+    iy: Math.floor(y / TILE_DRAW_HEIGHT),
+});
+
+export const getTileIndexOfObject = (object: GameObject): TileIndex =>
+    getTileIndex(object.x + object.width / 2, object.y + object.height / 2);
 
 export class TileMap {
     private grid: Array2D<Tile>;
@@ -59,7 +76,37 @@ export class TileMap {
         }
     }
 
-    drawTiles(visibleArea: Area, objectsToDraw: GameObject[]): void {
+    getTile(index: TileIndex): Tile | undefined {
+        return this.grid.getValue(index.ix, index.iy);
+    }
+
+    /**
+     * Returns visibility of the object, a number between 0-1.
+     */
+    getVisibility(o: GameObject): number {
+        // In case the object is between several tiles, calculate average
+        // of visibilities of each corner of the bounding box.
+        const topLeft =
+            this.getTile(getTileIndex(o.x, o.y))?.type ?? TileType.Grass;
+        const topRight =
+            this.getTile(getTileIndex(o.x + o.width, o.y))?.type ??
+            TileType.Grass;
+        const bottomLeft =
+            this.getTile(getTileIndex(o.x, o.y + o.height))?.type ??
+            TileType.Grass;
+        const bottomRight =
+            this.getTile(getTileIndex(o.x + o.width, o.y + o.height))?.type ??
+            TileType.Grass;
+
+        return average(
+            visibilityByTile[topLeft],
+            visibilityByTile[topRight],
+            visibilityByTile[bottomLeft],
+            visibilityByTile[bottomRight],
+        );
+    }
+
+    draw(visibleArea: Area, objectsToDraw: GameObject[]): void {
         const tiles = this.grid;
 
         // Calculate how many tiles are visible in x- and y direction
@@ -95,16 +142,13 @@ export class TileMap {
     /**
      * Returns objects from the given tile and the tiles next to it.
      */
-    *getNearbyObjects(
-        tileX: number,
-        tileY: number,
-    ): IterableIterator<GameObject> {
+    *getNearbyObjects(position: TileIndex): IterableIterator<GameObject> {
         const tiles = this.grid;
 
-        const leftmostIndex = Math.max(0, tileX - 1);
-        const rightmostIndex = Math.min(tileX + 1, tiles.xCount);
-        const topmostIndex = Math.max(0, tileY - 1);
-        const bottommostIndex = Math.min(tileY + 1, tiles.yCount);
+        const leftmostIndex = Math.max(0, position.ix - 1);
+        const rightmostIndex = Math.min(position.ix + 1, tiles.xCount);
+        const topmostIndex = Math.max(0, position.iy - 1);
+        const bottommostIndex = Math.min(position.iy + 1, tiles.yCount);
 
         for (let iy = topmostIndex; iy < bottommostIndex; iy++) {
             for (let ix = leftmostIndex; ix < rightmostIndex; ix++) {

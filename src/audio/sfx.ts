@@ -101,7 +101,7 @@ export const initMusicPlayer = (
     });
 };
 
-export const initialize = () => {
+export const initializeAudio = () => {
     const silentAudio = document.createElement("audio");
     silentAudio.setAttribute(
         "src",
