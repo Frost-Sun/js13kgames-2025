@@ -50,7 +50,7 @@ export class Mouse implements Animal {
     private dir: number = 1; // 1 = facing right, -1 = facing left
     private step: number = 0; // walk cycle phase
     private lastSpeed: number = 0; // used to modulate animations
-    private lastStepInt: number = 0; // last integer step for sound timing
+    private lastStep: number = -1; // last integer step for sound timing
     private lastFacing: MouseFacing = "side"; // keep last facing direction when stopped
 
     constructor(x: number, y: number) {
@@ -73,14 +73,25 @@ export class Mouse implements Animal {
 
         // Walk cycle speed from movement magnitude
         const speed = length(movement);
+        const wasMoving = this.lastSpeed > 0;
+        const isMoving = speed > 0;
         this.lastSpeed = speed;
-        this.step += speed * 0.25; // tune to taste
 
-        // Play step sound on each step cycle
-        const currentStepInt = Math.floor(this.step);
-        if (currentStepInt !== this.lastStepInt) {
-            playTune(SFX_MOUSE_WALK_NORMAL);
-            this.lastStepInt = currentStepInt;
+        if (isMoving) {
+            // Reset step cycle when starting to move
+            if (!wasMoving) {
+                this.step = 0;
+                this.lastStep = -1; // ensure first step triggers sound
+            }
+
+            this.step += speed * 0.25; // tune to taste
+
+            // Play step sound on each step cycle (including the first)
+            const currentStep = Math.floor(this.step);
+            if (currentStep !== this.lastStep) {
+                playTune(SFX_MOUSE_WALK_NORMAL);
+                this.lastStep = currentStep;
+            }
         }
     }
 
