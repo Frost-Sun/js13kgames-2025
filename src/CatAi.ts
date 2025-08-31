@@ -27,6 +27,7 @@ import { clamp } from "./core/math/number";
 import { randomBool } from "./core/math/random";
 import {
     distance,
+    length,
     normalize,
     subtract,
     ZERO_VECTOR,
@@ -34,14 +35,21 @@ import {
 } from "./core/math/Vector";
 import type { TimeStep } from "./core/time/TimeStep";
 import type { GameObject } from "./GameObject";
+import type { Mouse } from "./Mouse";
 import type { Space } from "./Space";
 import { TILE_SIZE } from "./tiles";
 
-const LOOK_PERIOD = 1000;
+const LOOK_PERIOD = 500;
 const NOTICE_PROPABILITY_LOWERING_DISTANCE = 5 * TILE_SIZE;
 
 const getPropabilityToNoticeByDistance = (distance: number): number =>
-    clamp(1 - distance / NOTICE_PROPABILITY_LOWERING_DISTANCE, 0.1, 0.9);
+    clamp(1 - distance / NOTICE_PROPABILITY_LOWERING_DISTANCE, 0.3, 1.0);
+
+const getMovementFactor = (mouse: Mouse): number => {
+    const speed = length(mouse.movement);
+    const relativeSpeed = speed / 0.16;
+    return clamp(relativeSpeed, 0.4, 1);
+};
 
 export enum CatState {
     Idle,
@@ -80,14 +88,15 @@ export class CatAi {
 
     private lookForMouse(): Vector | null {
         const sighting = this.space.lookForMouse();
-        const mouseCenter = getCenter(sighting.target);
+        const mouse = sighting.target;
+        const mouseCenter = getCenter(mouse);
         const hostCenter = getCenter(this.host);
-
         const distanceToMouse = distance(hostCenter, mouseCenter);
 
         const propabilityToNotice: number =
             sighting.visibility *
-            getPropabilityToNoticeByDistance(distanceToMouse);
+            getPropabilityToNoticeByDistance(distanceToMouse) *
+            getMovementFactor(mouse);
 
         return randomBool(propabilityToNotice) ? mouseCenter : null;
     }

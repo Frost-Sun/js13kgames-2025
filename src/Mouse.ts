@@ -43,8 +43,9 @@ export class Mouse implements Animal {
     width: number = 3;
     height: number = 1;
 
+    movement: Vector = ZERO_VECTOR;
+
     // Animation state
-    private movement: Vector = ZERO_VECTOR;
     private dir: number = 1; // 1 = facing right, -1 = facing left
     private step: number = 0; // walk cycle phase
     private lastSpeed: number = 0; // used to modulate animations

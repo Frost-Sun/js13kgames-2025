@@ -47,7 +47,7 @@ export interface Tile {
  */
 export const visibilityByTile: Readonly<Record<TileType, number>> = {
     [TileType.Grass]: 1,
-    [TileType.Flower]: 0.1,
+    [TileType.Flower]: 0.6,
 };
 
 export const createTile = (type: TileType, x: number, y: number): Tile => {

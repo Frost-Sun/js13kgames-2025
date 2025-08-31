@@ -1,7 +1,7 @@
-import type { GameObject } from "./GameObject";
+import type { Mouse } from "./Mouse";
 
 export interface Sighting {
-    target: GameObject;
+    target: Mouse;
 
     /**
      * 0-1, how much the target is visible.
