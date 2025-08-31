@@ -42,6 +42,14 @@ export interface Tile {
     readonly objects: readonly GameObject[];
 }
 
+/**
+ * Visibility when being on a tile, a number between 0-1.
+ */
+export const visibilityByTile: Readonly<Record<TileType, number>> = {
+    [TileType.Grass]: 1,
+    [TileType.Flower]: 0.1,
+};
+
 export const createTile = (type: TileType, x: number, y: number): Tile => {
     switch (type) {
         case TileType.Flower:

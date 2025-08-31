@@ -31,8 +31,19 @@ import {
     TILE_DRAW_HEIGHT,
     TILE_SIZE,
     TileType,
+    visibilityByTile,
     type Tile,
 } from "./tiles";
+
+export interface TileIndex {
+    ix: number;
+    iy: number;
+}
+
+export const getTileIndex = (object: GameObject): TileIndex => ({
+    ix: Math.floor((object.x + object.width / 2) / TILE_SIZE),
+    iy: Math.floor((object.y + object.height / 2) / TILE_DRAW_HEIGHT),
+});
 
 export class TileMap {
     private grid: Array2D<Tile>;
@@ -59,7 +70,21 @@ export class TileMap {
         }
     }
 
-    drawTiles(visibleArea: Area, objectsToDraw: GameObject[]): void {
+    /**
+     * Returns visibility of the object, a number between 0-1.
+     */
+    getVisibility(o: GameObject): number {
+        const index = getTileIndex(o);
+        const tile = this.grid.getValue(index.ix, index.iy);
+
+        if (!tile) {
+            return 0;
+        }
+
+        return visibilityByTile[tile.type];
+    }
+
+    draw(visibleArea: Area, objectsToDraw: GameObject[]): void {
         const tiles = this.grid;
 
         // Calculate how many tiles are visible in x- and y direction
@@ -95,16 +120,13 @@ export class TileMap {
     /**
      * Returns objects from the given tile and the tiles next to it.
      */
-    *getNearbyObjects(
-        tileX: number,
-        tileY: number,
-    ): IterableIterator<GameObject> {
+    *getNearbyObjects(position: TileIndex): IterableIterator<GameObject> {
         const tiles = this.grid;
 
-        const leftmostIndex = Math.max(0, tileX - 1);
-        const rightmostIndex = Math.min(tileX + 1, tiles.xCount);
-        const topmostIndex = Math.max(0, tileY - 1);
-        const bottommostIndex = Math.min(tileY + 1, tiles.yCount);
+        const leftmostIndex = Math.max(0, position.ix - 1);
+        const rightmostIndex = Math.min(position.ix + 1, tiles.xCount);
+        const topmostIndex = Math.max(0, position.iy - 1);
+        const bottommostIndex = Math.min(position.iy + 1, tiles.yCount);
 
         for (let iy = topmostIndex; iy < bottommostIndex; iy++) {
             for (let ix = leftmostIndex; ix < rightmostIndex; ix++) {

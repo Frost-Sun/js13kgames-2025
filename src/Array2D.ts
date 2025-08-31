@@ -35,17 +35,17 @@ export class Array2D<T> {
         this.values = new Array<T>(xCount * yCount);
     }
 
-    getValue(x: number, y: number): T | undefined {
-        if (x < 0 || this.xCount <= x || y < 0 || this.yCount <= y) {
+    getValue(ix: number, iy: number): T | undefined {
+        if (ix < 0 || this.xCount <= ix || iy < 0 || this.yCount <= iy) {
             return undefined;
         }
-        return this.values[x * this.yCount + y];
+        return this.values[ix * this.yCount + iy];
     }
 
-    setValue(x: number, y: number, value: T): void {
-        if (x < 0 || this.xCount <= x || y < 0 || this.yCount <= y) {
+    setValue(ix: number, iy: number, value: T): void {
+        if (ix < 0 || this.xCount <= ix || iy < 0 || this.yCount <= iy) {
             return;
         }
-        this.values[x * this.yCount + y] = value;
+        this.values[ix * this.yCount + iy] = value;
     }
 }

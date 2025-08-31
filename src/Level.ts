@@ -29,13 +29,12 @@ import { canvas, clearCanvas, cx, drawRain } from "./graphics";
 import { PartialArea } from "./PartialArea";
 import { Mouse } from "./Mouse";
 import { drawHorizon } from "./horizon";
-import { TileMap } from "./TileMap";
+import { getTileIndex, TileMap } from "./TileMap";
 import type { GameObject } from "./GameObject";
 import { Flower } from "./Flower";
 import { distance, type Vector } from "./core/math/Vector";
-import { TILE_DRAW_HEIGHT, TILE_SIZE } from "./tiles";
 import { BlackCat } from "./BlackCat";
-import type { Space } from "./Space";
+import type { Sighting, Space } from "./Space";
 import type { Animal } from "./Animal";
 
 const HORIZON_HEIGHT_OF_CANVAS = 0.25;
@@ -86,8 +85,13 @@ export class Level implements Area, Space {
         this.camera.follow(this.player);
     }
 
-    getMouse(): GameObject {
-        return this.player;
+    lookForMouse(): Sighting {
+        const mouse = this.player;
+
+        return {
+            target: mouse,
+            visibility: this.tileMap.getVisibility(mouse),
+        };
     }
 
     update(time: TimeStep): void {
@@ -139,16 +143,10 @@ export class Level implements Area, Space {
     }
 
     private checkCollisionsWithPlants(time: TimeStep): void {
-        const playerTileX = Math.floor((this.player.x - this.x) / TILE_SIZE);
-        const playerTileY = Math.floor(
-            (this.player.y - this.y) / TILE_DRAW_HEIGHT,
-        );
+        const playerTileIndex = getTileIndex(this.player);
         const playerCenter: Vector = getCenter(this.player);
 
-        for (const o of this.tileMap.getNearbyObjects(
-            playerTileX,
-            playerTileY,
-        )) {
+        for (const o of this.tileMap.getNearbyObjects(playerTileIndex)) {
             if (o instanceof Flower) {
                 const flowerCenter: Vector = getCenter(o);
 
@@ -176,7 +174,7 @@ export class Level implements Area, Space {
             cx.fillStyle = "rgb(100, 200, 100)";
             cx.fillRect(this.x, this.y, this.width, this.height);
 
-            this.tileMap.drawTiles(visibleArea, objectsToDraw);
+            this.tileMap.draw(visibleArea, objectsToDraw);
         });
         cx.restore();
 

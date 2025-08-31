@@ -79,15 +79,17 @@ export class CatAi {
     }
 
     private lookForMouse(): Vector | null {
-        const mouse = this.space.getMouse();
-        const mouseCenter = getCenter(mouse);
+        const sighting = this.space.lookForMouse();
+        const mouseCenter = getCenter(sighting.target);
         const hostCenter = getCenter(this.host);
 
         const distanceToMouse = distance(hostCenter, mouseCenter);
 
-        return randomBool(getPropabilityToNoticeByDistance(distanceToMouse))
-            ? mouseCenter
-            : null;
+        const propabilityToNotice: number =
+            sighting.visibility *
+            getPropabilityToNoticeByDistance(distanceToMouse);
+
+        return randomBool(propabilityToNotice) ? mouseCenter : null;
     }
 
     private follow(target: Vector): Vector {
