@@ -32,6 +32,7 @@ import {
     renderMouse,
 } from "./MouseAnimation";
 import { length, multiply, ZERO_VECTOR, type Vector } from "./core/math/Vector";
+import { playTune, SFX_MOUSE_WALK_NORMAL } from "./audio/sfx";
 
 const SPEED = 0.01;
 
@@ -49,6 +50,8 @@ export class Mouse implements Animal {
     private dir: number = 1; // 1 = facing right, -1 = facing left
     private step: number = 0; // walk cycle phase
     private lastSpeed: number = 0; // used to modulate animations
+    private lastStep: number = -1; // last integer step for sound timing
+    private lastFacing: MouseFacing = "side"; // keep last facing direction when stopped
 
     constructor(x: number, y: number) {
         this.x = x;
@@ -57,7 +60,9 @@ export class Mouse implements Animal {
 
     getMovement(time: TimeStep): Vector {
         const movementDirection = getControls().movement;
-        return multiply(movementDirection, time.dt * SPEED);
+        const movement = multiply(movementDirection, time.dt * SPEED);
+
+        return movement;
     }
 
     setActualMovement(movement: Vector): void {
@@ -68,8 +73,26 @@ export class Mouse implements Animal {
 
         // Walk cycle speed from movement magnitude
         const speed = length(movement);
+        const wasMoving = this.lastSpeed > 0;
+        const isMoving = speed > 0;
         this.lastSpeed = speed;
-        this.step += speed * 0.25; // tune to taste
+
+        if (isMoving) {
+            // Reset step cycle when starting to move
+            if (!wasMoving) {
+                this.step = 0;
+                this.lastStep = -1; // ensure first step triggers sound
+            }
+
+            this.step += speed * 0.25; // tune to taste
+
+            // Play step sound on each step cycle (including the first)
+            const currentStep = Math.floor(this.step);
+            if (currentStep !== this.lastStep) {
+                playTune(SFX_MOUSE_WALK_NORMAL);
+                this.lastStep = currentStep;
+            }
+        }
     }
 
     draw(time: TimeStep): void {
@@ -77,20 +100,30 @@ export class Mouse implements Animal {
         const mv = this.movement;
         const ax = Math.abs(mv.x);
         const ay = Math.abs(mv.y);
+        const isMoving = ax > 0.01 || ay > 0.01;
 
         let facing: MouseFacing = "side";
 
-        if (ax > 0.01 && ay > 0.01) {
-            // diagonal
-            if (mv.y < 0) facing = mv.x > 0 ? "up-right" : "up-left";
-            else facing = mv.x > 0 ? "down-right" : "down-left";
-        } else if (ay > ax && ay > 0.01) {
-            // pure vertical
-            facing = mv.y < 0 ? "up" : "down";
+        if (isMoving) {
+            // Calculate facing direction when moving
+            if (ax > 0.01 && ay > 0.01) {
+                // diagonal - update dir for left/right component
+                this.dir = mv.x >= 0 ? 1 : -1;
+                if (mv.y < 0) facing = mv.x > 0 ? "up-right" : "up-left";
+                else facing = mv.x > 0 ? "down-right" : "down-left";
+            } else if (ay > ax && ay > 0.01) {
+                // pure vertical
+                facing = mv.y < 0 ? "up" : "down";
+            } else {
+                // pure horizontal
+                facing = "side";
+                this.dir = mv.x >= 0 ? 1 : -1;
+            }
+            // Update last facing direction
+            this.lastFacing = facing;
         } else {
-            // pure horizontal
-            facing = "side";
-            this.dir = mv.x >= 0 ? 1 : -1;
+            // Use last facing direction when stopped
+            facing = this.lastFacing;
         }
 
         const animation = this.getAnimation();

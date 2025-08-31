@@ -22,7 +22,13 @@
  * SOFTWARE.
  */
 
-import { initializeAudio, SFX_RUNNING, SFX_START } from "./audio/sfx";
+import {
+    initializeAudio,
+    playTune,
+    SFX_GAMEOVER,
+    SFX_RUNNING,
+    SFX_START,
+} from "./audio/sfx";
 import { propabilityToNoticeDebug } from "./CatAi";
 import {
     initializeControls,
@@ -93,6 +99,7 @@ const setState = (newState: GameState): void => {
             break;
         }
         case GameState.GameOver: {
+            playTune(SFX_GAMEOVER);
             waitForProgressInput(SFX_START).then(() =>
                 setState(GameState.StartScreen),
             );
