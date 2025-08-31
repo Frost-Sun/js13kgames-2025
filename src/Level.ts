@@ -34,10 +34,11 @@ import type { GameObject } from "./GameObject";
 import { Flower } from "./Flower";
 import { distance, type Vector } from "./core/math/Vector";
 import { BlackCat } from "./BlackCat";
-import type { Sighting, Space } from "./Space";
+import type { Sighting, Sound, Space } from "./Space";
 import type { Animal } from "./Animal";
 import { createMapWithRoad } from "./maps";
-import { TILE_DRAW_HEIGHT } from "./tiles";
+import { stepVolumeByTile, TILE_DRAW_HEIGHT } from "./tiles";
+import { playTune } from "./audio/sfx";
 
 const HORIZON_HEIGHT_OF_CANVAS = 0.25;
 
@@ -46,6 +47,10 @@ const NIGHT_START_TIME = 5000;
 export enum LevelState {
     Running,
     Lose,
+}
+
+interface ProducedSound extends Sound {
+    time: number;
 }
 
 export class Level implements Area, Space {
@@ -74,6 +79,7 @@ export class Level implements Area, Space {
     height: number;
 
     private player;
+    private latestSoundByPlayer?: ProducedSound;
     private cat;
 
     private animals: Animal[];
@@ -95,6 +101,17 @@ export class Level implements Area, Space {
         this.camera.follow(this.player);
 
         this.startTime = performance.now();
+    }
+
+    listen(time: TimeStep): Sound | null {
+        if (
+            this.latestSoundByPlayer &&
+            time.t - this.latestSoundByPlayer.time < 1000
+        ) {
+            return this.latestSoundByPlayer;
+        }
+
+        return null;
     }
 
     lookForMouse(): Sighting {
@@ -138,11 +155,20 @@ export class Level implements Area, Space {
                 o.y += movement.y;
             }
 
-            const tile = this.tileMap.getTile(
-                getTileIndexOfObject(this.player),
-            );
+            const step = (tune: string): void => {
+                const tile = this.tileMap.getTile(getTileIndexOfObject(o));
+                const volume: number = tile ? stepVolumeByTile[tile.type] : 1;
+                playTune(tune, volume);
+                if (o instanceof Mouse) {
+                    this.latestSoundByPlayer = {
+                        position: getCenter(o),
+                        volume,
+                        time: time.t,
+                    };
+                }
+            };
 
-            o.setActualMovement(movement, tile!);
+            o.setActualMovement(movement, step);
         }
     }
 

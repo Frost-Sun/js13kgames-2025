@@ -62,7 +62,7 @@ export class CatAi {
     state: CatState = CatState.Idle;
 
     private lastLookTime: number = 0;
-    private mouseLastSightPosition: Vector | null = null;
+    private mouseLastObservedPosition: Vector | null = null;
 
     constructor(
         private host: GameObject,
@@ -72,17 +72,20 @@ export class CatAi {
     getMovement(time: TimeStep): Vector {
         if (LOOK_PERIOD < time.t - this.lastLookTime) {
             this.lastLookTime = time.t;
-            const mousePosition = this.lookForMouse();
+
+            const mousePosition =
+                this.lookForMouse() || this.listenForMouse(time);
+
             if (mousePosition) {
-                this.mouseLastSightPosition = mousePosition;
+                this.mouseLastObservedPosition = mousePosition;
                 if (this.state === CatState.Idle) {
                     this.state = CatState.Follow;
                 }
             }
         }
 
-        if (this.state === CatState.Follow && this.mouseLastSightPosition) {
-            return this.follow(this.mouseLastSightPosition);
+        if (this.state === CatState.Follow && this.mouseLastObservedPosition) {
+            return this.follow(this.mouseLastObservedPosition);
         }
 
         return ZERO_VECTOR;
@@ -103,6 +106,16 @@ export class CatAi {
         propabilityToNoticeDebug = propabilityToNotice;
 
         return randomBool(propabilityToNotice) ? mouseCenter : null;
+    }
+
+    private listenForMouse(time: TimeStep): Vector | null {
+        const sound = this.space.listen(time);
+
+        if (sound && 0.2 <= sound.volume) {
+            return sound.position;
+        }
+
+        return null;
     }
 
     private follow(target: Vector): Vector {
