@@ -26,7 +26,9 @@ import type { Vector } from "./core/math/Vector";
 import type { TimeStep } from "./core/time/TimeStep";
 import type { GameObject } from "./GameObject";
 
+export type StepFunction = (tune: string) => void;
+
 export interface Animal extends GameObject {
     getMovement(time: TimeStep): Vector;
-    setActualMovement(movement: Vector): void;
+    setActualMovement(movement: Vector, step: StepFunction): void;
 }

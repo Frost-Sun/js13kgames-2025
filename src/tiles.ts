@@ -35,6 +35,7 @@ export const TILE_DRAW_HEIGHT = TILE_SIZE * 0.3;
 export enum TileType {
     Grass,
     Flower,
+    Slate,
 }
 
 export interface Tile {
@@ -46,8 +47,15 @@ export interface Tile {
  * Visibility when being on a tile, a number between 0-1.
  */
 export const visibilityByTile: Readonly<Record<TileType, number>> = {
-    [TileType.Grass]: 1,
-    [TileType.Flower]: 0.6,
+    [TileType.Grass]: 0.8,
+    [TileType.Flower]: 0.2,
+    [TileType.Slate]: 1,
+};
+
+export const stepVolumeByTile: Readonly<Record<TileType, number>> = {
+    [TileType.Grass]: 0.7,
+    [TileType.Flower]: 1,
+    [TileType.Slate]: 0.1,
 };
 
 export const createTile = (type: TileType, x: number, y: number): Tile => {
@@ -78,6 +86,11 @@ export const createTile = (type: TileType, x: number, y: number): Tile => {
                     ),
                 ],
             };
+        case TileType.Slate:
+            return {
+                type: TileType.Slate,
+                objects: [],
+            };
         default:
             return { type: TileType.Grass, objects: [] };
     }
@@ -93,6 +106,20 @@ export const drawTile = (
             cx.fillStyle = "rgb(100, 190, 100)";
             cx.fillRect(x, y, TILE_SIZE, TILE_DRAW_HEIGHT);
             break;
+        case TileType.Slate: {
+            cx.fillStyle = "rgb(130, 130, 130)";
+            cx.fillRect(x, y, TILE_SIZE, TILE_DRAW_HEIGHT);
+            const edgeThickness = TILE_DRAW_HEIGHT * 0.1;
+            cx.fillStyle = "rgb(120, 120, 120)";
+            cx.fillRect(
+                x,
+                y + TILE_DRAW_HEIGHT - edgeThickness,
+                TILE_SIZE,
+                edgeThickness,
+            );
+            cx.fillRect(x, y, edgeThickness, TILE_DRAW_HEIGHT);
+            break;
+        }
         case TileType.Grass:
             break;
 

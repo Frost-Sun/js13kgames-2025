@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import type { Animal } from "./Animal";
+import type { Animal, StepFunction } from "./Animal";
 import { getControls } from "./controls";
 import type { TimeStep } from "./core/time/TimeStep";
 import { cx } from "./graphics";
@@ -32,7 +32,7 @@ import {
     renderMouse,
 } from "./MouseAnimation";
 import { length, multiply, ZERO_VECTOR, type Vector } from "./core/math/Vector";
-import { playTune, SFX_MOUSE_WALK_NORMAL } from "./audio/sfx";
+import { SFX_MOUSE_WALK_NORMAL } from "./audio/sfx";
 
 const SPEED = 0.01;
 
@@ -65,7 +65,7 @@ export class Mouse implements Animal {
         return movement;
     }
 
-    setActualMovement(movement: Vector): void {
+    setActualMovement(movement: Vector, step: StepFunction): void {
         this.movement = movement;
         // Direction follows horizontal input
         if (movement.x > 0.05) this.dir = 1;
@@ -89,7 +89,7 @@ export class Mouse implements Animal {
             // Play step sound on each step cycle (including the first)
             const currentStep = Math.floor(this.step);
             if (currentStep !== this.lastStep) {
-                playTune(SFX_MOUSE_WALK_NORMAL);
+                step(SFX_MOUSE_WALK_NORMAL);
                 this.lastStep = currentStep;
             }
         }

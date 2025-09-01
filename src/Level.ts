@@ -34,8 +34,11 @@ import type { GameObject } from "./GameObject";
 import { Flower } from "./Flower";
 import { distance, type Vector } from "./core/math/Vector";
 import { BlackCat } from "./BlackCat";
-import type { Sighting, Space } from "./Space";
+import type { Sighting, Sound, Space } from "./Space";
 import type { Animal } from "./Animal";
+import { createMapWithRoad } from "./maps";
+import { stepVolumeByTile, TILE_DRAW_HEIGHT } from "./tiles";
+import { playTune } from "./audio/sfx";
 
 const HORIZON_HEIGHT_OF_CANVAS = 0.25;
 
@@ -44,6 +47,10 @@ const NIGHT_START_TIME = 5000;
 export enum LevelState {
     Running,
     Lose,
+}
+
+interface ProducedSound extends Sound {
+    time: number;
 }
 
 export class Level implements Area, Space {
@@ -58,7 +65,7 @@ export class Level implements Area, Space {
         1 - HORIZON_HEIGHT_OF_CANVAS,
     );
 
-    private tileMap: TileMap = new TileMap(12, 20);
+    private tileMap: TileMap;
 
     private camera: Camera;
 
@@ -68,21 +75,43 @@ export class Level implements Area, Space {
 
     x: number = 0;
     y: number = 0;
-    width: number = this.tileMap.width;
-    height: number = this.tileMap.height;
+    width: number;
+    height: number;
 
-    private player = new Mouse(this.width * 0.8, this.height * 0.6);
-    private cat = new BlackCat(this.width * 0.4, this.height * 0.3, this);
+    private player;
+    private latestSoundByPlayer?: ProducedSound;
+    private cat;
 
-    private animals: Animal[] = [this.player];
+    private animals: Animal[];
 
     constructor() {
-        this.startTime = performance.now();
-        this.animals.push(this.cat);
+        this.tileMap = new TileMap(createMapWithRoad());
+        this.width = this.tileMap.width;
+        this.height = this.tileMap.height;
+
+        this.player = new Mouse(
+            this.width * 0.5,
+            this.height - TILE_DRAW_HEIGHT,
+        );
+        this.cat = new BlackCat(this.width * 0.4, this.height * 0.3, this);
+        this.animals = [this.player, this.cat];
 
         this.camera = new Camera(this, this.levelDrawArea);
         this.camera.zoom = 15;
         this.camera.follow(this.player);
+
+        this.startTime = performance.now();
+    }
+
+    listen(time: TimeStep): Sound | null {
+        if (
+            this.latestSoundByPlayer &&
+            time.t - this.latestSoundByPlayer.time < 1000
+        ) {
+            return this.latestSoundByPlayer;
+        }
+
+        return null;
     }
 
     lookForMouse(): Sighting {
@@ -126,7 +155,20 @@ export class Level implements Area, Space {
                 o.y += movement.y;
             }
 
-            o.setActualMovement(movement);
+            const step = (tune: string): void => {
+                const tile = this.tileMap.getTile(getTileIndexOfObject(o));
+                const volume: number = tile ? stepVolumeByTile[tile.type] : 1;
+                playTune(tune, volume);
+                if (o instanceof Mouse) {
+                    this.latestSoundByPlayer = {
+                        position: getCenter(o),
+                        volume,
+                        time: time.t,
+                    };
+                }
+            };
+
+            o.setActualMovement(movement, step);
         }
     }
 
