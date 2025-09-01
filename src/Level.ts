@@ -47,6 +47,7 @@ const NIGHT_START_TIME = 5000;
 export enum LevelState {
     Running,
     Lose,
+    Finished,
 }
 
 interface ProducedSound extends Sound {
@@ -128,6 +129,14 @@ export class Level implements Area, Space {
 
         this.calculateMovement(time);
 
+        if (
+            this.state === LevelState.Running &&
+            this.playerHasReachedFinish()
+        ) {
+            this.state = LevelState.Finished;
+            return;
+        }
+
         this.checkCollisionsWithCat();
         this.checkCollisionsWithPlants(time);
     }
@@ -170,6 +179,10 @@ export class Level implements Area, Space {
 
             o.setActualMovement(movement, step);
         }
+    }
+
+    private playerHasReachedFinish(): boolean {
+        return this.player.y < TILE_DRAW_HEIGHT * 0.1;
     }
 
     private checkCollisionsWithCat(): void {

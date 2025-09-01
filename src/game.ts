@@ -118,6 +118,8 @@ const update = (time: TimeStep): void => {
 
             if (level.state === LevelState.Lose) {
                 setState(GameState.GameOver);
+            } else if (level.state === LevelState.Finished) {
+                level = new Level();
             }
             break;
         }

@@ -33,11 +33,9 @@ import {
 } from "./tiles";
 
 export const createMapWithRoad = (): Array2D<Tile> => {
-    const grid = new Array2D<Tile>(10, 80);
+    const grid = new Array2D<Tile>(10, 20);
 
-    const turningYIndices: number[] = [
-        5, 11, 14, 22, 37, 43, 53, 60, 69, 78, 88, 95,
-    ];
+    const turningYIndices: number[] = [4, 12, 18];
 
     let ixPath = 4;
 
