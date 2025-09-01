@@ -44,7 +44,7 @@ export function drawHorizon(area: Area, blur: number, scrollX: number): void {
         area.width * 0.3,
         area.height * 0.4,
         area.width * 0.25,
-        area.height * 0.6,
+        area.height * 0.5,
     );
 
     // Roof
@@ -62,7 +62,7 @@ export function drawHorizon(area: Area, blur: number, scrollX: number): void {
         area.width * 0.42,
         area.height * 0.6,
         area.width * 0.06,
-        area.height * 0.4,
+        area.height * 0.3,
     );
 
     // Window
@@ -80,7 +80,7 @@ export function drawHorizon(area: Area, blur: number, scrollX: number): void {
         area.width * 0.7,
         area.height * 0.6,
         area.width * 0.03,
-        area.height * 0.4,
+        area.height * 0.3,
     );
 
     // Tree foliage
