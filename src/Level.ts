@@ -90,7 +90,7 @@ export class Level implements Area, Space {
 
     private animals: Animal[];
 
-    constructor() {
+    constructor(public number: number) {
         this.tileMap = new TileMap(createMapWithRoad());
         this.width = this.tileMap.width;
         this.height = this.tileMap.height;

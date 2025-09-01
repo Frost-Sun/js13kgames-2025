@@ -61,7 +61,7 @@ const time: TimeStep = {
     dt: 0,
 };
 
-let level = new Level();
+let level = new Level(0);
 
 const gameLoop = (t: number): void => {
     requestAnimationFrame(gameLoop);
@@ -95,7 +95,7 @@ const setState = (newState: GameState): void => {
             break;
         }
         case GameState.Running: {
-            level = new Level();
+            level = new Level(1);
             break;
         }
         case GameState.GameOver: {
@@ -119,7 +119,8 @@ const update = (time: TimeStep): void => {
             if (level.state === LevelState.Lose) {
                 setState(GameState.GameOver);
             } else if (level.state === LevelState.Finished) {
-                level = new Level();
+                const previousNumber = level.number;
+                level = new Level(previousNumber + 1);
             }
             break;
         }
@@ -157,12 +158,29 @@ const draw = (time: TimeStep): void => {
             cx.fillText(propabilityToNoticeDebug.toFixed(2), 10, 40);
             cx.restore();
 
+            renderText(
+                "Backyard #" + level.number,
+                TextSize.Small,
+                "Courier New",
+                1,
+                2,
+                false,
+                -18,
+            );
+
             break;
         }
 
         case GameState.GameOver: {
             level.draw(time);
             renderText("GAME OVER ☹", TextSize.Huge, "Courier New");
+            renderText(
+                "You reached backyard #" + level.number,
+                TextSize.Normal,
+                "Courier New",
+                1,
+                3,
+            );
             renderWaitForProgressInput("try again");
             break;
         }
