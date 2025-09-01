@@ -32,10 +32,12 @@ import {
     type Tile,
 } from "./tiles";
 
-export const createMapWithRoad = (): Array2D<Tile> => {
+export const createMap = (number: number): Array2D<Tile> => {
     const grid = new Array2D<Tile>(10, 20);
 
     const turningYIndices: number[] = [4, 12, 18];
+
+    const flowerPropability = Math.max(0.1, 0.8 - number * 0.05);
 
     let ixPath = 4;
 
@@ -68,7 +70,7 @@ export const createMapWithRoad = (): Array2D<Tile> => {
             const tileType =
                 ix === ixPath
                     ? TileType.Slate
-                    : random() < 0.4
+                    : random() < flowerPropability
                       ? TileType.Flower
                       : TileType.Grass;
 

@@ -36,7 +36,7 @@ import { distance, type Vector } from "./core/math/Vector";
 import { BlackCat } from "./BlackCat";
 import type { Sighting, Sound, Space } from "./Space";
 import type { Animal } from "./Animal";
-import { createMapWithRoad } from "./maps";
+import { createMap } from "./maps";
 import {
     GRASS_COLOR,
     stepVolumeByTile,
@@ -91,7 +91,7 @@ export class Level implements Area, Space {
     private animals: Animal[];
 
     constructor(public number: number) {
-        this.tileMap = new TileMap(createMapWithRoad());
+        this.tileMap = new TileMap(createMap(number));
         this.width = this.tileMap.width;
         this.height = this.tileMap.height;
 
