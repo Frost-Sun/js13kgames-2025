@@ -30,7 +30,9 @@ import { cx } from "./graphics";
 export const TILE_SIZE = 10;
 
 // Tiles are drawn lower than what they are wide for a pseudo-3D effect.
-export const TILE_DRAW_HEIGHT = TILE_SIZE * 0.3;
+export const TILE_DRAW_HEIGHT = TILE_SIZE * 0.2;
+
+export const GRASS_COLOR = "rgb(100, 200, 100)";
 
 export enum TileType {
     Grass,

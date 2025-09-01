@@ -36,8 +36,13 @@ import { distance, type Vector } from "./core/math/Vector";
 import { BlackCat } from "./BlackCat";
 import type { Sighting, Sound, Space } from "./Space";
 import type { Animal } from "./Animal";
-import { createMapWithRoad } from "./maps";
-import { stepVolumeByTile, TILE_DRAW_HEIGHT } from "./tiles";
+import { createMap } from "./maps";
+import {
+    GRASS_COLOR,
+    stepVolumeByTile,
+    TILE_DRAW_HEIGHT,
+    TILE_SIZE,
+} from "./tiles";
 import { playTune } from "./audio/sfx";
 
 const HORIZON_HEIGHT_OF_CANVAS = 0.25;
@@ -47,6 +52,7 @@ const NIGHT_START_TIME = 5000;
 export enum LevelState {
     Running,
     Lose,
+    Finished,
 }
 
 interface ProducedSound extends Sound {
@@ -84,8 +90,8 @@ export class Level implements Area, Space {
 
     private animals: Animal[];
 
-    constructor() {
-        this.tileMap = new TileMap(createMapWithRoad());
+    constructor(public number: number) {
+        this.tileMap = new TileMap(createMap(number));
         this.width = this.tileMap.width;
         this.height = this.tileMap.height;
 
@@ -127,6 +133,14 @@ export class Level implements Area, Space {
         this.camera.update(time);
 
         this.calculateMovement(time);
+
+        if (
+            this.state === LevelState.Running &&
+            this.playerHasReachedFinish()
+        ) {
+            this.state = LevelState.Finished;
+            return;
+        }
 
         this.checkCollisionsWithCat();
         this.checkCollisionsWithPlants(time);
@@ -172,6 +186,15 @@ export class Level implements Area, Space {
         }
     }
 
+    private playerHasReachedFinish(): boolean {
+        const holeWidth = TILE_SIZE / 2;
+        return (
+            this.player.y < TILE_DRAW_HEIGHT * 0.1 &&
+            this.width / 2 - holeWidth / 2 <= this.player.x &&
+            this.player.x + this.player.width <= this.width / 2 + holeWidth / 2
+        );
+    }
+
     private checkCollisionsWithCat(): void {
         const playerCenter = getCenter(this.player);
         const catCenter = getCenter(this.cat);
@@ -213,7 +236,7 @@ export class Level implements Area, Space {
 
         this.camera.apply(cx, () => {
             // Default color for grass
-            cx.fillStyle = "rgb(100, 200, 100)";
+            cx.fillStyle = GRASS_COLOR;
             cx.fillRect(this.x, this.y, this.width, this.height);
 
             this.tileMap.draw(visibleArea, objectsToDraw);
@@ -222,7 +245,9 @@ export class Level implements Area, Space {
 
         // The horizon is drawn after the tiles so that the tiles are sharply
         // "cut" at the horizon.
-        drawHorizon(this.horizonDrawArea, 4); // TODO: Change based on y location in map
+        const backgroundScrollAmount =
+            -(this.camera.x - this.width / 2) * this.camera.zoom;
+        drawHorizon(this.horizonDrawArea, 4, backgroundScrollAmount); // TODO: Change based on y location in map
 
         cx.save();
         cx.translate(0, this.levelDrawArea.y);
