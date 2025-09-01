@@ -33,11 +33,11 @@ import {
 } from "./tiles";
 
 export const createMap = (number: number): Array2D<Tile> => {
-    const grid = new Array2D<Tile>(10, 20);
+    const grid = new Array2D<Tile>(10, 50);
 
-    const turningYIndices: number[] = [4, 12, 18];
+    const turningYIndices: number[] = [4, 12, 18, 29, 34, 41, 47];
 
-    const flowerPropability = Math.max(0.1, 0.8 - number * 0.05);
+    const plantPropability = Math.max(0.1, 0.8 - number * 0.05);
 
     let ixPath = 4;
 
@@ -70,8 +70,10 @@ export const createMap = (number: number): Array2D<Tile> => {
             const tileType =
                 ix === ixPath
                     ? TileType.Slate
-                    : random() < flowerPropability
-                      ? TileType.Flower
+                    : random() < plantPropability
+                      ? random() < 0.1
+                          ? TileType.Bush
+                          : TileType.Flower
                       : TileType.Grass;
 
             const tile = createTile(tileType, x, y);
