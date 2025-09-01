@@ -37,7 +37,12 @@ import { BlackCat } from "./BlackCat";
 import type { Sighting, Sound, Space } from "./Space";
 import type { Animal } from "./Animal";
 import { createMapWithRoad } from "./maps";
-import { stepVolumeByTile, TILE_DRAW_HEIGHT } from "./tiles";
+import {
+    GRASS_COLOR,
+    stepVolumeByTile,
+    TILE_DRAW_HEIGHT,
+    TILE_SIZE,
+} from "./tiles";
 import { playTune } from "./audio/sfx";
 
 const HORIZON_HEIGHT_OF_CANVAS = 0.25;
@@ -182,7 +187,12 @@ export class Level implements Area, Space {
     }
 
     private playerHasReachedFinish(): boolean {
-        return this.player.y < TILE_DRAW_HEIGHT * 0.1;
+        const holeWidth = TILE_SIZE / 2;
+        return (
+            this.player.y < TILE_DRAW_HEIGHT * 0.1 &&
+            this.width / 2 - holeWidth / 2 <= this.player.x &&
+            this.player.x + this.player.width <= this.width / 2 + holeWidth / 2
+        );
     }
 
     private checkCollisionsWithCat(): void {
@@ -226,7 +236,7 @@ export class Level implements Area, Space {
 
         this.camera.apply(cx, () => {
             // Default color for grass
-            cx.fillStyle = "rgb(100, 200, 100)";
+            cx.fillStyle = GRASS_COLOR;
             cx.fillRect(this.x, this.y, this.width, this.height);
 
             this.tileMap.draw(visibleArea, objectsToDraw);
@@ -235,7 +245,9 @@ export class Level implements Area, Space {
 
         // The horizon is drawn after the tiles so that the tiles are sharply
         // "cut" at the horizon.
-        drawHorizon(this.horizonDrawArea, 4); // TODO: Change based on y location in map
+        const backgroundScrollAmount =
+            -(this.camera.x - this.width / 2) * this.camera.zoom;
+        drawHorizon(this.horizonDrawArea, 4, backgroundScrollAmount); // TODO: Change based on y location in map
 
         cx.save();
         cx.translate(0, this.levelDrawArea.y);

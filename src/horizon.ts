@@ -24,15 +24,19 @@
 
 import type { Area } from "./core/math/Area";
 import { cx } from "./graphics";
+import { GRASS_COLOR } from "./tiles";
 
-export function drawHorizon(area: Area, blur: number): void {
+export function drawHorizon(area: Area, blur: number, scrollX: number): void {
     cx.save();
 
-    // Draw sky
+    // Sky
     cx.fillStyle = "rgb(0, 150, 255)";
     cx.fillRect(area.x, area.y, area.width, area.height);
 
+    cx.save(); // Begin objects further away
     cx.filter = `blur(${blur}px)`;
+
+    cx.translate(scrollX / 2, 0);
 
     // House base
     cx.fillStyle = "#deb887";
@@ -90,6 +94,33 @@ export function drawHorizon(area: Area, blur: number): void {
     );
     cx.fillStyle = "#228b22";
     cx.fill();
+
+    cx.restore(); // end objects further away
+
+    // Fence
+    const fenceHeight = area.height / 2;
+    cx.fillStyle = "#882222";
+    cx.fillRect(
+        area.x,
+        area.y + area.height - fenceHeight,
+        area.width,
+        fenceHeight,
+    );
+
+    // Mouse hole
+    cx.save();
+    cx.translate(scrollX, 0);
+    const holeWidth = 20;
+    const holeHeight = 20;
+    cx.fillStyle = GRASS_COLOR;
+    cx.beginPath();
+    cx.moveTo(area.width / 2 - holeWidth / 2, area.height);
+    cx.lineTo(area.width / 2 - holeWidth / 2, area.height - holeHeight);
+    cx.lineTo(area.width / 2, area.height - holeHeight * 1.2);
+    cx.lineTo(area.width / 2 + holeWidth / 2, area.height - holeHeight);
+    cx.lineTo(area.width / 2 + holeWidth / 2, area.height);
+    cx.fill();
+    cx.restore();
 
     cx.restore();
 }
