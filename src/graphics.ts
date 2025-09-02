@@ -34,6 +34,61 @@ export const clearCanvas = (color: string = "black"): void => {
     cx.restore();
 };
 
+let thunderTimer = 0;
+let thunderActive = false;
+let lastThunder = 0;
+let nextThunderInterval = 10800 + Math.random() * 10800;
+
+export const updateThunder = (frame: number) => {
+    if (frame - lastThunder > nextThunderInterval) {
+        thunderActive = true;
+        thunderTimer = 0;
+        lastThunder = frame;
+        nextThunderInterval = 10800 + Math.random() * 10800;
+    }
+    if (thunderActive) {
+        thunderTimer++;
+        if (thunderTimer > 24) {
+            // lasts 0.4 seconds at 60 FPS
+            thunderActive = false;
+        }
+    }
+};
+
+export const drawThunder = () => {
+    if (thunderActive) {
+        cx.save();
+
+        // Dramatic flicker sequence
+        let alpha = 0,
+            color = "#fff";
+        if (thunderTimer < 4) {
+            alpha = 1;
+            color = "#fff";
+        } else if (thunderTimer < 8) {
+            alpha = 0.7 + Math.random() * 0.3;
+            color = "#eaf6ff";
+        } else if (thunderTimer < 12) {
+            alpha = 0.4 + Math.random() * 0.2;
+            color = "#f9f6e7";
+        } else if (thunderTimer < 16) {
+            alpha = Math.random() * 0.3;
+            color = "#eaf6ff";
+        } else if (thunderTimer < 20) {
+            alpha = 0.2 + Math.random() * 0.2;
+            color = "#fff";
+        } else {
+            alpha = Math.random() * 0.1;
+            color = "#eaf6ff";
+        }
+
+        cx.globalAlpha = alpha;
+        cx.fillStyle = color;
+        cx.fillRect(0, 0, canvas.width, canvas.height);
+        cx.restore();
+    }
+};
+
 const raindrops = Array.from({ length: 200 }, () => ({
     x: Math.random(),
     y: Math.random(),

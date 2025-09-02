@@ -25,7 +25,14 @@
 import { Camera } from "./core/gameplay/Camera";
 import { getCenter, type Area } from "./core/math/Area";
 import type { TimeStep } from "./core/time/TimeStep";
-import { canvas, clearCanvas, cx, drawRain } from "./graphics";
+import {
+    canvas,
+    clearCanvas,
+    cx,
+    drawRain,
+    drawThunder,
+    updateThunder,
+} from "./graphics";
 import { PartialArea } from "./PartialArea";
 import { Mouse } from "./Mouse";
 import { drawHorizon } from "./horizon";
@@ -47,7 +54,9 @@ import { playTune } from "./audio/sfx";
 
 const HORIZON_HEIGHT_OF_CANVAS = 0.25;
 
-const NIGHT_START_TIME = 5000;
+const NIGHT_FADE_DURATION = 240000; // 4 minutes in ms
+
+const GAME_START_TIME = performance.now();
 
 export enum LevelState {
     Running,
@@ -144,6 +153,8 @@ export class Level implements Area, Space {
 
         this.checkCollisionsWithCat();
         this.checkCollisionsWithPlants(time);
+
+        updateThunder(time.t);
     }
 
     private calculateMovement(time: TimeStep): void {
@@ -260,17 +271,14 @@ export class Level implements Area, Space {
 
         drawRain(time.t, cx.canvas.width, cx.canvas.height);
 
-        const elapsed = time.t - this.startTime;
-        if (elapsed > NIGHT_START_TIME) {
-            cx.save();
-            cx.globalAlpha = Math.min(
-                (elapsed - NIGHT_START_TIME) / 10000,
-                0.7,
-            ); // fade in to max 0.7
-            cx.fillStyle = "#000";
-            cx.fillRect(0, 0, cx.canvas.width, cx.canvas.height);
-            cx.restore();
-        }
+        const elapsed = time.t - GAME_START_TIME;
+        cx.save();
+        cx.globalAlpha = Math.min(elapsed / NIGHT_FADE_DURATION, 0.9);
+        cx.fillStyle = "#000";
+        cx.fillRect(0, 0, cx.canvas.width, cx.canvas.height);
+        cx.restore();
+
+        drawThunder();
     }
 
     private drawObjects(
