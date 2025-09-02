@@ -83,9 +83,11 @@ export class CatAi {
     getMovement(time: TimeStep): Vector {
         if (LOOK_PERIOD < time.t - this.lastLookTime) {
             this.lastLookTime = time.t;
+            const hostCenter = getCenter(this.host);
 
             const mousePosition =
-                this.lookForMouse() || this.listenForMouse(time);
+                this.lookForMouse(hostCenter) ||
+                this.listenForMouse(time, hostCenter);
 
             if (mousePosition) {
                 this.mouseLastObservedPosition = mousePosition;
@@ -117,11 +119,10 @@ export class CatAi {
         return ZERO_VECTOR;
     }
 
-    private lookForMouse(): Vector | null {
+    private lookForMouse(hostCenter: Vector): Vector | null {
         const sighting = this.space.lookForMouse();
         const mouse = sighting.target;
         const mouseCenter = getCenter(mouse);
-        const hostCenter = getCenter(this.host);
         const distanceToMouse = distance(hostCenter, mouseCenter);
 
         const propabilityToNotice: number =
@@ -134,10 +135,10 @@ export class CatAi {
         return randomBool(propabilityToNotice) ? mouseCenter : null;
     }
 
-    private listenForMouse(time: TimeStep): Vector | null {
-        const sound = this.space.listen(time);
+    private listenForMouse(time: TimeStep, hostCenter: Vector): Vector | null {
+        const sound = this.space.listen(time, hostCenter);
 
-        if (sound && 0.2 <= sound.volume) {
+        if (sound && 0.1 <= sound.volume) {
             return sound.position;
         }
 

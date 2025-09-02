@@ -34,7 +34,12 @@ import type { GameObject } from "./GameObject";
 import { Flower } from "./Flower";
 import { distance, type Vector } from "./core/math/Vector";
 import { BlackCat } from "./BlackCat";
-import type { Sighting, Sound, Space } from "./Space";
+import {
+    SOUND_FADE_DISTANCE,
+    type Sighting,
+    type Sound,
+    type Space,
+} from "./Space";
 import type { Animal } from "./Animal";
 import { createMap } from "./maps";
 import {
@@ -110,12 +115,21 @@ export class Level implements Area, Space {
         this.startTime = performance.now();
     }
 
-    listen(time: TimeStep): Sound | null {
+    listen(time: TimeStep, listenerPosition: Vector): Sound | null {
         if (
             this.latestSoundByPlayer &&
             time.t - this.latestSoundByPlayer.time < 1000
         ) {
-            return this.latestSoundByPlayer;
+            const d = distance(
+                listenerPosition,
+                this.latestSoundByPlayer.position,
+            );
+            const fadeFactor = Math.max(0, 1 - d / SOUND_FADE_DISTANCE);
+
+            return {
+                ...this.latestSoundByPlayer,
+                volume: this.latestSoundByPlayer.volume * fadeFactor,
+            };
         }
 
         return null;
