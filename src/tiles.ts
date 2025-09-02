@@ -51,9 +51,9 @@ export interface Tile {
  * Visibility when being on a tile, a number between 0-1.
  */
 export const visibilityByTile: Readonly<Record<TileType, number>> = {
-    [TileType.Grass]: 0.8,
-    [TileType.Flower]: 0.3,
-    [TileType.Bush]: 0.1,
+    [TileType.Grass]: 0.9,
+    [TileType.Flower]: 0.6,
+    [TileType.Bush]: 0.4,
     [TileType.Slate]: 1,
 };
 

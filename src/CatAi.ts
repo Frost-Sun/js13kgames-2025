@@ -24,7 +24,7 @@
 
 import { getCenter } from "./core/math/Area";
 import { clamp } from "./core/math/number";
-import { random, randomBool } from "./core/math/random";
+import { random } from "./core/math/random";
 import {
     distance,
     length,
@@ -39,13 +39,16 @@ import type { Mouse } from "./Mouse";
 import type { Space } from "./Space";
 import { TILE_DRAW_HEIGHT, TILE_SIZE } from "./tiles";
 
-export let propabilityToNoticeDebug: number = 0;
+export let sightAccuracyDebug: number = 0;
+export let hearAccuracyDebug: number = 0;
 
-const LOOK_PERIOD = 500;
-const NOTICE_PROPABILITY_LOWERING_DISTANCE = 5 * TILE_SIZE;
+const OBSERVE_PERIOD = 500;
+const SIGHT_ACCURACY_LOWERING_DISTANCE = 5 * TILE_SIZE;
 
-const getPropabilityToNoticeByDistance = (distance: number): number =>
-    clamp(1 - distance / NOTICE_PROPABILITY_LOWERING_DISTANCE, 0.3, 1.0);
+export const OBSERVATION_ACCURACY_THERSHOLD = 0.3;
+
+const getSightAccuracyByDistance = (distance: number): number =>
+    clamp(1 - distance / SIGHT_ACCURACY_LOWERING_DISTANCE, 0.3, 1.0);
 
 const getMovementFactor = (mouse: Mouse): number => {
     const speed = length(mouse.movement);
@@ -61,6 +64,30 @@ const getRandomPosition = (space: Space): Vector => {
         x: xMargin + random(space.width - 2 * xMargin),
         y: yMargin + random(space.height - 2 * yMargin),
     };
+};
+
+interface Observation {
+    position: Vector;
+    accuracy: number; // 0-1
+}
+
+const chooseBetter = (
+    a: Observation | null,
+    b: Observation | null,
+): Observation | null => {
+    if (a == null && b == null) {
+        return null;
+    }
+
+    if (a == null) {
+        return b;
+    }
+
+    if (b == null) {
+        return a;
+    }
+
+    return a.accuracy > b.accuracy ? a : b;
 };
 
 export enum CatState {
@@ -81,16 +108,22 @@ export class CatAi {
     ) {}
 
     getMovement(time: TimeStep): Vector {
-        if (LOOK_PERIOD < time.t - this.lastLookTime) {
+        if (OBSERVE_PERIOD < time.t - this.lastLookTime) {
             this.lastLookTime = time.t;
             const hostCenter = getCenter(this.host);
 
-            const mousePosition =
-                this.lookForMouse(hostCenter) ||
-                this.listenForMouse(time, hostCenter);
+            const seen = this.lookForMouse(hostCenter);
+            const heard = this.listenForMouse(time, hostCenter);
+            sightAccuracyDebug = seen?.accuracy ?? 0;
+            hearAccuracyDebug = heard?.accuracy ?? 0;
 
-            if (mousePosition) {
-                this.mouseLastObservedPosition = mousePosition;
+            const observation = chooseBetter(seen, heard);
+
+            if (
+                observation &&
+                OBSERVATION_ACCURACY_THERSHOLD < observation.accuracy
+            ) {
+                this.mouseLastObservedPosition = observation.position;
                 if (this.state === CatState.Idle) {
                     this.state = CatState.Follow;
                 }
@@ -119,30 +152,36 @@ export class CatAi {
         return ZERO_VECTOR;
     }
 
-    private lookForMouse(hostCenter: Vector): Vector | null {
+    private lookForMouse(hostCenter: Vector): Observation | null {
         const sighting = this.space.lookForMouse();
         const mouse = sighting.target;
         const mouseCenter = getCenter(mouse);
         const distanceToMouse = distance(hostCenter, mouseCenter);
 
-        const propabilityToNotice: number =
+        const accuracy: number =
             sighting.visibility *
-            getPropabilityToNoticeByDistance(distanceToMouse) *
+            getSightAccuracyByDistance(distanceToMouse) *
             getMovementFactor(mouse);
 
-        propabilityToNoticeDebug = propabilityToNotice;
-
-        return randomBool(propabilityToNotice) ? mouseCenter : null;
+        return sighting.visibility > 0
+            ? { position: mouseCenter, accuracy }
+            : null;
     }
 
-    private listenForMouse(time: TimeStep, hostCenter: Vector): Vector | null {
+    private listenForMouse(
+        time: TimeStep,
+        hostCenter: Vector,
+    ): Observation | null {
         const sound = this.space.listen(time, hostCenter);
 
-        if (sound && 0.1 <= sound.volume) {
-            return sound.position;
+        if (!sound) {
+            return null;
         }
 
-        return null;
+        return {
+            position: sound.position,
+            accuracy: sound.volume,
+        };
     }
 
     private goTo(target: Vector): Vector | null {
