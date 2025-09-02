@@ -44,6 +44,7 @@ import {
     TILE_SIZE,
 } from "./tiles";
 import { playTune } from "./audio/sfx";
+import { Bush } from "./Bush";
 
 const HORIZON_HEIGHT_OF_CANVAS = 0.25;
 
@@ -290,7 +291,20 @@ export class Level implements Area, Space {
                 continue;
             }
 
+            if (o instanceof Bush && isBehind(this.player, o)) {
+                cx.save();
+                cx.globalAlpha = 0.3;
+                o.draw(time);
+                cx.restore();
+            } else {
             o.draw(time);
         }
     }
 }
+}
+
+const isBehind = (o: GameObject, obstacle: GameObject): boolean =>
+    o.y + o.height / 2 < obstacle.y + obstacle.height / 2 &&
+    obstacle.y - 4 * TILE_DRAW_HEIGHT < o.y &&
+    obstacle.x <= o.x &&
+    o.x + o.width <= obstacle.x + obstacle.width;
