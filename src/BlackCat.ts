@@ -84,7 +84,7 @@ export class BlackCat implements Animal {
             this.dir = mv.x >= 0 ? 1 : -1;
         }
 
-        const eyesOpen: boolean = this.ai.state === CatState.Follow;
+        const eyesOpen: boolean = this.ai.state === CatState.Alert;
 
         renderBlackCat(
             cx,

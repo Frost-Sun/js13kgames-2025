@@ -31,8 +31,9 @@ import {
 } from "./audio/sfx";
 import {
     hearAccuracyDebug,
-    OBSERVATION_ACCURACY_THERSHOLD,
+    CERTAIN_OBSERVATION_THERSHOLD,
     sightAccuracyDebug,
+    VAGUE_OBSERVATION_THRESHOLD,
 } from "./CatAi";
 import {
     initializeControls,
@@ -159,14 +160,18 @@ const draw = (time: TimeStep): void => {
             cx.save();
             cx.font = "32px Courier New";
             cx.fillStyle =
-                sightAccuracyDebug > OBSERVATION_ACCURACY_THERSHOLD
+                sightAccuracyDebug > CERTAIN_OBSERVATION_THERSHOLD
                     ? "red"
-                    : "white";
+                    : sightAccuracyDebug > VAGUE_OBSERVATION_THRESHOLD
+                      ? "orange"
+                      : "white";
             cx.fillText("see: " + sightAccuracyDebug.toFixed(2), 10, 30);
             cx.fillStyle =
-                hearAccuracyDebug > OBSERVATION_ACCURACY_THERSHOLD
+                hearAccuracyDebug > CERTAIN_OBSERVATION_THERSHOLD
                     ? "red"
-                    : "white";
+                    : hearAccuracyDebug > VAGUE_OBSERVATION_THRESHOLD
+                      ? "orange"
+                      : "white";
             cx.fillText("hear:" + hearAccuracyDebug.toFixed(2), 10, 65);
             cx.restore();
 

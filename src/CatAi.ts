@@ -26,8 +26,10 @@ import { getCenter } from "./core/math/Area";
 import { clamp } from "./core/math/number";
 import { random } from "./core/math/random";
 import {
+    add,
     distance,
     length,
+    multiply,
     normalize,
     subtract,
     ZERO_VECTOR,
@@ -45,7 +47,10 @@ export let hearAccuracyDebug: number = 0;
 const OBSERVE_PERIOD = 500;
 const SIGHT_ACCURACY_LOWERING_DISTANCE = 5 * TILE_SIZE;
 
-export const OBSERVATION_ACCURACY_THERSHOLD = 0.3;
+export const CERTAIN_OBSERVATION_THERSHOLD = 0.3;
+export const VAGUE_OBSERVATION_THRESHOLD = 0.15;
+
+const ALERT_TIMEOUT = 2000;
 
 const getSightAccuracyByDistance = (distance: number): number =>
     clamp(1 - distance / SIGHT_ACCURACY_LOWERING_DISTANCE, 0.3, 1.0);
@@ -64,6 +69,16 @@ const getRandomPosition = (space: Space): Vector => {
         x: xMargin + random(space.width - 2 * xMargin),
         y: yMargin + random(space.height - 2 * yMargin),
     };
+};
+
+const getPositionALittleTowardsMouse = (
+    hostCenter: Vector,
+    mousePosition: Vector,
+): Vector => {
+    const toMouse: Vector = subtract(mousePosition, hostCenter);
+    const d = length(toMouse);
+    const directionToMouse: Vector = normalize(toMouse);
+    return add(hostCenter, multiply(directionToMouse, d / 3));
 };
 
 interface Observation {
@@ -92,14 +107,16 @@ const chooseBetter = (
 
 export enum CatState {
     Idle,
-    Follow,
+    Alert,
+    Chase,
 }
 
 export class CatAi {
     state: CatState = CatState.Idle;
 
+    private alertPositionReachedTime: number | null = null;
     private lastLookTime: number = 0;
-    private idleTarget: Vector | null = null;
+    private target: Vector | null = null;
     private mouseLastObservedPosition: Vector | null = null;
 
     constructor(
@@ -119,31 +136,52 @@ export class CatAi {
 
             const observation = chooseBetter(seen, heard);
 
-            if (
-                observation &&
-                OBSERVATION_ACCURACY_THERSHOLD < observation.accuracy
-            ) {
-                this.mouseLastObservedPosition = observation.position;
-                if (this.state === CatState.Idle) {
-                    this.state = CatState.Follow;
+            if (observation) {
+                if (CERTAIN_OBSERVATION_THERSHOLD < observation.accuracy) {
+                    this.mouseLastObservedPosition = observation.position;
+                    if (this.state !== CatState.Chase) {
+                        this.state = CatState.Chase;
+                    }
+                } else if (VAGUE_OBSERVATION_THRESHOLD < observation.accuracy) {
+                    this.target = getPositionALittleTowardsMouse(
+                        hostCenter,
+                        observation.position,
+                    );
+                    if (this.state == CatState.Idle) {
+                        this.state = CatState.Alert;
+                    }
                 }
             }
         }
 
         if (this.state === CatState.Idle) {
-            if (this.idleTarget == null) {
-                this.idleTarget = getRandomPosition(this.space);
+            if (this.target == null) {
+                this.target = getRandomPosition(this.space);
             }
 
-            const movement = this.goTo(this.idleTarget);
+            const movement = this.goTo(this.target);
 
             if (movement != null) {
                 return movement;
             } else {
-                this.idleTarget = getRandomPosition(this.space);
+                this.target = getRandomPosition(this.space);
             }
+        } else if (this.state === CatState.Alert && this.target) {
+            const movement = this.goTo(this.target);
+
+            if (movement == null) {
+                if (this.alertPositionReachedTime == null) {
+                    this.alertPositionReachedTime = time.t;
+                }
+                if (ALERT_TIMEOUT < time.t - this.alertPositionReachedTime) {
+                    this.alertPositionReachedTime = null;
+                    this.state = CatState.Idle;
+                }
+            }
+
+            return movement ?? ZERO_VECTOR;
         } else if (
-            this.state === CatState.Follow &&
+            this.state === CatState.Chase &&
             this.mouseLastObservedPosition
         ) {
             return this.goTo(this.mouseLastObservedPosition) ?? ZERO_VECTOR;
