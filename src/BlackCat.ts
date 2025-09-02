@@ -36,8 +36,8 @@ export class BlackCat implements Animal {
     x: number = 0;
     y: number = 0;
 
-    width: number = 6;
-    height: number = 3;
+    width: number = 12;
+    height: number = 6;
 
     private movement: Vector = ZERO_VECTOR;
     private dir: number = 1;

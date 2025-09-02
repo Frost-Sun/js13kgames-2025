@@ -297,10 +297,10 @@ export class Level implements Area, Space {
                 o.draw(time);
                 cx.restore();
             } else {
-            o.draw(time);
+                o.draw(time);
+            }
         }
     }
-}
 }
 
 const isBehind = (o: GameObject, obstacle: GameObject): boolean =>

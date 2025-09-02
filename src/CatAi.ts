@@ -24,7 +24,7 @@
 
 import { getCenter } from "./core/math/Area";
 import { clamp } from "./core/math/number";
-import { randomBool } from "./core/math/random";
+import { random, randomBool } from "./core/math/random";
 import {
     distance,
     length,
@@ -37,7 +37,7 @@ import type { TimeStep } from "./core/time/TimeStep";
 import type { GameObject } from "./GameObject";
 import type { Mouse } from "./Mouse";
 import type { Space } from "./Space";
-import { TILE_SIZE } from "./tiles";
+import { TILE_DRAW_HEIGHT, TILE_SIZE } from "./tiles";
 
 export let propabilityToNoticeDebug: number = 0;
 
@@ -53,6 +53,16 @@ const getMovementFactor = (mouse: Mouse): number => {
     return clamp(relativeSpeed, 0.4, 1);
 };
 
+const getRandomPosition = (space: Space): Vector => {
+    const xMargin = 2 * TILE_SIZE;
+    const yMargin = 2 + TILE_DRAW_HEIGHT;
+
+    return {
+        x: xMargin + random(space.width - 2 * xMargin),
+        y: yMargin + random(space.height - 2 * yMargin),
+    };
+};
+
 export enum CatState {
     Idle,
     Follow,
@@ -62,6 +72,7 @@ export class CatAi {
     state: CatState = CatState.Idle;
 
     private lastLookTime: number = 0;
+    private idleTarget: Vector | null = null;
     private mouseLastObservedPosition: Vector | null = null;
 
     constructor(
@@ -84,8 +95,23 @@ export class CatAi {
             }
         }
 
-        if (this.state === CatState.Follow && this.mouseLastObservedPosition) {
-            return this.follow(this.mouseLastObservedPosition);
+        if (this.state === CatState.Idle) {
+            if (this.idleTarget == null) {
+                this.idleTarget = getRandomPosition(this.space);
+            }
+
+            const movement = this.goTo(this.idleTarget);
+
+            if (movement != null) {
+                return movement;
+            } else {
+                this.idleTarget = getRandomPosition(this.space);
+            }
+        } else if (
+            this.state === CatState.Follow &&
+            this.mouseLastObservedPosition
+        ) {
+            return this.goTo(this.mouseLastObservedPosition) ?? ZERO_VECTOR;
         }
 
         return ZERO_VECTOR;
@@ -118,13 +144,12 @@ export class CatAi {
         return null;
     }
 
-    private follow(target: Vector): Vector {
+    private goTo(target: Vector): Vector | null {
         const hostCenter = getCenter(this.host);
         const distanceToMousePosition = distance(hostCenter, target);
 
-        if (distanceToMousePosition <= this.host.width * 0.4) {
-            this.state = CatState.Idle;
-            return ZERO_VECTOR;
+        if (distanceToMousePosition <= this.host.width * 0.2) {
+            return null;
         }
 
         const direction: Vector = normalize(subtract(target, hostCenter));

@@ -1,3 +1,4 @@
+import type { Area } from "./core/math/Area";
 import type { Vector } from "./core/math/Vector";
 import type { TimeStep } from "./core/time/TimeStep";
 import type { Mouse } from "./Mouse";
@@ -16,7 +17,7 @@ export interface Sound {
     volume: number;
 }
 
-export interface Space {
+export interface Space extends Area {
     lookForMouse(): Sighting;
     listen(time: TimeStep): Sound | null;
 }
