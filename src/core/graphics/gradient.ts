@@ -34,24 +34,25 @@ const createGradient = (
     const result = cx.createRadialGradient(
         width / 2,
         height / 2,
-        0, // Inner circle
+        0,
         width / 2,
         height / 2,
-        width / 2, // Outer circle
+        Math.max(width, height) / 2,
     );
-
-    result.addColorStop(0, "rgba(255, 255, 255, 0.3)");
-    result.addColorStop(1, "rgba(0, 0, 0, 0.5)");
+    result.addColorStop(0, "transparent");
+    result.addColorStop(1, "rgba(0, 0, 0, 1)");
     return result;
 };
 
 export const renderGradient = (
     canvas: HTMLCanvasElement,
     cx: CanvasRenderingContext2D,
+    opacity: number = 1,
 ) => {
     if (!gradient) {
         gradient = createGradient(canvas, cx);
     }
     cx.fillStyle = gradient;
+    cx.globalAlpha = opacity;
     cx.fillRect(0, 0, canvas.width, canvas.height);
 };

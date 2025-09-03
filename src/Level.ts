@@ -51,12 +51,17 @@ import {
     TILE_SIZE,
 } from "./tiles";
 import { playTune } from "./audio/sfx";
+import { renderGradient } from "./core/graphics/gradient";
 
 const HORIZON_HEIGHT_OF_CANVAS = 0.25;
 
 const NIGHT_FADE_DURATION = 240000; // 4 minutes in ms
 
-const GAME_START_TIME = performance.now();
+let GAME_START_TIME = performance.now();
+
+export function resetGameStartTime() {
+    GAME_START_TIME = performance.now();
+}
 
 export enum LevelState {
     Running,
@@ -83,8 +88,6 @@ export class Level implements Area, Space {
     private tileMap: TileMap;
 
     private camera: Camera;
-
-    private startTime: number;
 
     state: LevelState = LevelState.Running;
 
@@ -114,8 +117,6 @@ export class Level implements Area, Space {
         this.camera = new Camera(this, this.levelDrawArea);
         this.camera.zoom = 15;
         this.camera.follow(this.player);
-
-        this.startTime = performance.now();
     }
 
     listen(time: TimeStep): Sound | null {
@@ -279,6 +280,8 @@ export class Level implements Area, Space {
         cx.restore();
 
         drawThunder();
+
+        renderGradient(cx.canvas, cx, 0.9);
     }
 
     private drawObjects(
