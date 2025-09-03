@@ -26,6 +26,7 @@ import { renderWaitForProgressInput } from "./controls";
 import { clearCanvas } from "./graphics";
 import { renderText, TextSize } from "./text";
 import { renderBlackCat } from "./BlackCatGraphic";
+import { renderGradient } from "./core/graphics/gradient";
 
 export const drawLoadingView = (): void => {
     clearCanvas("rgb(0, 0, 0)");
@@ -65,4 +66,6 @@ export const drawStartScreen = (cx: CanvasRenderingContext2D): void => {
     renderText("[THE BLACK CAT]", TextSize.Xl, "Impact", 1, 1.8);
 
     renderWaitForProgressInput("start");
+
+    renderGradient(cx.canvas, cx);
 };

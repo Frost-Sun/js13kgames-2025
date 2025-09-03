@@ -43,7 +43,7 @@ import {
 } from "./controls";
 import type { TimeStep } from "./core/time/TimeStep";
 import { canvas, clearCanvas, cx } from "./graphics";
-import { Level, LevelState } from "./Level";
+import { Level, LevelState, resetGameStartTime } from "./Level";
 import { renderText, TextSize } from "./text";
 import { drawLoadingView, drawReadyView, drawStartScreen } from "./views";
 
@@ -100,6 +100,7 @@ const setState = (newState: GameState): void => {
             break;
         }
         case GameState.Running: {
+            resetGameStartTime();
             level = new Level(1);
             break;
         }
@@ -190,7 +191,12 @@ const draw = (time: TimeStep): void => {
 
         case GameState.GameOver: {
             level.draw(time);
-            renderText("GAME OVER ☹", TextSize.Huge, "Courier New");
+            cx.save();
+            cx.globalAlpha = 0.6;
+            cx.fillStyle = "#000";
+            cx.fillRect(0, 0, canvas.width, canvas.height);
+            cx.restore();
+            renderText("GAME OVER ☹", TextSize.Huge, "Impact");
             renderText(
                 "You reached backyard #" + level.number,
                 TextSize.Normal,
