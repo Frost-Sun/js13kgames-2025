@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+import { Bush } from "./Bush";
 import { randomMinMax } from "./core/math/random";
 import { Flower } from "./Flower";
 import type { GameObject } from "./GameObject";
@@ -32,11 +33,12 @@ export const TILE_SIZE = 10;
 // Tiles are drawn lower than what they are wide for a pseudo-3D effect.
 export const TILE_DRAW_HEIGHT = TILE_SIZE * 0.2;
 
-export const GRASS_COLOR = "rgb(100, 200, 100)";
+export const GRASS_COLOR = "rgb(100, 220, 100)";
 
 export enum TileType {
     Grass,
     Flower,
+    Bush,
     Slate,
 }
 
@@ -49,14 +51,16 @@ export interface Tile {
  * Visibility when being on a tile, a number between 0-1.
  */
 export const visibilityByTile: Readonly<Record<TileType, number>> = {
-    [TileType.Grass]: 0.8,
-    [TileType.Flower]: 0.2,
+    [TileType.Grass]: 0.9,
+    [TileType.Flower]: 0.6,
+    [TileType.Bush]: 0.4,
     [TileType.Slate]: 1,
 };
 
 export const stepVolumeByTile: Readonly<Record<TileType, number>> = {
     [TileType.Grass]: 0.7,
     [TileType.Flower]: 1,
+    [TileType.Bush]: 0.5,
     [TileType.Slate]: 0.1,
 };
 
@@ -88,6 +92,12 @@ export const createTile = (type: TileType, x: number, y: number): Tile => {
                     ),
                 ],
             };
+        case TileType.Bush: {
+            return {
+                type: TileType.Bush,
+                objects: [new Bush(x, y)],
+            };
+        }
         case TileType.Slate:
             return {
                 type: TileType.Slate,
@@ -105,9 +115,14 @@ export const drawTile = (
 ): void => {
     switch (tile) {
         case TileType.Flower:
-            cx.fillStyle = "rgb(100, 190, 100)";
+            cx.fillStyle = "rgb(100, 200, 100)";
             cx.fillRect(x, y, TILE_SIZE, TILE_DRAW_HEIGHT);
             break;
+        case TileType.Bush: {
+            cx.fillStyle = "rgb(90, 190, 90)";
+            cx.fillRect(x, y, TILE_SIZE, TILE_DRAW_HEIGHT);
+            break;
+        }
         case TileType.Slate: {
             cx.fillStyle = "rgb(130, 130, 130)";
             cx.fillRect(x, y, TILE_SIZE, TILE_DRAW_HEIGHT);

@@ -29,7 +29,12 @@ import {
     SFX_RUNNING,
     SFX_START,
 } from "./audio/sfx";
-import { propabilityToNoticeDebug } from "./CatAi";
+import {
+    hearAccuracyDebug,
+    CERTAIN_OBSERVATION_THERSHOLD,
+    sightAccuracyDebug,
+    VAGUE_OBSERVATION_THRESHOLD,
+} from "./CatAi";
 import {
     initializeControls,
     renderWaitForProgressInput,
@@ -152,11 +157,23 @@ const draw = (time: TimeStep): void => {
         case GameState.Running: {
             level.draw(time);
 
-            // Debug drawing of the propability of the cat to notice the mouse.
+            // Debug drawing of the accuracy of the cat noticing the mouse.
             cx.save();
-            cx.fillStyle = "red";
             cx.font = "32px Courier New";
-            cx.fillText(propabilityToNoticeDebug.toFixed(2), 10, 40);
+            cx.fillStyle =
+                sightAccuracyDebug > CERTAIN_OBSERVATION_THERSHOLD
+                    ? "red"
+                    : sightAccuracyDebug > VAGUE_OBSERVATION_THRESHOLD
+                      ? "orange"
+                      : "white";
+            cx.fillText("see: " + sightAccuracyDebug.toFixed(2), 10, 30);
+            cx.fillStyle =
+                hearAccuracyDebug > CERTAIN_OBSERVATION_THERSHOLD
+                    ? "red"
+                    : hearAccuracyDebug > VAGUE_OBSERVATION_THRESHOLD
+                      ? "orange"
+                      : "white";
+            cx.fillText("hear:" + hearAccuracyDebug.toFixed(2), 10, 65);
             cx.restore();
 
             renderText(
@@ -166,7 +183,7 @@ const draw = (time: TimeStep): void => {
                 1,
                 2,
                 false,
-                -18,
+                0,
             );
 
             break;

@@ -41,7 +41,12 @@ import type { GameObject } from "./GameObject";
 import { Flower } from "./Flower";
 import { distance, type Vector } from "./core/math/Vector";
 import { BlackCat } from "./BlackCat";
-import type { Sighting, Sound, Space } from "./Space";
+import {
+    SOUND_FADE_DISTANCE,
+    type Sighting,
+    type Sound,
+    type Space,
+} from "./Space";
 import type { Animal } from "./Animal";
 import { createMap } from "./maps";
 import {
@@ -51,6 +56,7 @@ import {
     TILE_SIZE,
 } from "./tiles";
 import { playTune } from "./audio/sfx";
+import { Bush } from "./Bush";
 import { renderGradient } from "./core/graphics/gradient";
 
 const HORIZON_HEIGHT_OF_CANVAS = 0.25;
@@ -119,12 +125,21 @@ export class Level implements Area, Space {
         this.camera.follow(this.player);
     }
 
-    listen(time: TimeStep): Sound | null {
+    listen(time: TimeStep, listenerPosition: Vector): Sound | null {
         if (
             this.latestSoundByPlayer &&
             time.t - this.latestSoundByPlayer.time < 1000
         ) {
-            return this.latestSoundByPlayer;
+            const d = distance(
+                listenerPosition,
+                this.latestSoundByPlayer.position,
+            );
+            const fadeFactor = Math.max(0, 1 - d / SOUND_FADE_DISTANCE);
+
+            return {
+                ...this.latestSoundByPlayer,
+                volume: this.latestSoundByPlayer.volume * fadeFactor,
+            };
         }
 
         return null;
@@ -301,7 +316,20 @@ export class Level implements Area, Space {
                 continue;
             }
 
-            o.draw(time);
+            if (o instanceof Bush && isBehind(this.player, o)) {
+                cx.save();
+                cx.globalAlpha = 0.3;
+                o.draw(time);
+                cx.restore();
+            } else {
+                o.draw(time);
+            }
         }
     }
 }
+
+const isBehind = (o: GameObject, obstacle: GameObject): boolean =>
+    o.y + o.height / 2 < obstacle.y + obstacle.height / 2 &&
+    obstacle.y - 4 * TILE_DRAW_HEIGHT < o.y &&
+    obstacle.x <= o.x &&
+    o.x + o.width <= obstacle.x + obstacle.width;

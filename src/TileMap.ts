@@ -103,7 +103,7 @@ export class TileMap {
         const tilesTopOfCamera = Math.floor(visibleArea.y / TILE_DRAW_HEIGHT);
         const tilesToBottomEdge =
             Math.ceil((visibleArea.y + visibleArea.height) / TILE_DRAW_HEIGHT) +
-            1; // +1 so that objects get drawn from a tile that is just below the edge
+            4; // +4 so that objects get drawn from a tile that is just below the edge
         const leftmostIndex = Math.max(0, tilesLeftOfCamera);
         const rightmostIndex = Math.min(tiles.xCount, tilesToRightEdge);
         const topmostIndex = Math.max(0, tilesTopOfCamera);

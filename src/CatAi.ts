@@ -24,10 +24,12 @@
 
 import { getCenter } from "./core/math/Area";
 import { clamp } from "./core/math/number";
-import { randomBool } from "./core/math/random";
+import { random } from "./core/math/random";
 import {
+    add,
     distance,
     length,
+    multiply,
     normalize,
     subtract,
     ZERO_VECTOR,
@@ -37,15 +39,21 @@ import type { TimeStep } from "./core/time/TimeStep";
 import type { GameObject } from "./GameObject";
 import type { Mouse } from "./Mouse";
 import type { Space } from "./Space";
-import { TILE_SIZE } from "./tiles";
+import { TILE_DRAW_HEIGHT, TILE_SIZE } from "./tiles";
 
-export let propabilityToNoticeDebug: number = 0;
+export let sightAccuracyDebug: number = 0;
+export let hearAccuracyDebug: number = 0;
 
-const LOOK_PERIOD = 500;
-const NOTICE_PROPABILITY_LOWERING_DISTANCE = 5 * TILE_SIZE;
+const OBSERVE_PERIOD = 500;
+const SIGHT_ACCURACY_LOWERING_DISTANCE = 5 * TILE_SIZE;
 
-const getPropabilityToNoticeByDistance = (distance: number): number =>
-    clamp(1 - distance / NOTICE_PROPABILITY_LOWERING_DISTANCE, 0.3, 1.0);
+export const CERTAIN_OBSERVATION_THERSHOLD = 0.3;
+export const VAGUE_OBSERVATION_THRESHOLD = 0.15;
+
+const ALERT_TIMEOUT = 2000;
+
+const getSightAccuracyByDistance = (distance: number): number =>
+    clamp(1 - distance / SIGHT_ACCURACY_LOWERING_DISTANCE, 0.3, 1.0);
 
 const getMovementFactor = (mouse: Mouse): number => {
     const speed = length(mouse.movement);
@@ -53,15 +61,62 @@ const getMovementFactor = (mouse: Mouse): number => {
     return clamp(relativeSpeed, 0.4, 1);
 };
 
+const getRandomPosition = (space: Space): Vector => {
+    const xMargin = 2 * TILE_SIZE;
+    const yMargin = 2 + TILE_DRAW_HEIGHT;
+
+    return {
+        x: xMargin + random(space.width - 2 * xMargin),
+        y: yMargin + random(space.height - 2 * yMargin),
+    };
+};
+
+const getPositionALittleTowardsMouse = (
+    hostCenter: Vector,
+    mousePosition: Vector,
+): Vector => {
+    const toMouse: Vector = subtract(mousePosition, hostCenter);
+    const d = length(toMouse);
+    const directionToMouse: Vector = normalize(toMouse);
+    return add(hostCenter, multiply(directionToMouse, d / 3));
+};
+
+interface Observation {
+    position: Vector;
+    accuracy: number; // 0-1
+}
+
+const chooseBetter = (
+    a: Observation | null,
+    b: Observation | null,
+): Observation | null => {
+    if (a == null && b == null) {
+        return null;
+    }
+
+    if (a == null) {
+        return b;
+    }
+
+    if (b == null) {
+        return a;
+    }
+
+    return a.accuracy > b.accuracy ? a : b;
+};
+
 export enum CatState {
     Idle,
-    Follow,
+    Alert,
+    Chase,
 }
 
 export class CatAi {
     state: CatState = CatState.Idle;
 
+    private alertPositionReachedTime: number | null = null;
     private lastLookTime: number = 0;
+    private target: Vector | null = null;
     private mouseLastObservedPosition: Vector | null = null;
 
     constructor(
@@ -70,61 +125,109 @@ export class CatAi {
     ) {}
 
     getMovement(time: TimeStep): Vector {
-        if (LOOK_PERIOD < time.t - this.lastLookTime) {
+        if (OBSERVE_PERIOD < time.t - this.lastLookTime) {
             this.lastLookTime = time.t;
+            const hostCenter = getCenter(this.host);
 
-            const mousePosition =
-                this.lookForMouse() || this.listenForMouse(time);
+            const seen = this.lookForMouse(hostCenter);
+            const heard = this.listenForMouse(time, hostCenter);
+            sightAccuracyDebug = seen?.accuracy ?? 0;
+            hearAccuracyDebug = heard?.accuracy ?? 0;
 
-            if (mousePosition) {
-                this.mouseLastObservedPosition = mousePosition;
-                if (this.state === CatState.Idle) {
-                    this.state = CatState.Follow;
+            const observation = chooseBetter(seen, heard);
+
+            if (observation) {
+                if (CERTAIN_OBSERVATION_THERSHOLD < observation.accuracy) {
+                    this.mouseLastObservedPosition = observation.position;
+                    if (this.state !== CatState.Chase) {
+                        this.state = CatState.Chase;
+                    }
+                } else if (VAGUE_OBSERVATION_THRESHOLD < observation.accuracy) {
+                    this.target = getPositionALittleTowardsMouse(
+                        hostCenter,
+                        observation.position,
+                    );
+                    if (this.state == CatState.Idle) {
+                        this.state = CatState.Alert;
+                    }
                 }
             }
         }
 
-        if (this.state === CatState.Follow && this.mouseLastObservedPosition) {
-            return this.follow(this.mouseLastObservedPosition);
+        if (this.state === CatState.Idle) {
+            if (this.target == null) {
+                this.target = getRandomPosition(this.space);
+            }
+
+            const movement = this.goTo(this.target);
+
+            if (movement != null) {
+                return movement;
+            } else {
+                this.target = getRandomPosition(this.space);
+            }
+        } else if (this.state === CatState.Alert && this.target) {
+            const movement = this.goTo(this.target);
+
+            if (movement == null) {
+                if (this.alertPositionReachedTime == null) {
+                    this.alertPositionReachedTime = time.t;
+                }
+                if (ALERT_TIMEOUT < time.t - this.alertPositionReachedTime) {
+                    this.alertPositionReachedTime = null;
+                    this.state = CatState.Idle;
+                }
+            }
+
+            return movement ?? ZERO_VECTOR;
+        } else if (
+            this.state === CatState.Chase &&
+            this.mouseLastObservedPosition
+        ) {
+            return this.goTo(this.mouseLastObservedPosition) ?? ZERO_VECTOR;
         }
 
         return ZERO_VECTOR;
     }
 
-    private lookForMouse(): Vector | null {
+    private lookForMouse(hostCenter: Vector): Observation | null {
         const sighting = this.space.lookForMouse();
         const mouse = sighting.target;
         const mouseCenter = getCenter(mouse);
-        const hostCenter = getCenter(this.host);
         const distanceToMouse = distance(hostCenter, mouseCenter);
 
-        const propabilityToNotice: number =
+        const accuracy: number =
             sighting.visibility *
-            getPropabilityToNoticeByDistance(distanceToMouse) *
+            getSightAccuracyByDistance(distanceToMouse) *
             getMovementFactor(mouse);
 
-        propabilityToNoticeDebug = propabilityToNotice;
-
-        return randomBool(propabilityToNotice) ? mouseCenter : null;
+        return sighting.visibility > 0
+            ? { position: mouseCenter, accuracy }
+            : null;
     }
 
-    private listenForMouse(time: TimeStep): Vector | null {
-        const sound = this.space.listen(time);
+    private listenForMouse(
+        time: TimeStep,
+        hostCenter: Vector,
+    ): Observation | null {
+        const sound = this.space.listen(time, hostCenter);
 
-        if (sound && 0.2 <= sound.volume) {
-            return sound.position;
+        if (!sound) {
+            return null;
         }
 
-        return null;
+        return {
+            position: sound.position,
+            accuracy: sound.volume,
+        };
     }
 
-    private follow(target: Vector): Vector {
+    private goTo(target: Vector): Vector | null {
         const hostCenter = getCenter(this.host);
         const distanceToMousePosition = distance(hostCenter, target);
 
-        if (distanceToMousePosition <= this.host.width * 0.4) {
-            this.state = CatState.Idle;
-            return ZERO_VECTOR;
+        if (distanceToMousePosition <= this.host.width * 0.2) {
+            return null;
         }
 
         const direction: Vector = normalize(subtract(target, hostCenter));
