@@ -54,7 +54,7 @@ export function renderBlackCat(
 
     // For a pseudo-3D effect, the bounding box should be
     // on the ground and the figure "rise" from there.
-    cx.translate(0, -height * 0.7);
+    cx.translate(0, -height * 0.25);
 
     // Centered transform; flip only for side pose; subtle bob when moving
     cx.translate(x + width / 2, y + height / 2);
@@ -68,7 +68,7 @@ export function renderBlackCat(
     // Body
     cx.beginPath();
     cx.ellipse(0, height * 0.2, width * 0.35, height * 0.28, 0, 0, Math.PI * 2);
-    cx.fillStyle = "#181818";
+    cx.fillStyle = "#000";
     cx.fill();
 
     // Head
@@ -82,7 +82,6 @@ export function renderBlackCat(
         0,
         Math.PI * 2,
     );
-    cx.fillStyle = "#181818";
     cx.fill();
 
     // Ears
@@ -95,7 +94,6 @@ export function renderBlackCat(
     cx.lineTo(-width * 0.13 - earW / 2, earY + earH);
     cx.lineTo(-width * 0.13 + earW / 2, earY + earH);
     cx.closePath();
-    cx.fillStyle = "#181818";
     cx.fill();
     // Right ear
     cx.beginPath();
@@ -103,7 +101,6 @@ export function renderBlackCat(
     cx.lineTo(width * 0.13 - earW / 2, earY + earH);
     cx.lineTo(width * 0.13 + earW / 2, earY + earH);
     cx.closePath();
-    cx.fillStyle = "#181818";
     cx.fill();
 
     // Eyes
