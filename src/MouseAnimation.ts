@@ -43,40 +43,30 @@ const MOUSE_RENDER_HEIGHT = 28;
 const MOUSE_ASPECT_RATIO = MOUSE_RENDER_WIDTH / MOUSE_RENDER_HEIGHT;
 
 export function renderMouse(
-    context: CanvasRenderingContext2D,
+    ctx: CanvasRenderingContext2D,
     x: number,
     y: number,
-    width: number,
+    w: number,
     facing: MouseFacing,
-    _animation: MouseAnimation,
+    _anim: MouseAnimation,
     dir: number,
     step: number,
     lastSpeed: number,
     time: TimeStep,
-): void {
-    const t = time.t;
-    const height = width / MOUSE_ASPECT_RATIO;
+) {
+    const t = time.t,
+        h = w / MOUSE_ASPECT_RATIO,
+        PI2 = Math.PI * 2;
+    ctx.save();
+    ctx.translate(0, -h * 0.6);
+    ctx.translate(x + w / 2, y + h / 2);
+    ctx.scale(facing === "side" ? dir : 1, 1);
+    ctx.scale(w / MOUSE_RENDER_WIDTH, h / MOUSE_RENDER_HEIGHT);
+    const mv = Math.min(1, lastSpeed * 0.8),
+        bob = Math.sin(t / 220 + step * 2) * (1.5 * (0.4 + mv));
+    ctx.translate(0, bob);
 
-    context.save();
-
-    // For a pseudo-3D effect, the bounding box should be
-    // on the ground and the mouse figure "rise" from there.
-    context.translate(0, -height * 0.6);
-
-    // Centered transform; flip only for side pose
-    context.translate(x + width / 2, y + height / 2);
-    context.scale(facing === "side" ? dir : 1, 1);
-
-    // Rendering the mouse is done at a certain size. Adjust to
-    // be drawn in the requested size.
-    context.scale(width / MOUSE_RENDER_WIDTH, height / MOUSE_RENDER_HEIGHT);
-
-    const moveFactor = Math.min(1, lastSpeed * 0.8);
-    const bob = Math.sin(t / 220 + step * 2.0) * (1.5 * (0.4 + moveFactor));
-    context.translate(0, bob);
-
-    // Helper to draw a filled + stroked ellipse
-    const fillStrokeEllipse = (
+    const fse = (
         x: number,
         y: number,
         rx: number,
@@ -84,51 +74,50 @@ export function renderMouse(
         fill: string,
         stroke = "#dcdcdc",
     ) => {
-        context.beginPath();
-        context.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
-        context.fillStyle = fill;
-        context.fill();
+        ctx.beginPath();
+        ctx.ellipse(x, y, rx, ry, 0, 0, PI2);
+        ctx.fillStyle = fill;
+        ctx.fill();
         if (stroke) {
-            context.strokeStyle = stroke;
-            context.lineWidth = 1;
-            context.stroke();
+            ctx.strokeStyle = stroke;
+            ctx.lineWidth = 1;
+            ctx.stroke();
         }
     };
 
-    // Common shadow
-    context.save();
-    context.globalAlpha = 0.18;
-    context.fillStyle = "black";
-    context.beginPath();
-    context.ellipse(
+    ctx.save();
+    ctx.globalAlpha = 0.18;
+    ctx.fillStyle = "black";
+    ctx.beginPath();
+    ctx.ellipse(
         0,
-        height * (facing.indexOf("down") === 0 ? 0.7 : 0.5),
-        width * 0.45,
-        height * 0.24,
+        h * (facing.startsWith("down") ? 0.7 : 0.5),
+        w * 0.45,
+        h * 0.24,
         0,
         0,
-        Math.PI * 2,
+        PI2,
     );
-    context.fill();
-    context.restore();
+    ctx.fill();
+    ctx.restore();
 
     if (facing === "side") {
-        renderSideView(context, t, step, moveFactor, fillStrokeEllipse);
-    } else if (facing.indexOf("up") === 0) {
-        renderUpView(context, t, step, moveFactor, facing, fillStrokeEllipse);
+        renderSideView(ctx, t, step, mv, fse);
+    } else if (facing.startsWith("up")) {
+        renderUpView(ctx, t, step, mv, facing, fse);
     } else {
-        renderDownView(context, t, step, moveFactor, facing, fillStrokeEllipse);
+        renderDownView(ctx, t, step, mv, facing, fse);
     }
 
-    context.restore();
+    ctx.restore();
 }
 
 function renderSideView(
-    context: CanvasRenderingContext2D,
+    ctx: CanvasRenderingContext2D,
     t: number,
     step: number,
-    moveFactor: number,
-    fillStrokeEllipse: (
+    mv: number,
+    fse: (
         x: number,
         y: number,
         rx: number,
@@ -136,115 +125,88 @@ function renderSideView(
         fill: string,
         stroke?: string,
     ) => void,
-): void {
-    // Tail sway
-    context.save();
-    const tailSway = Math.sin(t / 260 + step * 1.6) * (6 + moveFactor * 4);
-    context.strokeStyle = "#f0c2c2";
-    context.lineWidth = 2;
-    context.lineCap = "round";
-    context.beginPath();
-    context.moveTo(-18, 2);
-    context.bezierCurveTo(-28, 0, -40, tailSway * 0.4, -62, tailSway);
-    context.stroke();
-    context.restore();
+) {
+    const PI2 = Math.PI * 2,
+        bp = (x: number, y: number, rx: number, ry: number) => {
+            ctx.beginPath();
+            ctx.ellipse(x, y, rx, ry, 0, 0, PI2);
+        };
 
-    // Legs (simple step cycle)
-    const legLift = (phase: number) =>
-        Math.sin(step * 6 + phase) * (2.0 * (0.3 + moveFactor));
-    context.fillStyle = "#ededed";
-    context.strokeStyle = "#d7d7d7";
+    ctx.save();
+    const ts = Math.sin(t / 260 + step * 1.6) * (6 + mv * 4);
+    ctx.strokeStyle = "#f0c2c2";
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(-18, 2);
+    ctx.bezierCurveTo(-28, 0, -40, ts * 0.4, -62, ts);
+    ctx.stroke();
+    ctx.restore();
 
-    // Back foot
-    context.beginPath();
-    context.ellipse(-8, 10 + legLift(0), 6, 3, 0, 0, Math.PI * 2);
-    context.fill();
-    context.stroke();
+    const legLift = (p: number) => Math.sin(step * 6 + p) * (2 * (0.3 + mv));
+    ctx.fillStyle = "#ededed";
+    ctx.strokeStyle = "#d7d7d7";
+    bp(-8, 10 + legLift(0), 6, 3);
+    ctx.fill();
+    ctx.stroke();
+    bp(10, 10 + legLift(Math.PI), 6, 3);
+    ctx.fill();
+    ctx.stroke();
 
-    // Front foot
-    context.beginPath();
-    context.ellipse(10, 10 + legLift(Math.PI), 6, 3, 0, 0, Math.PI * 2);
-    context.fill();
-    context.stroke();
+    fse(0, 0, 18, 10, "#fff");
 
-    // Body
-    fillStrokeEllipse(0, 0, 18, 10, "#ffffff");
+    ctx.save();
+    const g = ctx.createRadialGradient(0, 4, 2, 0, 4, 18);
+    g.addColorStop(0, "rgba(0,0,0,0.05)");
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    bp(0, 4, 14, 7);
+    ctx.fill();
+    ctx.restore();
 
-    // Subtle belly shading
-    context.save();
-    const grad = context.createRadialGradient(0, 4, 2, 0, 4, 18);
-    grad.addColorStop(0, "rgba(0,0,0,0.05)");
-    grad.addColorStop(1, "rgba(0,0,0,0)");
-    context.fillStyle = grad;
-    context.beginPath();
-    context.ellipse(0, 4, 14, 7, 0, 0, Math.PI * 2);
-    context.fill();
-    context.restore();
+    fse(14, -2, 9, 7, "#fff");
+    fse(8, -10, 5, 5, "#ffe2e6");
+    fse(8, -10, 3, 3, "#ffc8d0", "#eec3c9");
 
-    // Head (slightly forward and up)
-    fillStrokeEllipse(14, -2, 9, 7, "#ffffff");
+    const bpBlink = (t / 1400) % 1;
+    let eo = 1;
+    if (bpBlink < 0.06) eo = Math.max(0.15, 1 - bpBlink / 0.06);
+    else if (bpBlink < 0.12) eo = Math.max(0.15, (bpBlink - 0.06) / 0.06);
 
-    // Ears (outer + inner)
-    fillStrokeEllipse(8, -10, 5, 5, "#ffe2e6");
-    fillStrokeEllipse(8, -10, 3, 3, "#ffc8d0", "#eec3c9");
-
-    // Eye with blink
-    const blinkPhase = (t / 1400) % 1; // 0..1
-    let eyeOpen = 1;
-    if (blinkPhase < 0.06) eyeOpen = Math.max(0.15, 1 - blinkPhase / 0.06);
-    else if (blinkPhase < 0.12)
-        eyeOpen = Math.max(0.15, (blinkPhase - 0.06) / 0.06);
-
-    context.save();
-    context.translate(18, -4);
-    context.beginPath();
-    context.ellipse(0, 0, 1.8, 1.8 * eyeOpen, 0, 0, Math.PI * 2);
-    context.fillStyle = "#222";
-    context.fill();
-    // tiny eye highlight when open
-    if (eyeOpen > 0.3) {
-        context.beginPath();
-        context.ellipse(
-            -0.4,
-            -0.5 * eyeOpen,
-            0.5,
-            0.35 * eyeOpen,
-            0,
-            0,
-            Math.PI * 2,
-        );
-        context.fillStyle = "rgba(255,255,255,0.9)";
-        context.fill();
+    ctx.save();
+    ctx.translate(18, -4);
+    bp(0, 0, 1.8, 1.8 * eo);
+    ctx.fillStyle = "#222";
+    ctx.fill();
+    if (eo > 0.3) {
+        bp(-0.4, -0.5 * eo, 0.5, 0.35 * eo);
+        ctx.fillStyle = "rgba(255,255,255,0.9)";
+        ctx.fill();
     }
-    context.restore();
+    ctx.restore();
 
-    // Nose wiggle
-    const noseWiggle = Math.sin(t / 120) * 0.6;
-    fillStrokeEllipse(22 + noseWiggle, -1, 1.6, 1.4, "#ff9aa9", "#ef8a99");
+    fse(22 + Math.sin(t / 120) * 0.6, -1, 1.6, 1.4, "#ff9aa9", "#ef8a99");
 
-    // Whiskers
-    context.save();
-    context.strokeStyle = "rgba(0,0,0,0.35)";
-    context.lineWidth = 1;
-    context.lineCap = "round";
-    const whiskerY = [-2, 0, 2];
-    for (let i = 0; i < whiskerY.length; i++) {
-        const wy = whiskerY[i];
-        context.beginPath();
-        context.moveTo(20, wy);
-        context.lineTo(28, wy - 1 + i); // three slight angles
-        context.stroke();
-    }
-    context.restore();
+    ctx.save();
+    ctx.strokeStyle = "rgba(0,0,0,0.35)";
+    ctx.lineWidth = 1;
+    ctx.lineCap = "round";
+    [-2, 0, 2].forEach((wy, i) => {
+        ctx.beginPath();
+        ctx.moveTo(20, wy);
+        ctx.lineTo(28, wy - 1 + i);
+        ctx.stroke();
+    });
+    ctx.restore();
 }
 
 function renderUpView(
-    context: CanvasRenderingContext2D,
+    ctx: CanvasRenderingContext2D,
     t: number,
     step: number,
-    moveFactor: number,
+    mv: number,
     facing: MouseFacing,
-    fillStrokeEllipse: (
+    fse: (
         x: number,
         y: number,
         rx: number,
@@ -252,97 +214,79 @@ function renderUpView(
         fill: string,
         stroke?: string,
     ) => void,
-): void {
-    const isDiagonal = facing === "up-left" || facing === "up-right";
-    const flip = facing.slice(-4) === "left" ? -1 : 1;
-    context.scale(flip, 1);
+) {
+    const PI2 = Math.PI * 2,
+        diag = facing === "up-left" || facing === "up-right",
+        flip = facing.endsWith("left") ? -1 : 1,
+        bp = (x: number, y: number, rx: number, ry: number) => {
+            ctx.beginPath();
+            ctx.ellipse(x, y, rx, ry, 0, 0, PI2);
+        };
+
+    ctx.scale(flip, 1);
 
     // Tail
-    context.save();
-    const tailSwayFB = Math.sin(t / 260 + step * 1.6) * (6 + moveFactor * 4);
-    context.strokeStyle = "#f0c2c2";
-    context.lineWidth = 2;
-    context.lineCap = "round";
-    context.beginPath();
-    if (!isDiagonal) {
-        context.moveTo(0, 6);
-        context.bezierCurveTo(4, 14, 2, 16 + tailSwayFB, 0, 20 + tailSwayFB);
+    ctx.save();
+    const ts = Math.sin(t / 260 + step * 1.6) * (6 + mv * 4);
+    ctx.strokeStyle = "#f0c2c2";
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    if (!diag) {
+        ctx.moveTo(0, 6);
+        ctx.bezierCurveTo(4, 14, 2, 16 + ts, 0, 20 + ts);
     } else {
-        context.moveTo(-2, 6);
-        context.bezierCurveTo(
-            -10,
-            12,
-            -14,
-            14 + tailSwayFB * 0.7,
-            -20,
-            20 + tailSwayFB,
-        );
+        ctx.moveTo(-2, 6);
+        ctx.bezierCurveTo(-10, 12, -14, 14 + ts * 0.7, -20, 20 + ts);
     }
-    context.stroke();
-    context.restore();
+    ctx.stroke();
+    ctx.restore();
 
     // Rear paws
-    const legLiftFB = (phase: number) =>
-        Math.sin(step * 6 + phase) * (1.5 * (0.3 + moveFactor));
-    context.fillStyle = "#ededed";
-    context.strokeStyle = "#d7d7d7";
-    if (!isDiagonal) {
-        context.beginPath();
-        context.ellipse(-8, 8 + legLiftFB(0), 5, 2.5, 0, 0, Math.PI * 2);
-        context.fill();
-        context.stroke();
-        context.beginPath();
-        context.ellipse(8, 8 + legLiftFB(Math.PI), 5, 2.5, 0, 0, Math.PI * 2);
-        context.fill();
-        context.stroke();
+    const legLift = (p: number) => Math.sin(step * 6 + p) * (1.5 * (0.3 + mv));
+    ctx.fillStyle = "#ededed";
+    ctx.strokeStyle = "#d7d7d7";
+    if (!diag) {
+        bp(-8, 8 + legLift(0), 5, 2.5);
+        ctx.fill();
+        ctx.stroke();
+        bp(8, 8 + legLift(Math.PI), 5, 2.5);
+        ctx.fill();
+        ctx.stroke();
     } else {
-        context.beginPath();
-        context.ellipse(6, 10 + legLiftFB(0), 5.2, 2.6, 0, 0, Math.PI * 2);
-        context.fill();
-        context.stroke();
-        context.beginPath();
-        context.ellipse(
-            -10,
-            9 + legLiftFB(Math.PI),
-            4.2,
-            2.1,
-            0,
-            0,
-            Math.PI * 2,
-        );
-        context.fill();
-        context.stroke();
+        bp(6, 10 + legLift(0), 5.2, 2.6);
+        ctx.fill();
+        ctx.stroke();
+        bp(-10, 9 + legLift(Math.PI), 4.2, 2.1);
+        ctx.fill();
+        ctx.stroke();
     }
 
     // Body
-    fillStrokeEllipse(isDiagonal ? 1.5 : 0, 0, 18, 10, "#ffffff");
+    fse(diag ? 1.5 : 0, 0, 18, 10, "#fff");
 
-    if (!isDiagonal) {
-        fillStrokeEllipse(-6, -14, 5, 5, "#ffe2e6");
-        fillStrokeEllipse(-6, -14, 3, 3, "#ffc8d0", "#eec3c9");
-        fillStrokeEllipse(6, -14, 5, 5, "#ffe2e6");
-        fillStrokeEllipse(6, -14, 3, 3, "#ffc8d0", "#eec3c9");
-        // Head
-        fillStrokeEllipse(0, -12, 9, 7, "#ffffff");
+    if (!diag) {
+        fse(-6, -14, 5, 5, "#ffe2e6");
+        fse(-6, -14, 3, 3, "#ffc8d0", "#eec3c9");
+        fse(6, -14, 5, 5, "#ffe2e6");
+        fse(6, -14, 3, 3, "#ffc8d0", "#eec3c9");
+        fse(0, -12, 9, 7, "#fff");
     } else {
-        // Far ear (smaller/higher)
-        fillStrokeEllipse(-4, -15, 4.2, 4.2, "#ffe2e6");
-        fillStrokeEllipse(-4, -15, 2.4, 2.4, "#ffc8d0", "#eec3c9");
-        // Head
-        fillStrokeEllipse(4, -12, 9, 7, "#ffffff");
-        // Near ear (larger/lower)
-        fillStrokeEllipse(7.5, -14, 5.2, 5.2, "#ffe2e6");
-        fillStrokeEllipse(7.5, -14, 3.1, 3.1, "#ffc8d0", "#eec3c9");
+        fse(-4, -15, 4.2, 4.2, "#ffe2e6");
+        fse(-4, -15, 2.4, 2.4, "#ffc8d0", "#eec3c9");
+        fse(4, -12, 9, 7, "#fff");
+        fse(7.5, -14, 5.2, 5.2, "#ffe2e6");
+        fse(7.5, -14, 3.1, 3.1, "#ffc8d0", "#eec3c9");
     }
 }
 
 function renderDownView(
-    context: CanvasRenderingContext2D,
+    ctx: CanvasRenderingContext2D,
     t: number,
     step: number,
-    moveFactor: number,
+    mv: number,
     facing: MouseFacing,
-    fillStrokeEllipse: (
+    fse: (
         x: number,
         y: number,
         rx: number,
@@ -350,254 +294,117 @@ function renderDownView(
         fill: string,
         stroke?: string,
     ) => void,
-): void {
-    const isDiagonal = facing === "down-left" || facing === "down-right";
-    const flip = facing.slice(-4) === "left" ? -1 : 1;
-    context.scale(flip, 1);
+) {
+    const PI2 = Math.PI * 2,
+        diag = facing === "down-left" || facing === "down-right",
+        flip = facing.endsWith("left") ? -1 : 1,
+        bp = (x: number, y: number, rx: number, ry: number) => {
+            ctx.beginPath();
+            ctx.ellipse(x, y, rx, ry, 0, 0, PI2);
+        },
+        legLift = (p: number) => Math.sin(step * 6 + p) * (1.5 * (0.3 + mv));
 
-    // Legs: four little paws alternating
-    const legLiftFB = (phase: number) =>
-        Math.sin(step * 6 + phase) * (1.5 * (0.3 + moveFactor));
-    context.fillStyle = "#ededed";
-    context.strokeStyle = "#d7d7d7";
+    ctx.scale(flip, 1);
+    ctx.fillStyle = "#ededed";
+    ctx.strokeStyle = "#d7d7d7";
 
-    if (!isDiagonal) {
-        // Rear paws
-        context.beginPath();
-        context.ellipse(-8, 8 + legLiftFB(0), 5, 2.5, 0, 0, Math.PI * 2);
-        context.fill();
-        context.stroke();
-        context.beginPath();
-        context.ellipse(8, 8 + legLiftFB(Math.PI), 5, 2.5, 0, 0, Math.PI * 2);
-        context.fill();
-        context.stroke();
-
-        // Front paws (closer to the head side)
-        const frontY = 8;
-        context.beginPath();
-        context.ellipse(
-            -7,
-            frontY + legLiftFB(Math.PI),
-            4.5,
-            2.2,
-            0,
-            0,
-            Math.PI * 2,
-        );
-        context.fill();
-        context.stroke();
-        context.beginPath();
-        context.ellipse(7, frontY + legLiftFB(0), 4.5, 2.2, 0, 0, Math.PI * 2);
-        context.fill();
-        context.stroke();
+    if (!diag) {
+        bp(-8, 8 + legLift(0), 5, 2.5);
+        ctx.fill();
+        ctx.stroke();
+        bp(8, 8 + legLift(Math.PI), 5, 2.5);
+        ctx.fill();
+        ctx.stroke();
+        const fy = 8;
+        bp(-7, fy + legLift(Math.PI), 4.5, 2.2);
+        ctx.fill();
+        ctx.stroke();
+        bp(7, fy + legLift(0), 4.5, 2.2);
+        ctx.fill();
+        ctx.stroke();
     } else {
-        // Diagonal: near paws slightly larger/closer; far paws smaller/farther
-        // Rear paws
-        context.beginPath();
-        context.ellipse(6, 7 + legLiftFB(0), 5.2, 2.6, 0, 0, Math.PI * 2); // near
-        context.fill();
-        context.stroke();
-        context.beginPath();
-        context.ellipse(
-            -8,
-            9 + legLiftFB(Math.PI),
-            4.2,
-            2.1,
-            0,
-            0,
-            Math.PI * 2,
-        ); // far
-        context.fill();
-        context.stroke();
-
-        // Front paws
-        const frontY = 8;
-        context.beginPath();
-        context.ellipse(
-            7.5,
-            frontY + legLiftFB(0),
-            4.9,
-            2.4,
-            0,
-            0,
-            Math.PI * 2,
-        ); // near
-        context.fill();
-        context.stroke();
-        context.beginPath();
-        context.ellipse(
-            -8.5,
-            frontY + legLiftFB(Math.PI),
-            4.1,
-            2.0,
-            0,
-            0,
-            Math.PI * 2,
-        ); // far
-        context.fill();
-        context.stroke();
+        bp(6, 7 + legLift(0), 5.2, 2.6);
+        ctx.fill();
+        ctx.stroke();
+        bp(-8, 9 + legLift(Math.PI), 4.2, 2.1);
+        ctx.fill();
+        ctx.stroke();
+        const fy = 8;
+        bp(7.5, fy + legLift(0), 4.9, 2.4);
+        ctx.fill();
+        ctx.stroke();
+        bp(-8.5, fy + legLift(Math.PI), 4.1, 2);
+        ctx.fill();
+        ctx.stroke();
     }
 
-    // Body
-    fillStrokeEllipse(isDiagonal ? 1.5 : 0, 0, 18, 10, "#ffffff");
+    fse(diag ? 1.5 : 0, 0, 18, 10, "#fff");
 
-    // Subtle belly shading
-    context.save();
-    const gradFB = context.createRadialGradient(0, 4, 2, 0, 4, 18);
-    gradFB.addColorStop(0, "rgba(0,0,0,0.05)");
-    gradFB.addColorStop(1, "rgba(0,0,0,0)");
-    context.fillStyle = gradFB;
-    context.beginPath();
-    context.ellipse(0, 4, 14, 7, 0, 0, Math.PI * 2);
-    context.fill();
-    context.restore();
+    ctx.save();
+    const g = ctx.createRadialGradient(0, 4, 2, 0, 4, 18);
+    g.addColorStop(0, "rgba(0,0,0,0.05)");
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    bp(0, 4, 14, 7);
+    ctx.fill();
+    ctx.restore();
 
-    // Head/ears layering: far ear -> head -> near ear so both ears stay visible
-    const headY = 12;
-    const headX = isDiagonal ? 3.5 : 0;
+    const hy = 12,
+        hx = diag ? 3.5 : 0;
+    fse(hx - 6, hy - 6, 5, 5, "#ffe2e6");
+    fse(hx - 6, hy - 6, 3, 3, "#ffc8d0", "#eec3c9");
+    fse(hx + 6, hy - 6, 5, 5, "#ffe2e6");
+    fse(hx + 6, hy - 6, 3, 3, "#ffc8d0", "#eec3c9");
+    fse(hx, hy, 9, 7, "#fff");
 
-    fillStrokeEllipse(headX - 6, headY - 6, 5, 5, "#ffe2e6");
-    fillStrokeEllipse(headX - 6, headY - 6, 3, 3, "#ffc8d0", "#eec3c9");
+    const bpBlink = (t / 1400) % 1;
+    let eo = 1;
+    if (bpBlink < 0.06) eo = Math.max(0.15, 1 - bpBlink / 0.06);
+    else if (bpBlink < 0.12) eo = Math.max(0.15, (bpBlink - 0.06) / 0.06);
 
-    fillStrokeEllipse(headX + 6, headY - 6, 5, 5, "#ffe2e6");
-    fillStrokeEllipse(headX + 6, headY - 6, 3, 3, "#ffc8d0", "#eec3c9");
-
-    // Head at the leading side (bottom for down), slightly shifted for diagonal
-    fillStrokeEllipse(headX, headY, 9, 7, "#ffffff");
-
-    // Eyes with synced blink (near eye slightly larger on diagonals)
-    const blinkPhase = (t / 1400) % 1;
-    let eyeOpen = 1;
-    if (blinkPhase < 0.06) eyeOpen = Math.max(0.15, 1 - blinkPhase / 0.06);
-    else if (blinkPhase < 0.12)
-        eyeOpen = Math.max(0.15, (blinkPhase - 0.06) / 0.06);
-
-    context.fillStyle = "#222";
-    if (!isDiagonal) {
-        context.beginPath();
-        context.ellipse(
-            headX - 3.2,
-            headY - 2,
-            1.6,
-            1.6 * eyeOpen,
-            0,
-            0,
-            Math.PI * 2,
-        );
-        context.fill();
-        context.beginPath();
-        context.ellipse(
-            headX + 3.2,
-            headY - 2,
-            1.6,
-            1.6 * eyeOpen,
-            0,
-            0,
-            Math.PI * 2,
-        );
-        context.fill();
-
-        // tiny highlights when open
-        if (eyeOpen > 0.3) {
-            context.fillStyle = "rgba(255,255,255,0.9)";
-            context.beginPath();
-            context.ellipse(
-                headX - 3.7,
-                headY - 2.6 * eyeOpen,
-                0.4,
-                0.3 * eyeOpen,
-                0,
-                0,
-                Math.PI * 2,
-            );
-            context.fill();
-            context.beginPath();
-            context.ellipse(
-                headX + 2.7,
-                headY - 2.6 * eyeOpen,
-                0.4,
-                0.3 * eyeOpen,
-                0,
-                0,
-                Math.PI * 2,
-            );
-            context.fill();
+    ctx.fillStyle = "#222";
+    if (!diag) {
+        bp(hx - 3.2, hy - 2, 1.6, 1.6 * eo);
+        ctx.fill();
+        bp(hx + 3.2, hy - 2, 1.6, 1.6 * eo);
+        ctx.fill();
+        if (eo > 0.3) {
+            ctx.fillStyle = "rgba(255,255,255,0.9)";
+            bp(hx - 3.7, hy - 2.6 * eo, 0.4, 0.3 * eo);
+            ctx.fill();
+            bp(hx + 2.7, hy - 2.6 * eo, 0.4, 0.3 * eo);
+            ctx.fill();
         }
     } else {
-        // Far eye (smaller)
-        context.beginPath();
-        context.ellipse(
-            headX - 2.6,
-            headY - 2.1,
-            1.3,
-            1.3 * eyeOpen,
-            0,
-            0,
-            Math.PI * 2,
-        );
-        context.fill();
-        // Near eye (larger)
-        context.beginPath();
-        context.ellipse(
-            headX + 3.8,
-            headY - 1.9,
-            1.8,
-            1.8 * eyeOpen,
-            0,
-            0,
-            Math.PI * 2,
-        );
-        context.fill();
-
-        if (eyeOpen > 0.3) {
-            context.fillStyle = "rgba(255,255,255,0.9)";
-            // Far highlight
-            context.beginPath();
-            context.ellipse(
-                headX - 3.0,
-                headY - 2.4 * eyeOpen,
-                0.35,
-                0.25 * eyeOpen,
-                0,
-                0,
-                Math.PI * 2,
-            );
-            context.fill();
-            // Near highlight
-            context.beginPath();
+        bp(hx - 2.6, hy - 2.1, 1.3, 1.3 * eo);
+        ctx.fill();
+        bp(hx + 3.8, hy - 1.9, 1.8, 1.8 * eo);
+        ctx.fill();
+        if (eo > 0.3) {
+            ctx.fillStyle = "rgba(255,255,255,0.9)";
+            bp(hx - 3, hy - 2.4 * eo, 0.35, 0.25 * eo);
+            ctx.fill();
+            ctx.beginPath(); // near highlight path start
         }
     }
 
-    // Nose wiggle at the tip
-    const noseWiggle = Math.sin(t / 120) * 0.6;
-    const noseY = headY + 6;
-    fillStrokeEllipse(
-        headX + noseWiggle,
-        noseY,
-        1.6,
-        1.4,
-        "#ff9aa9",
-        "#ef8a99",
-    );
+    fse(hx + Math.sin(t / 120) * 0.6, hy + 6, 1.6, 1.4, "#ff9aa9", "#ef8a99");
 
-    // Whiskers (both sides)
-    context.save();
-    context.strokeStyle = "rgba(0,0,0,0.35)";
-    context.lineWidth = 1;
-    context.lineCap = "round";
-    const whiskerY = [-1.5, 0, 1.5].map((d) => d + noseY);
-    for (let i = 0; i < whiskerY.length; i++) {
-        const wy = whiskerY[i];
-        // left
-        context.beginPath();
-        context.moveTo(headX - 2, wy);
-        context.lineTo(headX - 10, wy - 1 + i);
-        context.stroke();
-        // right
-        context.beginPath();
-        context.moveTo(headX + 2, wy);
-        context.lineTo(headX + 10, wy - 1 + i);
-        context.stroke();
-    }
-    context.restore();
+    ctx.save();
+    ctx.strokeStyle = "rgba(0,0,0,0.35)";
+    ctx.lineWidth = 1;
+    ctx.lineCap = "round";
+    [-1.5, 0, 1.5]
+        .map((d) => d + hy + 6)
+        .forEach((wy, i) => {
+            ctx.beginPath();
+            ctx.moveTo(hx - 2, wy);
+            ctx.lineTo(hx - 10, wy - 1 + i);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(hx + 2, wy);
+            ctx.lineTo(hx + 10, wy - 1 + i);
+            ctx.stroke();
+        });
+    ctx.restore();
 }
