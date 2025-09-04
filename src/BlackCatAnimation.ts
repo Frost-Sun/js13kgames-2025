@@ -142,9 +142,11 @@ export function renderBlackCat(
     cx.fill();
 
     // Tail
-    const tailStartX = 0 + width * 0.35;
+    const tailStartX = width * 0.33;
     const tailStartY = height * 0.2;
     const tailThickness = width * 0.07;
+    const tailEndX = tailStartX - width * 0.22;
+    const tailEndY = tailStartY + height * 0.32;
     cx.beginPath();
     cx.moveTo(tailStartX, tailStartY);
     cx.bezierCurveTo(
@@ -152,12 +154,16 @@ export function renderBlackCat(
         tailStartY - height * 0.1,
         tailStartX + width * 0.1,
         tailStartY + height * 0.25,
-        tailStartX - width * 0.15,
-        tailStartY + height * 0.25,
+        tailEndX,
+        tailEndY,
     );
     cx.strokeStyle = "#000";
     cx.lineWidth = tailThickness;
     cx.stroke();
+    cx.beginPath();
+    cx.arc(tailEndX, tailEndY, tailThickness / 2, 0, Math.PI * 2);
+    cx.fillStyle = "#000";
+    cx.fill();
 
     // Whiskers
     cx.strokeStyle = "#e6d6e6";
