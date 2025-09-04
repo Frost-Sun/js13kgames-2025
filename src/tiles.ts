@@ -146,77 +146,18 @@ export const drawTile = (
     x: number,
     y: number,
 ): void => {
-    switch (tile) {
-        case TileType.Flower:
-            cx.fillStyle = "rgb(100, 220, 100)";
-            cx.fillRect(x, y, TILE_SIZE, TILE_DRAW_HEIGHT);
-            {
-                const pattern = createAsciiPattern(
-                    TILE_SIZE,
-                    TILE_DRAW_HEIGHT,
-                    0.55,
-                );
-                if (pattern) {
-                    cx.save();
-                    cx.fillStyle = pattern;
-                    cx.fillRect(x, y, TILE_SIZE, TILE_DRAW_HEIGHT);
-                    cx.restore();
-                }
-            }
-            break;
-        case TileType.Bush:
-            cx.fillStyle = "rgb(100, 220, 100)";
-            cx.fillRect(x, y, TILE_SIZE, TILE_DRAW_HEIGHT);
-            {
-                const pattern = createAsciiPattern(
-                    TILE_SIZE,
-                    TILE_DRAW_HEIGHT,
-                    0.55,
-                );
-                if (pattern) {
-                    cx.save();
-                    cx.fillStyle = pattern;
-                    cx.fillRect(x, y, TILE_SIZE, TILE_DRAW_HEIGHT);
-                    cx.restore();
-                }
-            }
-            break;
-        case TileType.Grass:
-            cx.fillStyle = "rgb(100, 220, 100)";
-            cx.fillRect(x, y, TILE_SIZE, TILE_DRAW_HEIGHT);
-            {
-                const pattern = createAsciiPattern(
-                    TILE_SIZE,
-                    TILE_DRAW_HEIGHT,
-                    0.55,
-                );
-                if (pattern) {
-                    cx.save();
-                    cx.fillStyle = pattern;
-                    cx.fillRect(x, y, TILE_SIZE, TILE_DRAW_HEIGHT);
-                    cx.restore();
-                }
-            }
-            break;
-        case TileType.Slate: {
-            cx.fillStyle = "rgb(130, 130, 130)";
-            cx.fillRect(x, y, TILE_SIZE, TILE_DRAW_HEIGHT);
-            const pattern = createAsciiPattern(
-                TILE_SIZE,
-                TILE_DRAW_HEIGHT,
-                0.55,
-            );
-            if (pattern) {
-                cx.save();
-                cx.fillStyle = pattern;
-                cx.fillRect(x, y, TILE_SIZE, TILE_DRAW_HEIGHT);
-                cx.restore();
-            }
-            break;
-        }
-        default:
-            cx.fillStyle = "black";
-            cx.fillRect(x, y, TILE_SIZE, TILE_DRAW_HEIGHT);
-            break;
+    const base = tile === TileType.Slate ? "rgb(130, 130, 130)" : GRASS_COLOR;
+    cx.fillStyle = base;
+    cx.fillRect(x, y, TILE_SIZE, TILE_DRAW_HEIGHT);
+    const pattern = createAsciiPattern(TILE_SIZE, TILE_DRAW_HEIGHT, 0.55);
+    if (pattern) {
+        cx.save();
+        cx.fillStyle = pattern;
+        cx.fillRect(x, y, TILE_SIZE, TILE_DRAW_HEIGHT);
+        cx.restore();
+    }
+    if (tile === undefined) {
+        cx.fillStyle = "black";
+        cx.fillRect(x, y, TILE_SIZE, TILE_DRAW_HEIGHT);
     }
 };
