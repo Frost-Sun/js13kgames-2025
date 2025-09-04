@@ -64,6 +64,39 @@ export const stepVolumeByTile: Readonly<Record<TileType, number>> = {
     [TileType.Slate]: 0.1,
 };
 
+const asciiPatternCache: Record<string, CanvasPattern | null> = {};
+function createAsciiPattern(
+    width: number,
+    height: number,
+    alpha: number,
+): CanvasPattern | null {
+    const key = `${width}x${height}-a${alpha}`;
+    if (asciiPatternCache[key]) return asciiPatternCache[key];
+    const off = document.createElement("canvas");
+    off.width = width;
+    off.height = height;
+    const ctx = off.getContext("2d");
+    if (!ctx) return null;
+    ctx.clearRect(0, 0, width, height);
+    const fontSize = Math.max(1, Math.floor(height * 0.2));
+    ctx.font = `${fontSize}px Courier New`;
+    ctx.globalAlpha = alpha;
+    const chars = ["#", ".", "-", "+", "*"];
+    for (let y = 0; y < height; y += fontSize) {
+        for (let x = 0; x < width; x += fontSize) {
+            const char = chars[Math.floor(Math.random() * chars.length)];
+            ctx.fillStyle =
+                Math.random() > 0.5
+                    ? "rgba(40,40,40,0.7)"
+                    : "rgba(80,80,80,0.7)";
+            ctx.fillText(char, x, y + fontSize);
+        }
+    }
+    const pattern = ctx.createPattern(off, "repeat");
+    asciiPatternCache[key] = pattern;
+    return pattern;
+}
+
 export const createTile = (type: TileType, x: number, y: number): Tile => {
     switch (type) {
         case TileType.Flower:
@@ -115,31 +148,72 @@ export const drawTile = (
 ): void => {
     switch (tile) {
         case TileType.Flower:
-            cx.fillStyle = "rgb(100, 200, 100)";
+            cx.fillStyle = "rgb(100, 220, 100)";
             cx.fillRect(x, y, TILE_SIZE, TILE_DRAW_HEIGHT);
+            {
+                const pattern = createAsciiPattern(
+                    TILE_SIZE,
+                    TILE_DRAW_HEIGHT,
+                    0.55,
+                );
+                if (pattern) {
+                    cx.save();
+                    cx.fillStyle = pattern;
+                    cx.fillRect(x, y, TILE_SIZE, TILE_DRAW_HEIGHT);
+                    cx.restore();
+                }
+            }
             break;
-        case TileType.Bush: {
-            cx.fillStyle = "rgb(90, 190, 90)";
+        case TileType.Bush:
+            cx.fillStyle = "rgb(100, 220, 100)";
             cx.fillRect(x, y, TILE_SIZE, TILE_DRAW_HEIGHT);
+            {
+                const pattern = createAsciiPattern(
+                    TILE_SIZE,
+                    TILE_DRAW_HEIGHT,
+                    0.55,
+                );
+                if (pattern) {
+                    cx.save();
+                    cx.fillStyle = pattern;
+                    cx.fillRect(x, y, TILE_SIZE, TILE_DRAW_HEIGHT);
+                    cx.restore();
+                }
+            }
             break;
-        }
+        case TileType.Grass:
+            cx.fillStyle = "rgb(100, 220, 100)";
+            cx.fillRect(x, y, TILE_SIZE, TILE_DRAW_HEIGHT);
+            {
+                const pattern = createAsciiPattern(
+                    TILE_SIZE,
+                    TILE_DRAW_HEIGHT,
+                    0.55,
+                );
+                if (pattern) {
+                    cx.save();
+                    cx.fillStyle = pattern;
+                    cx.fillRect(x, y, TILE_SIZE, TILE_DRAW_HEIGHT);
+                    cx.restore();
+                }
+            }
+            break;
         case TileType.Slate: {
             cx.fillStyle = "rgb(130, 130, 130)";
             cx.fillRect(x, y, TILE_SIZE, TILE_DRAW_HEIGHT);
-            const edgeThickness = TILE_DRAW_HEIGHT * 0.1;
-            cx.fillStyle = "rgb(120, 120, 120)";
-            cx.fillRect(
-                x,
-                y + TILE_DRAW_HEIGHT - edgeThickness,
+            const pattern = createAsciiPattern(
                 TILE_SIZE,
-                edgeThickness,
+                TILE_DRAW_HEIGHT,
+                0.55,
             );
-            cx.fillRect(x, y, edgeThickness, TILE_DRAW_HEIGHT);
+            if (pattern) {
+                cx.save();
+                cx.fillStyle = pattern;
+                cx.fillRect(x, y, TILE_SIZE, TILE_DRAW_HEIGHT);
+                cx.restore();
+            }
             break;
         }
-        case TileType.Grass:
-            break;
-
         default:
             cx.fillStyle = "black";
             cx.fillRect(x, y, TILE_SIZE, TILE_DRAW_HEIGHT);
