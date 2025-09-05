@@ -26,7 +26,12 @@ import type { Area } from "./core/math/Area";
 import { cx } from "./graphics";
 import { GRASS_COLOR } from "./tiles";
 
-export function drawHorizon(area: Area, blur: number, scrollX: number): void {
+export function drawHorizon(
+    area: Area,
+    blur: number,
+    scrollX: number,
+    progress: number,
+): void {
     cx.save();
 
     // Sky
@@ -56,46 +61,7 @@ export function drawHorizon(area: Area, blur: number, scrollX: number): void {
     cx.fillStyle = "#8b0000";
     cx.fill();
 
-    // Door
-    cx.fillStyle = "#654321";
-    cx.fillRect(
-        area.width * 0.42,
-        area.height * 0.6,
-        area.width * 0.06,
-        area.height * 0.3,
-    );
-
-    // Window
-    cx.fillStyle = "#add8e6";
-    cx.fillRect(
-        area.width * 0.33,
-        area.height * 0.56,
-        area.width * 0.06,
-        area.height * 0.3,
-    );
-
-    // Tree trunk
-    cx.fillStyle = "#8b5a2b";
-    cx.fillRect(
-        area.width * 0.7,
-        area.height * 0.6,
-        area.width * 0.03,
-        area.height * 0.3,
-    );
-
-    // Tree foliage
-    cx.beginPath();
-    cx.arc(
-        area.width * 0.715,
-        area.height * 0.5,
-        area.width * 0.05,
-        0,
-        Math.PI * 2,
-    );
-    cx.fillStyle = "#228b22";
-    cx.fill();
-
-    cx.restore(); // end objects further away
+    cx.restore();
 
     // Fence
     const fenceHeight = area.height / 2;
@@ -107,20 +73,33 @@ export function drawHorizon(area: Area, blur: number, scrollX: number): void {
         fenceHeight,
     );
 
-    // Mouse hole
-    cx.save();
-    cx.translate(scrollX, 0);
-    const holeWidth = 20;
-    const holeHeight = 20;
-    cx.fillStyle = GRASS_COLOR;
-    cx.beginPath();
-    cx.moveTo(area.width / 2 - holeWidth / 2, area.height);
-    cx.lineTo(area.width / 2 - holeWidth / 2, area.height - holeHeight);
-    cx.lineTo(area.width / 2, area.height - holeHeight * 1.2);
-    cx.lineTo(area.width / 2 + holeWidth / 2, area.height - holeHeight);
-    cx.lineTo(area.width / 2 + holeWidth / 2, area.height);
-    cx.fill();
-    cx.restore();
+    // Mouse hole: grows from 0 to full size at the bottom as progress goes from 0.95 to 1
+    const HOLE_GROW_START = 0.8;
+    const HOLE_GROW_END = 1.0;
+    if (progress > HOLE_GROW_START) {
+        cx.save();
+        cx.translate(scrollX, 0);
+        const maxHoleWidth = 20;
+        const maxHoleHeight = 20;
+        // t: 0 (progress=HOLE_GROW_START) to 1 (progress=HOLE_GROW_END)
+        const t = Math.min(
+            (progress - HOLE_GROW_START) / (HOLE_GROW_END - HOLE_GROW_START),
+            1,
+        );
+        const holeWidth = maxHoleWidth * t;
+        const holeHeight = maxHoleHeight * t;
+        // Place the hole at the very bottom of the horizon
+        const holeBaseY = area.height - holeHeight;
+        cx.fillStyle = GRASS_COLOR;
+        cx.beginPath();
+        cx.moveTo(area.width / 2 - holeWidth / 2, holeBaseY + holeHeight);
+        cx.lineTo(area.width / 2 - holeWidth / 2, holeBaseY);
+        cx.lineTo(area.width / 2, holeBaseY - holeHeight * 0.2);
+        cx.lineTo(area.width / 2 + holeWidth / 2, holeBaseY);
+        cx.lineTo(area.width / 2 + holeWidth / 2, holeBaseY + holeHeight);
+        cx.fill();
+        cx.restore();
+    }
 
     cx.restore();
 }

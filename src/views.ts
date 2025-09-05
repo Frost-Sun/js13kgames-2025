@@ -25,7 +25,7 @@
 import { renderWaitForProgressInput } from "./controls";
 import { clearCanvas } from "./graphics";
 import { renderText, TextSize } from "./text";
-import { renderBlackCat } from "./BlackCatGraphic";
+import { renderBlackCat } from "./BlackCatAnimation";
 import { renderGradient } from "./core/graphics/gradient";
 
 export const drawLoadingView = (): void => {
@@ -39,14 +39,19 @@ export const drawReadyView = (): void => {
 };
 
 export const drawStartScreen = (cx: CanvasRenderingContext2D): void => {
-    clearCanvas("rgb(18, 18, 18)");
+    clearCanvas("rgb(20, 20, 20)");
 
     renderBlackCat(
         cx,
-        cx.canvas.width / 4,
-        10,
-        cx.canvas.width / 2,
-        cx.canvas.height,
+        cx.canvas.width / 2 - cx.canvas.width * 0.18,
+        cx.canvas.height / 2 - cx.canvas.width * 0.14,
+        cx.canvas.width * 0.36,
+        "down",
+        true,
+        1,
+        0,
+        0,
+        { t: 0, dt: 0 },
     );
 
     renderText(
