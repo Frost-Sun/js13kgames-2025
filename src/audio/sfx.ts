@@ -32,12 +32,14 @@ import {
     startSong,
     mouseSfx,
     mouseWalkNormalSfx,
+    fightSong,
 } from "./sfxData.ts";
 
 import {
     createTune,
     FadeIn,
     FadeOut,
+    FadeOutIn,
     type SongData,
 } from "../core/audio/music.js";
 
@@ -116,7 +118,7 @@ export const initializeAudio = () => {
 
     return Promise.all([
         initMusicPlayer(startTune, startSong, true),
-        //    initMusicPlayer(raceTune, song2, true),
+        initMusicPlayer(gameTune, fightSong, true),
         //    initMusicPlayer(gameoverFx, gameoverSfx, false),
     ]);
 };
@@ -126,34 +128,24 @@ export const playTune = async (tune: string, vol: number = 1) => {
 
     switch (tune) {
         case SFX_RUNNING: {
-            FadeOut(startTune, 0.2);
+            gameTune.currentTime = 0;
+            FadeOutIn(startTune, gameTune, 0.2);
             break;
         }
         case SFX_FINISHED: {
-            //zzfx(0.04, ...finishSfx);
-            //startTune.currentTime = 0;
-            //FadeOutIn(raceTune, startTune);
             break;
         }
         case SFX_GAMEOVER: {
             zzfx(1, ...mouseSfx);
-
-            if (startTune.paused || startTune.volume < 1) {
-                startTune.currentTime = 0;
-                FadeIn(startTune);
-            }
+            FadeOut(gameTune);
             break;
         }
         case SFX_RESTART: {
-            startTune.currentTime = 0;
-            FadeIn(startTune);
             break;
         }
         case SFX_START: {
-            if (startTune.paused || startTune.volume < 1) {
-                startTune.currentTime = 0;
-                FadeIn(startTune);
-            }
+            startTune.currentTime = 0;
+            FadeIn(startTune);
             break;
         }
         case SFX_BOUNCE: {

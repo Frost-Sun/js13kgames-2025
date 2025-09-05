@@ -168,7 +168,7 @@ export const FadeIn = (tune: Tune, vol: number = 1): void => {
         });
 };
 
-export const FadeOutIn = (tune1: Tune, tune2: Tune): void => {
+export const FadeOutIn = (tune1: Tune, tune2: Tune, vol: number = 1): void => {
     if (tune1._fadeInterval) clearInterval(tune1._fadeInterval);
     if (tune1._fadeOutInTimeout) clearTimeout(tune1._fadeOutInTimeout);
     if (tune2._fadeInterval) clearInterval(tune2._fadeInterval);
@@ -193,7 +193,7 @@ export const FadeOutIn = (tune1: Tune, tune2: Tune): void => {
                 tune1._fadeInterval = undefined;
 
                 tune1._fadeOutInTimeout = setTimeout(() => {
-                    FadeIn(tune2, 1);
+                    FadeIn(tune2, vol);
                     tune1._fadeOutInTimeout = undefined;
                 }, 500);
             }
@@ -202,7 +202,7 @@ export const FadeOutIn = (tune1: Tune, tune2: Tune): void => {
         tune1.pause();
         tune1.volume = 0;
         tune1._fadeOutInTimeout = setTimeout(() => {
-            FadeIn(tune2, 1);
+            FadeIn(tune2, vol);
             tune1._fadeOutInTimeout = undefined;
         }, 500);
     }
