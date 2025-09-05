@@ -155,7 +155,7 @@ export class Level implements Area, Space {
     }
 
     update(time: TimeStep): void {
-        this.camera.update(time);
+        this.camera.update();
 
         this.calculateMovement(time);
 

@@ -23,8 +23,8 @@
  */
 
 import type { Area, Dimensions } from "../math/Area";
-import { easeInOutExpo } from "../math/easings";
-import type { TimeStep } from "../time/TimeStep";
+// import { easeInOutExpo } from "../math/easings";
+// import type { TimeStep } from "../time/TimeStep";
 
 export interface Transition {
     startY: number;
@@ -39,12 +39,8 @@ export class Camera {
     zoom = 1;
     visibleAreaHeight?: number;
 
-    // Adjusts the camera y position, relative to the visible level
-    // area.
-    yAdjust: number = 0;
-
     private target: Area | null = null;
-    private transition: Transition | null = null;
+    // private transition: Transition | null = null;
 
     constructor(
         private level: Area,
@@ -65,34 +61,34 @@ export class Camera {
         };
     }
 
-    zoomToLevel(): void {
-        this.target = null;
+    // zoomToLevel(): void {
+    //     this.target = null;
 
-        this.x = this.level.x + this.level.width / 2;
-        this.y = this.level.y + this.level.height / 2;
+    //     this.x = this.level.x + this.level.width / 2;
+    //     this.y = this.level.y + this.level.height / 2;
 
-        if (
-            this.level.width / this.level.height >=
-            this.view.width / this.view.height
-        ) {
-            this.zoom = this.view.width / this.level.width;
-        } else {
-            this.zoom = this.view.height / this.level.height;
-        }
-    }
+    //     if (
+    //         this.level.width / this.level.height >=
+    //         this.view.width / this.view.height
+    //     ) {
+    //         this.zoom = this.view.width / this.level.width;
+    //     } else {
+    //         this.zoom = this.view.height / this.level.height;
+    //     }
+    // }
 
     follow(target: Area): void {
         this.target = target;
     }
 
-    setTransition(transition: Transition): void {
-        const viewAreaHeight = this.view.height / this.zoom;
-        this.transition = {
-            ...transition,
-            endY: transition.endY + viewAreaHeight * this.yAdjust,
-        };
-        this.target = null;
-    }
+    // setTransition(transition: Transition): void {
+    //     const viewAreaHeight = this.view.height / this.zoom;
+    //     this.transition = {
+    //         ...transition,
+    //         endY: transition.endY + viewAreaHeight * this.yAdjust,
+    //     };
+    //     this.target = null;
+    // }
 
     /**
      * Applies camera view when drawing. Drawing within this
@@ -111,23 +107,27 @@ export class Camera {
         cx.restore();
     }
 
-    update(time: TimeStep): void {
+    update(/* time: TimeStep */): void {
         if (this.visibleAreaHeight != null) {
             this.zoom = this.view.height / this.visibleAreaHeight;
         }
 
-        if (this.transition != null) {
-            const { startY, endY, startTime, duration } = this.transition;
+        // if (this.transition != null) {
+        //     const { startY, endY, startTime, duration } = this.transition;
 
-            if (time.t < startTime + duration) {
-                const elapsedTime = time.t - this.transition.startTime;
-                const progress = elapsedTime / this.transition.duration;
+        //     if (time.t < startTime + duration) {
+        //         const elapsedTime = time.t - this.transition.startTime;
+        //         const progress = elapsedTime / this.transition.duration;
 
-                this.y = startY + easeInOutExpo(progress) * (endY - startY);
-            } else {
-                this.transition = null;
-            }
-        } else if (this.target) {
+        //         this.y = startY + easeInOutExpo(progress) * (endY - startY);
+        //     } else {
+        //         this.transition = null;
+        //     }
+        // } else if (this.target) {
+        //     this.followFrame(this.target);
+        // }
+
+        if (this.target) {
             this.followFrame(this.target);
         }
     }
