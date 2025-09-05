@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "start": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build && roadroller dist/assets/index.js -o dist/assets/index.js",
     "postbuild": "node createDeployPackage.js",
     "preview": "vite preview",
     "lint": "eslint ."
@@ -19,6 +19,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
     "prettier": "3.6.2",
+    "roadroller": "^2.1.0",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.39.1",
     "vite": "^7.1.2"
