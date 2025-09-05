@@ -274,7 +274,10 @@ export class Level implements Area, Space {
         // "cut" at the horizon.
         const backgroundScrollAmount =
             -(this.camera.x - this.width / 2) * this.camera.zoom;
-        drawHorizon(this.horizonDrawArea, 4, backgroundScrollAmount); // TODO: Change based on y location in map
+        // Calculate player progress: 0 at bottom, 1 at top
+        let progress = 1 - this.player.y / (this.height - TILE_DRAW_HEIGHT);
+        progress = Math.max(0, Math.min(1, progress));
+        drawHorizon(this.horizonDrawArea, 4, backgroundScrollAmount, progress);
 
         cx.save();
         cx.translate(0, this.levelDrawArea.y);
