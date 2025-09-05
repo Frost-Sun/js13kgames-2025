@@ -44,7 +44,7 @@ const i0 = { // Instrument 0
     6 // FX_DELAY_TIME
   ],
   // Patterns
-  p: [, , , , 2, 1, 2, 3, 4, 1, 2, 3, 2, 1, 2, 3],
+  p: [2, 1, 2, 3 , 2, 1, 2, 3, 4, 1, 2, 3, 2, 1, 2, 3],
   // Columns
   c: [
     {
