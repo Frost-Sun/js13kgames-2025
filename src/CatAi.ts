@@ -48,7 +48,7 @@ export let hearAccuracyDebug: number = 0;
 const OBSERVE_PERIOD = 500;
 const SIGHT_ACCURACY_LOWERING_DISTANCE = 5 * TILE_SIZE;
 
-export const CERTAIN_OBSERVATION_THERSHOLD = 0.3;
+export const CERTAIN_OBSERVATION_THERSHOLD = 0.5;
 export const VAGUE_OBSERVATION_THRESHOLD = 0.15;
 
 const ALERT_TIMEOUT = 2000;
@@ -69,6 +69,23 @@ const getRandomPosition = (space: Space): Vector => {
     return {
         x: xMargin + random(space.width - 2 * xMargin),
         y: yMargin + random(space.height - 2 * yMargin),
+    };
+};
+
+const notFarFrom = (reference: Vector, position: Vector): Vector => {
+    const xMaxDistance = 3 * TILE_SIZE;
+    const yMaxDistance = 3 * TILE_DRAW_HEIGHT;
+    return {
+        x: clamp(
+            position.x,
+            reference.x - xMaxDistance,
+            reference.x + xMaxDistance,
+        ),
+        y: clamp(
+            position.y,
+            reference.y - yMaxDistance,
+            reference.y + yMaxDistance,
+        ),
     };
 };
 
@@ -116,7 +133,7 @@ export class CatAi {
     state: CatState = CatState.Idle;
 
     private alertPositionReachedTime: number | null = null;
-    private lastLookTime: number = 0;
+    private lastObserveTime: number = 0;
     private target: Vector | null = null;
     private mouseLastObservedPosition: Vector | null = null;
 
@@ -126,8 +143,8 @@ export class CatAi {
     ) {}
 
     getMovement(time: TimeStep): Vector {
-        if (OBSERVE_PERIOD < time.t - this.lastLookTime) {
-            this.lastLookTime = time.t;
+        if (OBSERVE_PERIOD < time.t - this.lastObserveTime) {
+            this.lastObserveTime = time.t;
             const hostCenter = getCenter(this.host);
 
             const seen = this.lookForMouse(hostCenter);
@@ -144,10 +161,17 @@ export class CatAi {
                         this.state = CatState.Chase;
                     }
                 } else if (VAGUE_OBSERVATION_THRESHOLD < observation.accuracy) {
-                    this.target = getPositionALittleTowardsMouse(
+                    const distanceToMouse = distance(
                         hostCenter,
                         observation.position,
                     );
+                    this.target =
+                        distanceToMouse < TILE_SIZE
+                            ? observation.position
+                            : getPositionALittleTowardsMouse(
+                                  hostCenter,
+                                  observation.position,
+                              );
                     if (this.state == CatState.Idle) {
                         this.state = CatState.Alert;
                     }
@@ -167,7 +191,15 @@ export class CatAi {
             } else {
                 this.target = getRandomPosition(this.space);
             }
-        } else if (this.state === CatState.Alert && this.target) {
+        } else if (this.state === CatState.Alert) {
+            if (this.target == null) {
+                const hostCenter = getCenter(this.host);
+                this.target = notFarFrom(
+                    hostCenter,
+                    getRandomPosition(this.space),
+                );
+            }
+
             const movement = this.goTo(this.target);
 
             if (movement == null) {
@@ -175,8 +207,8 @@ export class CatAi {
                     this.alertPositionReachedTime = time.t;
                 }
                 if (ALERT_TIMEOUT < time.t - this.alertPositionReachedTime) {
+                    this.target = null;
                     this.alertPositionReachedTime = null;
-                    this.state = CatState.Idle;
                 }
             }
 
