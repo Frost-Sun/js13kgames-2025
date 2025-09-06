@@ -44,7 +44,7 @@ export const drawStartScreen = (cx: CanvasRenderingContext2D): void => {
     renderBlackCat(
         cx,
         cx.canvas.width / 2 - cx.canvas.width * 0.18,
-        cx.canvas.height / 2 - cx.canvas.width * 0.14,
+        cx.canvas.height / 2 + cx.canvas.width * 0.07,
         cx.canvas.width * 0.36,
         "down",
         true,
