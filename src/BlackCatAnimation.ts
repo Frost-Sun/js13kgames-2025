@@ -88,37 +88,63 @@ export function renderBlackCat(
     const earY = -height * 0.5;
     const earW = width * 0.16;
     const earH = height * 0.18;
-    // Left ear
-    cx.beginPath();
-    cx.moveTo(-width * 0.13, earY);
-    cx.lineTo(-width * 0.13 - earW / 2, earY + earH);
-    cx.lineTo(-width * 0.13 + earW / 2, earY + earH);
-    cx.closePath();
-    cx.fill();
-    // Right ear
-    cx.beginPath();
-    cx.moveTo(width * 0.13, earY);
-    cx.lineTo(width * 0.13 - earW / 2, earY + earH);
-    cx.lineTo(width * 0.13 + earW / 2, earY + earH);
-    cx.closePath();
-    cx.fill();
+    if (facing === "side") {
+        // Always draw ears at positive X, let canvas flip handle mirroring
+        const mainEarX = width * 0.13;
+        const farEarX = width * 0.03;
+        const farEarW = earW * 0.7;
+        const farEarH = earH * 0.7;
+        // Farther ear (drawn first, lighter color for depth)
+        cx.save();
+        cx.beginPath();
+        cx.moveTo(farEarX, earY + earH * 0.1);
+        cx.lineTo(farEarX - farEarW / 2, earY + farEarH + earH * 0.1);
+        cx.lineTo(farEarX + farEarW / 2, earY + farEarH + earH * 0.1);
+        cx.closePath();
+        cx.fillStyle = "#000";
+        cx.fill();
+        cx.restore();
+        // Main (closer) ear
+        cx.beginPath();
+        cx.moveTo(mainEarX, earY);
+        cx.lineTo(mainEarX - earW / 2, earY + earH);
+        cx.lineTo(mainEarX + earW / 2, earY + earH);
+        cx.closePath();
+        cx.fillStyle = "#000";
+        cx.fill();
+    } else {
+        // Both ears (default)
+        // Left ear
+        cx.beginPath();
+        cx.moveTo(-width * 0.13, earY);
+        cx.lineTo(-width * 0.13 - earW / 2, earY + earH);
+        cx.lineTo(-width * 0.13 + earW / 2, earY + earH);
+        cx.closePath();
+        cx.fillStyle = "#000";
+        cx.fill();
+        // Right ear
+        cx.beginPath();
+        cx.moveTo(width * 0.13, earY);
+        cx.lineTo(width * 0.13 - earW / 2, earY + earH);
+        cx.lineTo(width * 0.13 + earW / 2, earY + earH);
+        cx.closePath();
+        cx.fillStyle = "#000";
+        cx.fill();
+    }
 
     // Tail
-    const tailStartX = width * 0.33;
+    const tailStartX = -width * 0.33;
     const tailStartY = height * 0.2;
     const tailThickness = width * 0.07;
-    const tailEndX = tailStartX - width * 0.22;
+    const tailEndX = tailStartX + width * 0.22;
     const tailEndY = tailStartY + height * 0.32;
+    const ctrl1X = tailStartX - width * 0.2;
+    const ctrl1Y = tailStartY - height * 0.1;
+    const ctrl2X = tailStartX - width * 0.1;
+    const ctrl2Y = tailStartY + height * 0.25;
     cx.beginPath();
     cx.moveTo(tailStartX, tailStartY);
-    cx.bezierCurveTo(
-        tailStartX + width * 0.2,
-        tailStartY - height * 0.1,
-        tailStartX + width * 0.1,
-        tailStartY + height * 0.25,
-        tailEndX,
-        tailEndY,
-    );
+    cx.bezierCurveTo(ctrl1X, ctrl1Y, ctrl2X, ctrl2Y, tailEndX, tailEndY);
     cx.strokeStyle = "#000";
     cx.lineWidth = tailThickness;
     cx.stroke();
