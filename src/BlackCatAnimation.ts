@@ -112,6 +112,43 @@ export function renderBlackCat(
         cx.closePath();
         cx.fillStyle = "#000";
         cx.fill();
+
+        // Nose (right side for profile)
+        const noseX = width * 0.28;
+        cx.beginPath();
+        cx.ellipse(
+            noseX,
+            -height * 0.11,
+            width * 0.018,
+            height * 0.012,
+            0,
+            0,
+            Math.PI * 2,
+        );
+        cx.fillStyle = "#e68686";
+        cx.fill();
+
+        // Only right-side whiskers
+        cx.strokeStyle = "#e6d6e6";
+        const whiskerThickness = Math.max(0.1, width * 0.012);
+        cx.lineWidth = whiskerThickness;
+        const whiskerLength = width * 0.18;
+        const whiskerSpread = width * 0.04;
+        const whiskerY = -height * 0.1;
+        [-1, 0, 1].forEach((row) => {
+            // right whiskers only
+            cx.beginPath();
+            cx.moveTo(width * 0.13, whiskerY + row * whiskerSpread);
+            cx.bezierCurveTo(
+                width * 0.22,
+                whiskerY + row * whiskerSpread + whiskerLength * 0.1,
+                width * 0.32,
+                whiskerY + row * whiskerSpread + whiskerLength * 0.3,
+                width * 0.38,
+                whiskerY + row * whiskerSpread + whiskerLength * 0.2,
+            );
+            cx.stroke();
+        });
     } else {
         // Both ears (default)
         // Left ear
@@ -219,7 +256,7 @@ export function renderBlackCat(
             0,
             Math.PI * 2,
         );
-        cx.fillStyle = "#e6d6e6";
+        cx.fillStyle = "#e68686";
         cx.fill();
 
         // Whiskers
