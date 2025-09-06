@@ -7,8 +7,7 @@
     "dev": "vite",
     "start": "vite",
     "build": "tsc && vite build && roadroller dist/assets/index.js -o dist/assets/index.js",
-    "advzip": "advzip -z -4 -i 100 build.zip",
-    "postbuild": "node createDeployPackage.js",
+    "postbuild": "node createDeployPackage.js && advzip -z -4 -i 100 build.zip",
     "preview": "vite preview",
     "lint": "eslint ."
   },
