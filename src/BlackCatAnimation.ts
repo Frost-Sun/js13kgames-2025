@@ -47,138 +47,101 @@ export function renderBlackCat(
     lastSpeed: number,
     time: TimeStep,
 ) {
-    const t = time.t;
-    const height = width / CAT_ASPECT_RATIO;
-
+    const t = time.t,
+        h = width / CAT_ASPECT_RATIO;
     cx.save();
-
-    // For a pseudo-3D effect, the bounding box should be
-    // on the ground and the figure "rise" from there.
-    cx.translate(0, -height * 0.25);
-
-    // Centered transform; flip only for side pose; subtle bob when moving
-    cx.translate(x + width / 2, y + height / 2);
+    cx.translate(0, -h * 0.25);
+    cx.translate(x + width / 2, y + h / 2);
     cx.scale(facing === "side" ? dir : 1, 1);
-
-    const moveFactor = Math.min(1, lastSpeed * 0.8);
-    const bob =
-        Math.sin(t / 220 + step * 2.0) * (height * 0.05 * (0.4 + moveFactor));
-    cx.translate(0, bob);
-
+    cx.translate(
+        0,
+        Math.sin(t / 220 + step * 2.0) *
+            (h * 0.05 * (0.4 + Math.min(1, lastSpeed * 0.8))),
+    );
     // Body
     cx.beginPath();
-    cx.ellipse(0, height * 0.2, width * 0.35, height * 0.28, 0, 0, Math.PI * 2);
+    cx.ellipse(0, h * 0.2, width * 0.35, h * 0.28, 0, 0, Math.PI * 2);
     cx.fillStyle = "#000";
     cx.fill();
-
     // Head
     cx.beginPath();
-    cx.ellipse(
-        0,
-        -height * 0.18,
-        width * 0.28,
-        height * 0.22,
-        0,
-        0,
-        Math.PI * 2,
-    );
+    cx.ellipse(0, -h * 0.18, width * 0.28, h * 0.22, 0, 0, Math.PI * 2);
     cx.fill();
-
     // Ears
-    const earY = -height * 0.5;
-    const earW = width * 0.16;
-    const earH = height * 0.18;
+    const earY = -h * 0.5,
+        earW = width * 0.16,
+        earH = h * 0.18;
     if (facing === "side") {
-        // Always draw ears at positive X, let canvas flip handle mirroring
-        const mainEarX = width * 0.13;
-        const farEarX = width * 0.03;
-        const farEarW = earW * 0.7;
-        const farEarH = earH * 0.7;
-        // Farther ear (drawn first)
-        cx.save();
-        cx.beginPath();
-        cx.moveTo(farEarX, earY + earH * 0.1);
-        cx.lineTo(farEarX + farEarW / 2, earY + farEarH + earH * 0.1);
-        cx.lineTo(farEarX - farEarW / 2, earY + farEarH + earH * 0.1);
-        cx.closePath();
-        cx.fillStyle = "#000";
-        cx.fill();
-        cx.restore();
-        // Main (closer) ear
-        cx.beginPath();
-        cx.moveTo(mainEarX, earY);
-        cx.lineTo(mainEarX + earW / 2, earY + earH);
-        cx.lineTo(mainEarX - earW / 2, earY + earH);
-        cx.closePath();
-        cx.fillStyle = "#000";
-        cx.fill();
-
-        // Nose (right side for profile)
-        const noseX = width * 0.28;
+        [
+            [width * 0.03, earW * 0.7, earH * 0.7, 0.1],
+            [width * 0.13, earW, earH, 0],
+        ].forEach(([ex, ew, eh, yoff], i) => {
+            cx.save();
+            cx.beginPath();
+            cx.moveTo(ex, earY + earH * yoff);
+            cx.lineTo(ex + ew / 2, earY + eh + earH * yoff);
+            cx.lineTo(ex - ew / 2, earY + eh + earH * yoff);
+            cx.closePath();
+            cx.fillStyle = "#000";
+            cx.fill();
+            cx.restore();
+        });
+        // Nose
+        cx.fillStyle = "#e68686";
         cx.beginPath();
         cx.ellipse(
-            noseX,
-            -height * 0.11,
+            width * 0.28,
+            -h * 0.11,
             width * 0.018,
-            height * 0.012,
+            h * 0.012,
             0,
             0,
             Math.PI * 2,
         );
-        cx.fillStyle = "#e68686";
         cx.fill();
-
-        // Only right-side whiskers
+        // Whiskers (right only)
         cx.strokeStyle = "#e6d6e6";
-        const whiskerThickness = Math.max(0.1, width * 0.012);
-        cx.lineWidth = whiskerThickness;
-        const whiskerLength = width * 0.18;
-        const whiskerSpread = width * 0.04;
-        const whiskerY = -height * 0.1;
+        cx.lineWidth = Math.max(0.1, width * 0.012);
+        const wy = -h * 0.1,
+            wl = width * 0.18,
+            ws = width * 0.04;
         [-1, 0, 1].forEach((row) => {
-            // right whiskers only
             cx.beginPath();
-            cx.moveTo(width * 0.13, whiskerY + row * whiskerSpread);
+            cx.moveTo(width * 0.13, wy + row * ws);
             cx.bezierCurveTo(
                 width * 0.22,
-                whiskerY + row * whiskerSpread + whiskerLength * 0.1,
+                wy + row * ws + wl * 0.1,
                 width * 0.32,
-                whiskerY + row * whiskerSpread + whiskerLength * 0.3,
+                wy + row * ws + wl * 0.3,
                 width * 0.38,
-                whiskerY + row * whiskerSpread + whiskerLength * 0.2,
+                wy + row * ws + wl * 0.2,
             );
             cx.stroke();
         });
     } else {
-        // Both ears (default)
-        // Left ear
-        cx.beginPath();
-        cx.moveTo(-width * 0.13, earY);
-        cx.lineTo(-width * 0.13 - earW / 2, earY + earH);
-        cx.lineTo(-width * 0.13 + earW / 2, earY + earH);
-        cx.closePath();
-        cx.fillStyle = "#000";
-        cx.fill();
-        // Right ear
-        cx.beginPath();
-        cx.moveTo(width * 0.13, earY);
-        cx.lineTo(width * 0.13 - earW / 2, earY + earH);
-        cx.lineTo(width * 0.13 + earW / 2, earY + earH);
-        cx.closePath();
-        cx.fillStyle = "#000";
-        cx.fill();
+        [
+            [-width * 0.13, -1],
+            [width * 0.13, 1],
+        ].forEach(([ex, sign]) => {
+            cx.beginPath();
+            cx.moveTo(ex, earY);
+            cx.lineTo(ex - (sign * earW) / 2, earY + earH);
+            cx.lineTo(ex + (sign * earW) / 2, earY + earH);
+            cx.closePath();
+            cx.fillStyle = "#000";
+            cx.fill();
+        });
     }
-
     // Tail
-    const tailStartX = -width * 0.33;
-    const tailStartY = height * 0.2;
-    const tailThickness = width * 0.07;
-    const tailEndX = tailStartX + width * 0.22;
-    const tailEndY = tailStartY + height * 0.32;
-    const ctrl1X = tailStartX - width * 0.2;
-    const ctrl1Y = tailStartY - height * 0.1;
-    const ctrl2X = tailStartX - width * 0.1;
-    const ctrl2Y = tailStartY + height * 0.25;
+    const tailStartX = -width * 0.33,
+        tailStartY = h * 0.2,
+        tailThickness = width * 0.07,
+        tailEndX = tailStartX + width * 0.22,
+        tailEndY = tailStartY + h * 0.32,
+        ctrl1X = tailStartX - width * 0.2,
+        ctrl1Y = tailStartY - h * 0.1,
+        ctrl2X = tailStartX - width * 0.1,
+        ctrl2Y = tailStartY + h * 0.25;
     cx.beginPath();
     cx.moveTo(tailStartX, tailStartY);
     cx.bezierCurveTo(ctrl1X, ctrl1Y, ctrl2X, ctrl2Y, tailEndX, tailEndY);
@@ -189,49 +152,22 @@ export function renderBlackCat(
     cx.arc(tailEndX, tailEndY, tailThickness / 2, 0, Math.PI * 2);
     cx.fillStyle = "#000";
     cx.fill();
-
     if (facing.includes("down")) {
-        // Eyes
         const eo = eyesOpen ? 1 : 0.7;
         cx.save();
-        cx.translate(0, -height * 0.18);
-        for (const dx of [-width * 0.09, width * 0.09]) {
-            cx.beginPath();
-            cx.ellipse(
-                dx,
-                0,
-                width * 0.07,
-                width * 0.04 * eo,
-                0,
-                0,
-                Math.PI * 2,
-            );
-            cx.fillStyle = "#fff";
-            cx.fill();
-            cx.beginPath();
-            cx.ellipse(
-                dx,
-                0,
-                width * 0.06,
-                width * 0.03 * eo,
-                0,
-                0,
-                Math.PI * 2,
-            );
-            cx.fillStyle = "green";
-            cx.fill();
-            cx.beginPath();
-            cx.ellipse(
-                dx,
-                0,
-                width * 0.025,
-                width * 0.018 * eo,
-                0,
-                0,
-                Math.PI * 2,
-            );
-            cx.fillStyle = "#181818";
-            cx.fill();
+        cx.translate(0, -h * 0.18);
+        [-width * 0.09, width * 0.09].forEach((dx) => {
+            [
+                [width * 0.07, width * 0.04 * eo, "#fff"],
+                [width * 0.06, width * 0.03 * eo, "green"],
+                [width * 0.025, width * 0.018 * eo, "#181818"],
+            ].forEach((item) => {
+                const [rx, ry, fill] = item as [number, number, string];
+                cx.beginPath();
+                cx.ellipse(dx, 0, rx, ry, 0, 0, Math.PI * 2);
+                cx.fillStyle = fill;
+                cx.fill();
+            });
             cx.beginPath();
             cx.arc(
                 dx - width * 0.02,
@@ -242,57 +178,43 @@ export function renderBlackCat(
             );
             cx.fillStyle = "#fff";
             cx.fill();
-        }
+        });
         cx.restore();
-
         // Nose
         cx.beginPath();
-        cx.ellipse(
-            0,
-            -height * 0.11,
-            width * 0.018,
-            height * 0.012,
-            0,
-            0,
-            Math.PI * 2,
-        );
+        cx.ellipse(0, -h * 0.11, width * 0.018, h * 0.012, 0, 0, Math.PI * 2);
         cx.fillStyle = "#e68686";
         cx.fill();
-
         // Whiskers
         cx.strokeStyle = "#e6d6e6";
-        const whiskerThickness = Math.max(0.1, width * 0.012);
-        cx.lineWidth = whiskerThickness;
-        const whiskerLength = width * 0.18;
-        const whiskerSpread = width * 0.04;
-        const whiskerY = -height * 0.1;
+        cx.lineWidth = Math.max(0.1, width * 0.012);
+        const wy = -h * 0.1,
+            wl = width * 0.18,
+            ws = width * 0.04;
         [-1, 0, 1].forEach((row) => {
-            // left whiskers
             cx.beginPath();
-            cx.moveTo(-width * 0.13, whiskerY + row * whiskerSpread);
+            cx.moveTo(-width * 0.13, wy + row * ws);
             cx.bezierCurveTo(
                 -width * 0.22,
-                whiskerY + row * whiskerSpread + whiskerLength * 0.1,
+                wy + row * ws + wl * 0.1,
                 -width * 0.32,
-                whiskerY + row * whiskerSpread + whiskerLength * 0.3,
+                wy + row * ws + wl * 0.3,
                 -width * 0.38,
-                whiskerY + row * whiskerSpread + whiskerLength * 0.2,
+                wy + row * ws + wl * 0.2,
             );
             cx.stroke();
-            // right whiskers
             cx.beginPath();
-            cx.moveTo(width * 0.13, whiskerY + row * whiskerSpread);
+            cx.moveTo(width * 0.13, wy + row * ws);
             cx.bezierCurveTo(
                 width * 0.22,
-                whiskerY + row * whiskerSpread + whiskerLength * 0.1,
+                wy + row * ws + wl * 0.1,
                 width * 0.32,
-                whiskerY + row * whiskerSpread + whiskerLength * 0.3,
+                wy + row * ws + wl * 0.3,
                 width * 0.38,
-                whiskerY + row * whiskerSpread + whiskerLength * 0.2,
+                wy + row * ws + wl * 0.2,
             );
             cx.stroke();
         });
     }
-
     cx.restore();
 }
