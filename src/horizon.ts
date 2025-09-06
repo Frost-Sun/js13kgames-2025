@@ -64,14 +64,43 @@ export function drawHorizon(
     cx.restore();
 
     // Fence
-    const fenceHeight = area.height / 2;
-    cx.fillStyle = "#882222";
-    cx.fillRect(
-        area.x,
-        area.y + area.height - fenceHeight,
-        area.width,
-        fenceHeight,
+    const fenceHeightNear = area.height / 1.5;
+    const fenceHeightFar = area.height / 3;
+    // Make fence dynamically darker based on progress (0 = near, 1 = far)
+    function lerpColor(a: string, b: string, t: number) {
+        // a, b: hex colors like #882222, #441111
+        const ah = a
+            .match(/#(..)(..)(..)/)!
+            .slice(1)
+            .map((x) => parseInt(x, 16));
+        const bh = b
+            .match(/#(..)(..)(..)/)!
+            .slice(1)
+            .map((x) => parseInt(x, 16));
+        const ch = ah.map((v, i) => Math.round(v + (bh[i] - v) * t));
+        return `#${ch.map((x) => x.toString(16).padStart(2, "0")).join("")}`;
+    }
+    // Fence is darkest and most blurred at progress=0 (far), lightest/sharpest at progress=1 (close)
+    const t = 1 - Math.max(0, Math.min(progress, 1));
+    const fenceColor = lerpColor(
+        "#aa4444", // close (light)
+        "#664848", // far (very dark)
+        t,
     );
+    // Blur decreases as progress increases
+    if (progress < 1) {
+        cx.save();
+        cx.filter = `blur(${Math.round((1 - progress) * 4)}px)`;
+    }
+    cx.fillStyle = fenceColor;
+    // If blurred, extend the fence below the bottom to hide background color bleed
+    const h =
+        fenceHeightFar + (fenceHeightNear - fenceHeightFar) * progress + 8;
+    const y = area.y + area.height - h;
+    cx.fillRect(area.x, y, area.width, h);
+    if (progress < 1) {
+        cx.restore();
+    }
 
     // Mouse hole: grows from 0 to full size at the bottom as progress goes from 0.95 to 1
     const HOLE_GROW_START = 0.8;
@@ -88,8 +117,8 @@ export function drawHorizon(
         );
         const holeWidth = maxHoleWidth * t;
         const holeHeight = maxHoleHeight * t;
-        // Place the hole at the very bottom of the horizon
-        const holeBaseY = area.height - holeHeight;
+        // Place the hole at the very bottom of the canvas, regardless of fence or blur
+        const holeBaseY = area.y + area.height - holeHeight;
         cx.fillStyle = GRASS_COLOR;
         cx.beginPath();
         cx.moveTo(area.width / 2 - holeWidth / 2, holeBaseY + holeHeight);
