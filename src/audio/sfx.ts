@@ -38,7 +38,6 @@ import {
 import {
     createTune,
     FadeIn,
-    FadeOut,
     FadeOutIn,
     type SongData,
 } from "../core/audio/music.js";

@@ -103,44 +103,6 @@ export function renderBlackCat(
     cx.closePath();
     cx.fill();
 
-    // Eyes
-    const eo = eyesOpen ? 1 : 0.7;
-    cx.save();
-    cx.translate(0, -height * 0.18);
-    for (const dx of [-width * 0.09, width * 0.09]) {
-        cx.beginPath();
-        cx.ellipse(dx, 0, width * 0.07, width * 0.04 * eo, 0, 0, Math.PI * 2);
-        cx.fillStyle = "#fff";
-        cx.fill();
-        cx.beginPath();
-        cx.ellipse(dx, 0, width * 0.06, width * 0.03 * eo, 0, 0, Math.PI * 2);
-        cx.fillStyle = "green";
-        cx.fill();
-        cx.beginPath();
-        cx.ellipse(dx, 0, width * 0.025, width * 0.018 * eo, 0, 0, Math.PI * 2);
-        cx.fillStyle = "#181818";
-        cx.fill();
-        cx.beginPath();
-        cx.arc(dx - width * 0.02, -width * 0.01, width * 0.01, 0, Math.PI * 2);
-        cx.fillStyle = "#fff";
-        cx.fill();
-    }
-    cx.restore();
-
-    // Nose
-    cx.beginPath();
-    cx.ellipse(
-        0,
-        -height * 0.11,
-        width * 0.018,
-        height * 0.012,
-        0,
-        0,
-        Math.PI * 2,
-    );
-    cx.fillStyle = "#e6d6e6";
-    cx.fill();
-
     // Tail
     const tailStartX = width * 0.33;
     const tailStartY = height * 0.2;
@@ -165,39 +127,109 @@ export function renderBlackCat(
     cx.fillStyle = "#000";
     cx.fill();
 
-    // Whiskers
-    cx.strokeStyle = "#e6d6e6";
-    const whiskerThickness = Math.max(0.1, width * 0.012);
-    cx.lineWidth = whiskerThickness;
-    const whiskerLength = width * 0.18;
-    const whiskerSpread = width * 0.04;
-    const whiskerY = -height * 0.1;
-    [-1, 0, 1].forEach((row) => {
-        // left whiskers
+    if (facing.includes("down")) {
+        // Eyes
+        const eo = eyesOpen ? 1 : 0.7;
+        cx.save();
+        cx.translate(0, -height * 0.18);
+        for (const dx of [-width * 0.09, width * 0.09]) {
+            cx.beginPath();
+            cx.ellipse(
+                dx,
+                0,
+                width * 0.07,
+                width * 0.04 * eo,
+                0,
+                0,
+                Math.PI * 2,
+            );
+            cx.fillStyle = "#fff";
+            cx.fill();
+            cx.beginPath();
+            cx.ellipse(
+                dx,
+                0,
+                width * 0.06,
+                width * 0.03 * eo,
+                0,
+                0,
+                Math.PI * 2,
+            );
+            cx.fillStyle = "green";
+            cx.fill();
+            cx.beginPath();
+            cx.ellipse(
+                dx,
+                0,
+                width * 0.025,
+                width * 0.018 * eo,
+                0,
+                0,
+                Math.PI * 2,
+            );
+            cx.fillStyle = "#181818";
+            cx.fill();
+            cx.beginPath();
+            cx.arc(
+                dx - width * 0.02,
+                -width * 0.01,
+                width * 0.01,
+                0,
+                Math.PI * 2,
+            );
+            cx.fillStyle = "#fff";
+            cx.fill();
+        }
+        cx.restore();
+
+        // Nose
         cx.beginPath();
-        cx.moveTo(-width * 0.13, whiskerY + row * whiskerSpread);
-        cx.bezierCurveTo(
-            -width * 0.22,
-            whiskerY + row * whiskerSpread + whiskerLength * 0.1,
-            -width * 0.32,
-            whiskerY + row * whiskerSpread + whiskerLength * 0.3,
-            -width * 0.38,
-            whiskerY + row * whiskerSpread + whiskerLength * 0.2,
+        cx.ellipse(
+            0,
+            -height * 0.11,
+            width * 0.018,
+            height * 0.012,
+            0,
+            0,
+            Math.PI * 2,
         );
-        cx.stroke();
-        // right whiskers
-        cx.beginPath();
-        cx.moveTo(width * 0.13, whiskerY + row * whiskerSpread);
-        cx.bezierCurveTo(
-            width * 0.22,
-            whiskerY + row * whiskerSpread + whiskerLength * 0.1,
-            width * 0.32,
-            whiskerY + row * whiskerSpread + whiskerLength * 0.3,
-            width * 0.38,
-            whiskerY + row * whiskerSpread + whiskerLength * 0.2,
-        );
-        cx.stroke();
-    });
+        cx.fillStyle = "#e6d6e6";
+        cx.fill();
+
+        // Whiskers
+        cx.strokeStyle = "#e6d6e6";
+        const whiskerThickness = Math.max(0.1, width * 0.012);
+        cx.lineWidth = whiskerThickness;
+        const whiskerLength = width * 0.18;
+        const whiskerSpread = width * 0.04;
+        const whiskerY = -height * 0.1;
+        [-1, 0, 1].forEach((row) => {
+            // left whiskers
+            cx.beginPath();
+            cx.moveTo(-width * 0.13, whiskerY + row * whiskerSpread);
+            cx.bezierCurveTo(
+                -width * 0.22,
+                whiskerY + row * whiskerSpread + whiskerLength * 0.1,
+                -width * 0.32,
+                whiskerY + row * whiskerSpread + whiskerLength * 0.3,
+                -width * 0.38,
+                whiskerY + row * whiskerSpread + whiskerLength * 0.2,
+            );
+            cx.stroke();
+            // right whiskers
+            cx.beginPath();
+            cx.moveTo(width * 0.13, whiskerY + row * whiskerSpread);
+            cx.bezierCurveTo(
+                width * 0.22,
+                whiskerY + row * whiskerSpread + whiskerLength * 0.1,
+                width * 0.32,
+                whiskerY + row * whiskerSpread + whiskerLength * 0.3,
+                width * 0.38,
+                whiskerY + row * whiskerSpread + whiskerLength * 0.2,
+            );
+            cx.stroke();
+        });
+    }
 
     cx.restore();
 }
