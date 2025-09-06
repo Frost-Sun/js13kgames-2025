@@ -7,7 +7,7 @@
     "dev": "vite",
     "start": "vite",
     "build": "tsc && vite build && roadroller dist/assets/index.js -o dist/assets/index.js",
-    "postbuild": "node createDeployPackage.js",
+    "postbuild": "node createDeployPackage.js && advzip -z -4 -i 100 build.zip",
     "preview": "vite preview",
     "lint": "eslint ."
   },
@@ -23,5 +23,8 @@
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.39.1",
     "vite": "^7.1.2"
+  },
+  "dependencies": {
+    "advzip-bin": "^2.0.0"
   }
 }
