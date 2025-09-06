@@ -35,6 +35,33 @@ import type { TimeStep } from "./core/time/TimeStep";
 
 const CAT_ASPECT_RATIO = 3 / 4;
 
+// Draws a cat eye at (x, y) with open/closed state
+export function renderCatEye(
+    cx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    width: number,
+    open: boolean,
+) {
+    const eo = open ? 1 : 0.7;
+    [
+        [width * 0.07, width * 0.04 * eo, "#fff"],
+        [width * 0.06, width * 0.03 * eo, "green"],
+        [width * 0.025, width * 0.018 * eo, "#181818"],
+    ].forEach((item) => {
+        const [rx, ry, fill] = item as [number, number, string];
+        cx.beginPath();
+        cx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+        cx.fillStyle = fill;
+        cx.fill();
+    });
+    // Eye highlight
+    cx.beginPath();
+    cx.arc(x - width * 0.02, y - width * 0.01, width * 0.01, 0, Math.PI * 2);
+    cx.fillStyle = "#fff";
+    cx.fill();
+}
+
 export function renderBlackCat(
     cx: CanvasRenderingContext2D,
     x: number,
@@ -72,10 +99,12 @@ export function renderBlackCat(
         earW = width * 0.16,
         earH = h * 0.18;
     if (facing === "side") {
+        // Eye (profile)
+        renderCatEye(cx, width * 0.19, -h * 0.18, width, eyesOpen);
         [
             [width * 0.03, earW * 0.7, earH * 0.7, 0.1],
             [width * 0.13, earW, earH, 0],
-        ].forEach(([ex, ew, eh, yoff], i) => {
+        ].forEach(([ex, ew, eh, yoff]) => {
             cx.save();
             cx.beginPath();
             cx.moveTo(ex, earY + earH * yoff);
@@ -153,32 +182,11 @@ export function renderBlackCat(
     cx.fillStyle = "#000";
     cx.fill();
     if (facing.includes("down")) {
-        const eo = eyesOpen ? 1 : 0.7;
         cx.save();
         cx.translate(0, -h * 0.18);
-        [-width * 0.09, width * 0.09].forEach((dx) => {
-            [
-                [width * 0.07, width * 0.04 * eo, "#fff"],
-                [width * 0.06, width * 0.03 * eo, "green"],
-                [width * 0.025, width * 0.018 * eo, "#181818"],
-            ].forEach((item) => {
-                const [rx, ry, fill] = item as [number, number, string];
-                cx.beginPath();
-                cx.ellipse(dx, 0, rx, ry, 0, 0, Math.PI * 2);
-                cx.fillStyle = fill;
-                cx.fill();
-            });
-            cx.beginPath();
-            cx.arc(
-                dx - width * 0.02,
-                -width * 0.01,
-                width * 0.01,
-                0,
-                Math.PI * 2,
-            );
-            cx.fillStyle = "#fff";
-            cx.fill();
-        });
+        [-width * 0.09, width * 0.09].forEach((dx) =>
+            renderCatEye(cx, dx, 0, width, eyesOpen),
+        );
         cx.restore();
         // Nose
         cx.beginPath();
