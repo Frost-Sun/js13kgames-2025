@@ -22,12 +22,14 @@
  * SOFTWARE.
  */
 
+import type { Animal } from "./Animal";
 import { getCenter } from "./core/math/Area";
 import { clamp } from "./core/math/number";
 import { random } from "./core/math/random";
 import {
     add,
     distance,
+    dotProduct,
     length,
     multiply,
     normalize,
@@ -36,7 +38,6 @@ import {
     type Vector,
 } from "./core/math/Vector";
 import type { TimeStep } from "./core/time/TimeStep";
-import type { GameObject } from "./GameObject";
 import type { Mouse } from "./Mouse";
 import type { Space } from "./Space";
 import { TILE_DRAW_HEIGHT, TILE_SIZE } from "./tiles";
@@ -120,7 +121,7 @@ export class CatAi {
     private mouseLastObservedPosition: Vector | null = null;
 
     constructor(
-        private host: GameObject,
+        private host: Animal,
         private space: Space,
     ) {}
 
@@ -195,8 +196,15 @@ export class CatAi {
         const mouse = sighting.target;
         const mouseCenter = getCenter(mouse);
         const distanceToMouse = distance(hostCenter, mouseCenter);
+        const directionToMouse = normalize(subtract(mouseCenter, hostCenter));
+
+        const lookingDirectionFactor = Math.max(
+            0,
+            dotProduct(directionToMouse, this.host.direction),
+        );
 
         const accuracy: number =
+            lookingDirectionFactor *
             sighting.visibility *
             getSightAccuracyByDistance(distanceToMouse) *
             getMovementFactor(mouse);

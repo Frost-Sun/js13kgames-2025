@@ -27,7 +27,13 @@ import type { TimeStep } from "./core/time/TimeStep";
 import { cx } from "./graphics";
 import { type BlackCatFacing, renderBlackCat } from "././BlackCatAnimation";
 import { CatAi, CatState } from "./CatAi";
-import { length, multiply, ZERO_VECTOR, type Vector } from "./core/math/Vector";
+import {
+    length,
+    multiply,
+    normalize,
+    ZERO_VECTOR,
+    type Vector,
+} from "./core/math/Vector";
 import type { Space } from "./Space";
 
 const SPEED = 0.01;
@@ -40,6 +46,7 @@ export class BlackCat implements Animal {
     height: number = 6;
 
     private movement: Vector = ZERO_VECTOR;
+    direction: Vector = ZERO_VECTOR;
     private dir: number = 1;
     private step: number = 0;
     private lastSpeed: number = 0;
@@ -59,6 +66,10 @@ export class BlackCat implements Animal {
 
     setActualMovement(movement: Vector): void {
         this.movement = movement;
+
+        if (movement.x !== 0 || movement.y !== 0) {
+            this.direction = normalize(movement);
+        }
 
         if (movement.x > 0.05) this.dir = 1;
         else if (movement.x < -0.05) this.dir = -1;
