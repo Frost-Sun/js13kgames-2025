@@ -1,4 +1,5 @@
-// Code from: https://github.com/sz-piotr/js13k-webpack-starter/blob/master/postbuild.js
+// Base code from: https://github.com/sz-piotr/js13k-webpack-starter/blob/master/postbuild.js
+// Added advzip
 
 /* eslint-disable no-undef */
 
@@ -13,14 +14,24 @@ let archive = archiver("zip", {
 
 const MAX = 13 * 1024; // 13kb
 
-output.on("close", function () {
-    const bytes = archive.pointer();
-    const percent = ((bytes / MAX) * 100).toFixed(2);
-    if (bytes > MAX) {
-        console.error(`Size overflow: ${bytes} bytes (${percent}%)`);
-    } else {
-        console.log(`Size: ${bytes} bytes (${percent}%)`);
-    }
+output.on("close", async function () {
+    // Run advzip for maximum compression
+    const { exec } = await import("node:child_process");
+    exec("advzip -z -4 -i 100 build.zip", (err, stdout, stderr) => {
+        if (err) {
+            console.error("advzip error:", err);
+        } else {
+            console.log("advzip output:", stdout || stderr);
+            // Get the final size after advzip
+            const bytes = fs.statSync("build.zip").size;
+            const percent = ((bytes / MAX) * 100).toFixed(2);
+            if (bytes > MAX) {
+                console.error(`Size overflow: ${bytes} bytes (${percent}%)`);
+            } else {
+                console.log(`Size: ${bytes} bytes (${percent}%)`);
+            }
+        }
+    });
 });
 
 archive.on("warning", function (err) {
