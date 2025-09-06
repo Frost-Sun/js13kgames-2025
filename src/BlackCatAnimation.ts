@@ -94,12 +94,12 @@ export function renderBlackCat(
         const farEarX = width * 0.03;
         const farEarW = earW * 0.7;
         const farEarH = earH * 0.7;
-        // Farther ear (drawn first, lighter color for depth)
+        // Farther ear (drawn first)
         cx.save();
         cx.beginPath();
         cx.moveTo(farEarX, earY + earH * 0.1);
-        cx.lineTo(farEarX - farEarW / 2, earY + farEarH + earH * 0.1);
         cx.lineTo(farEarX + farEarW / 2, earY + farEarH + earH * 0.1);
+        cx.lineTo(farEarX - farEarW / 2, earY + farEarH + earH * 0.1);
         cx.closePath();
         cx.fillStyle = "#000";
         cx.fill();
@@ -107,8 +107,8 @@ export function renderBlackCat(
         // Main (closer) ear
         cx.beginPath();
         cx.moveTo(mainEarX, earY);
-        cx.lineTo(mainEarX - earW / 2, earY + earH);
         cx.lineTo(mainEarX + earW / 2, earY + earH);
+        cx.lineTo(mainEarX - earW / 2, earY + earH);
         cx.closePath();
         cx.fillStyle = "#000";
         cx.fill();
