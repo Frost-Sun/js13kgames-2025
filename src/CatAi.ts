@@ -319,32 +319,7 @@ export class CatAi {
                 (seen && seen.accuracy > VAGUE_OBSERVATION_THRESHOLD) ||
                 (heard && heard.accuracy > VAGUE_OBSERVATION_THRESHOLD)
             ) {
-                // If seeing the mouse and not already chasing, jump to mouse position
-                if (
-                    seen &&
-                    seen.accuracy > VAGUE_OBSERVATION_THRESHOLD &&
-                    this.state !== CatState.Chase
-                ) {
-                    // Jump closer in front of the mouse, not directly on top
-                    const offset = 24;
-                    const jumpPos = { x: seen.position.x, y: seen.position.y };
-                    if (seen.mouse && seen.mouse.movement) {
-                        const mx = seen.mouse.movement.x;
-                        const my = seen.mouse.movement.y;
-                        const len = Math.sqrt(mx * mx + my * my);
-                        if (len > 0.01) {
-                            jumpPos.x += (mx / len) * offset;
-                            jumpPos.y += (my / len) * offset;
-                        } else {
-                            // Default direction: right
-                            jumpPos.x += offset;
-                        }
-                    } else {
-                        // Default direction: right
-                        jumpPos.x += offset;
-                    }
-                    this.jumpTo = jumpPos;
-                }
+                // After the first jump, do NOT jump again. Only update state and last known position.
                 this.lastSenseTime = time.t;
                 if (obs) this.mouseLastKnownPosition = obs.position;
                 if (this.state !== CatState.Chase) this.state = CatState.Chase;
