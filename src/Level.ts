@@ -117,7 +117,12 @@ export class Level implements Area, Space {
             this.width * 0.5,
             this.height - TILE_DRAW_HEIGHT,
         );
-        this.cat = new BlackCat(this.width * 0.4, this.height * 0.3, this);
+        this.cat = new BlackCat(
+            this.width * 0.4,
+            this.height * 0.3,
+            this,
+            this.player,
+        );
         this.animals = [this.player, this.cat];
 
         this.camera = new Camera(this, this.levelDrawArea);

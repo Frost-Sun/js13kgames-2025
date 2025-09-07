@@ -35,6 +35,7 @@ import {
     type Vector,
 } from "./core/math/Vector";
 import type { Space } from "./Space";
+import type { Mouse } from "./Mouse";
 
 const SPEED = 0.01;
 
@@ -53,10 +54,10 @@ export class BlackCat implements Animal {
 
     private ai: CatAi;
 
-    constructor(x: number, y: number, space: Space) {
+    constructor(x: number, y: number, space: Space, mouse: Mouse) {
         this.x = x;
         this.y = y;
-        this.ai = new CatAi(this, space);
+        this.ai = new CatAi(this, space, mouse);
     }
 
     getMovement(time: TimeStep): Vector {

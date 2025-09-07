@@ -142,6 +142,7 @@ export class CatAi {
     constructor(
         private host: Animal,
         private space: Space,
+        private mouse: Mouse,
     ) {
         // Place cat offscreen before first jump
         this.host.x = this.initialCatPos.x;
@@ -157,7 +158,16 @@ export class CatAi {
         this.goingToLastKnown = false;
         this.searchingAfterLostTime = 0;
         this.scanAngle = 0;
-        this.hearingEvents = []; // Reset noise buffer for next track/level
+        this.hearingEvents = [];
+        this.jumpTo = null;
+        this.jumpTarget = null;
+        this.dropAnim = false;
+        this.hasJumped = false;
+        this.postJumpWait = 0;
+        // Place cat offscreen before first jump
+        this.host.x = this.initialCatPos.x;
+        this.host.y = this.initialCatPos.y;
+        this.host.direction = { x: 0, y: 1 };
         if (this.lastMusic !== SFX_RUNNING) {
             playTune(SFX_RUNNING);
             this.lastMusic = SFX_RUNNING;
@@ -235,11 +245,10 @@ export class CatAi {
         let hadObservation = false;
         // Before first jump, use the mouse's position as the hearing center
         let hostCenter: Vector;
-        if (!this.hasJumped && (this.space as any).player) {
-            const mouse = (this.space as any).player;
+        if (!this.hasJumped && this.mouse) {
             hostCenter = {
-                x: mouse.x + mouse.width / 2,
-                y: mouse.y + mouse.height / 2,
+                x: this.mouse.x + this.mouse.width / 2,
+                y: this.mouse.y + this.mouse.height / 2,
             };
         } else {
             hostCenter = getCenter(this.host);
@@ -499,12 +508,10 @@ export class CatAi {
             return null;
         }
         // Try to get the mouse from the space if possible
-        let mouse: Mouse | undefined = undefined;
-        if ((this.space as any).player) mouse = (this.space as any).player;
         return {
             position: sound.position,
             accuracy: sound.volume,
-            mouse,
+            mouse: this.mouse,
         };
     }
 
