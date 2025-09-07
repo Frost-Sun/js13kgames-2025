@@ -110,4 +110,8 @@ export class BlackCat implements Animal {
             time,
         );
     }
+
+    reset() {
+        this.ai.reset();
+    }
 }

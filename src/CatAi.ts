@@ -41,6 +41,7 @@ import type { TimeStep } from "./core/time/TimeStep";
 import type { Mouse } from "./Mouse";
 import type { Space } from "./Space";
 import { TILE_DRAW_HEIGHT, TILE_SIZE } from "./tiles";
+import { playTune, SFX_CHASE, SFX_RUNNING } from "./audio/sfx";
 
 export let sightAccuracyDebug: number = 0;
 export let hearAccuracyDebug: number = 0;
@@ -54,9 +55,9 @@ const CAT_FOV = (160 * Math.PI) / 180;
 export const CERTAIN_OBSERVATION_THERSHOLD = 0.5;
 export const VAGUE_OBSERVATION_THRESHOLD = 0.15;
 
-const ALERT_TIMEOUT = 2000;
-const VAGUE_OBSERVATION_COOLDOWN = 1000; // ms
-const OBSERVATION_LINGER_TIME = 1500; // ms to keep chasing/alert after last observation
+const ALERT_TIMEOUT = 1200;
+const VAGUE_OBSERVATION_COOLDOWN = 700; // ms
+const OBSERVATION_LINGER_TIME = 800; // ms to keep chasing/alert after last observation
 
 type Observation = { position: Vector; accuracy: number };
 function getSightAcc(d: number) {
@@ -98,6 +99,7 @@ export enum CatState {
 
 export class CatAi {
     state: CatState = CatState.Idle;
+    private lastMusic: string | null = SFX_RUNNING;
 
     private alertPositionReachedTime: number | null = null;
     private lastObserveTime: number = 0;
@@ -115,6 +117,20 @@ export class CatAi {
         private host: Animal,
         private space: Space,
     ) {}
+
+    // Resets cat AI state and music (e.g. when level finishes)
+    reset() {
+        this.state = CatState.Idle;
+        this.target = null;
+        this.mouseLastKnownPosition = null;
+        this.goingToLastKnown = false;
+        this.searchingAfterLostTime = 0;
+        this.scanAngle = 0;
+        if (this.lastMusic !== SFX_RUNNING) {
+            playTune(SFX_RUNNING);
+            this.lastMusic = SFX_RUNNING;
+        }
+    }
 
     getMovement(time: TimeStep): Vector {
         // After reaching last known position, look around for 3s before going fully idle
@@ -282,6 +298,15 @@ export class CatAi {
                 this.mouseLastKnownPosition = null;
                 return ZERO_VECTOR;
             }
+        }
+
+        // --- SFX logic ---
+        let newMusic = null;
+        if (this.state === CatState.Chase) newMusic = SFX_CHASE;
+        else newMusic = SFX_RUNNING;
+        if (newMusic !== this.lastMusic) {
+            playTune(newMusic);
+            this.lastMusic = newMusic;
         }
 
         return ZERO_VECTOR;

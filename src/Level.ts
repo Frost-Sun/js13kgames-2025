@@ -164,6 +164,8 @@ export class Level implements Area, Space {
             this.playerHasReachedFinish()
         ) {
             this.state = LevelState.Finished;
+            if (this.cat && typeof this.cat.reset === "function")
+                this.cat.reset();
             return;
         }
 
