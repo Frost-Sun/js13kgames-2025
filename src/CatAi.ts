@@ -1,3 +1,5 @@
+// Cat's field of view in radians (e.g., 160 degrees)
+const CAT_FOV = (160 * Math.PI) / 180;
 /*
  * Copyright (c) 2025 Tero Jäntti, Sami Heikkinen
  *
@@ -52,6 +54,8 @@ export const CERTAIN_OBSERVATION_THERSHOLD = 0.5;
 export const VAGUE_OBSERVATION_THRESHOLD = 0.15;
 
 const ALERT_TIMEOUT = 2000;
+const VAGUE_OBSERVATION_COOLDOWN = 1000; // ms
+const OBSERVATION_LINGER_TIME = 1500; // ms to keep chasing/alert after last observation
 
 const getSightAccuracyByDistance = (distance: number): number =>
     clamp(1 - distance / SIGHT_ACCURACY_LOWERING_DISTANCE, 0.3, 1.0);
@@ -135,7 +139,14 @@ export class CatAi {
     private alertPositionReachedTime: number | null = null;
     private lastObserveTime: number = 0;
     private target: Vector | null = null;
-    private mouseLastObservedPosition: Vector | null = null;
+    private mouseLastKnownPosition: Vector | null = null;
+    private vagueObservationCooldownUntil: number = 0;
+    private lastObservationTime: number = 0;
+    private lastSenseTime: number = 0; // last time cat saw or heard mouse
+    private goingToLastKnown: boolean = false;
+    private lastLookAroundTime: number = 0;
+    private scanAngle: number = 0;
+    private searchingAfterLostTime: number = 0;
 
     constructor(
         private host: Animal,
@@ -143,43 +154,137 @@ export class CatAi {
     ) {}
 
     getMovement(time: TimeStep): Vector {
+        // After reaching last known position, look around for 1.5s before going fully idle
+        if (
+            this.searchingAfterLostTime > 0 &&
+            time.t - this.searchingAfterLostTime < 3000
+        ) {
+            // Actively scan all directions: rotate direction smoothly every frame for 3s
+            const scanSpeed = Math.PI / 60; // 3s = 180 frames at 60fps, full circle
+            this.scanAngle += scanSpeed;
+            if (this.scanAngle > Math.PI * 2) this.scanAngle -= Math.PI * 2;
+            this.host.direction = {
+                x: Math.cos(this.scanAngle),
+                y: Math.sin(this.scanAngle),
+            };
+            // Stay in search phase, do not set Idle yet
+            return ZERO_VECTOR;
+        } else if (this.searchingAfterLostTime > 0) {
+            this.searchingAfterLostTime = 0;
+            this.scanAngle = 0;
+            // Only now set Idle
+            this.state = CatState.Idle;
+            this.target = null;
+            this.alertPositionReachedTime = null;
+            return ZERO_VECTOR;
+        }
+
+        let hadObservation = false;
+        const hostCenter = getCenter(this.host);
+        // Always check if we can see the mouse, every frame
+        const seen = this.lookForMouse(hostCenter);
+        let heard: Observation | null = null;
+        if (OBSERVE_PERIOD < time.t - this.lastObserveTime) {
+            heard = this.listenForMouse(time, hostCenter);
+        }
+        // If we see or hear the mouse, update lastSenseTime and always chase
+        if (
+            (seen && seen.accuracy > VAGUE_OBSERVATION_THRESHOLD) ||
+            (heard && heard.accuracy > VAGUE_OBSERVATION_THRESHOLD)
+        ) {
+            this.lastSenseTime = time.t;
+            // Always update last known position to best observation
+            const bestObs = chooseBetter(seen, heard);
+            if (bestObs) {
+                this.mouseLastKnownPosition = bestObs.position;
+            }
+            // Always set state to Chase if not already
+            if (this.state !== CatState.Chase) {
+                this.state = CatState.Chase;
+            }
+        }
+
         if (OBSERVE_PERIOD < time.t - this.lastObserveTime) {
             this.lastObserveTime = time.t;
-            const hostCenter = getCenter(this.host);
-
-            const seen = this.lookForMouse(hostCenter);
-            const heard = this.listenForMouse(time, hostCenter);
             sightAccuracyDebug = seen?.accuracy ?? 0;
             hearAccuracyDebug = heard?.accuracy ?? 0;
 
             const observation = chooseBetter(seen, heard);
 
             if (observation) {
+                this.lastObservationTime = time.t;
+                hadObservation = true;
                 if (CERTAIN_OBSERVATION_THERSHOLD < observation.accuracy) {
-                    this.mouseLastObservedPosition = observation.position;
+                    // Certain observation: always update chase target to latest seen position
+                    this.mouseLastKnownPosition = observation.position;
+                    this.vagueObservationCooldownUntil = 0;
+                    // Always set state to Chase if not already
                     if (this.state !== CatState.Chase) {
                         this.state = CatState.Chase;
                     }
                 } else if (VAGUE_OBSERVATION_THRESHOLD < observation.accuracy) {
-                    const distanceToMouse = distance(
-                        hostCenter,
-                        observation.position,
-                    );
-                    this.target =
-                        distanceToMouse < TILE_SIZE
-                            ? observation.position
-                            : getPositionALittleTowardsMouse(
-                                  hostCenter,
-                                  observation.position,
-                              );
-                    if (this.state == CatState.Idle) {
-                        this.state = CatState.Alert;
+                    // Vague observation: only update chase target if not seen recently
+                    if (time.t >= this.vagueObservationCooldownUntil) {
+                        // Only update chase target if we haven't seen the mouse recently
+                        if (
+                            !(
+                                seen &&
+                                seen.accuracy > CERTAIN_OBSERVATION_THERSHOLD
+                            ) &&
+                            time.t - this.lastSenseTime >
+                                OBSERVATION_LINGER_TIME
+                        ) {
+                            const distanceToMouse = distance(
+                                hostCenter,
+                                observation.position,
+                            );
+                            this.mouseLastKnownPosition =
+                                distanceToMouse < TILE_SIZE
+                                    ? observation.position
+                                    : getPositionALittleTowardsMouse(
+                                          hostCenter,
+                                          observation.position,
+                                      );
+                        }
+                        if (this.state == CatState.Idle) {
+                            this.state = CatState.Alert;
+                        }
+                        this.vagueObservationCooldownUntil =
+                            time.t + VAGUE_OBSERVATION_COOLDOWN;
                     }
                 }
             }
         }
 
-        if (this.state === CatState.Idle) {
+        if (this.goingToLastKnown && this.mouseLastKnownPosition) {
+            // Continue moving to last known position until reached
+            const hostCenter = getCenter(this.host);
+            const dist = distance(hostCenter, this.mouseLastKnownPosition);
+            // Look around (randomize direction) every 300ms while searching
+            if (time.t - this.lastLookAroundTime > 300) {
+                const angle = Math.random() * Math.PI * 2;
+                this.host.direction = {
+                    x: Math.cos(angle),
+                    y: Math.sin(angle),
+                };
+                this.lastLookAroundTime = time.t;
+            }
+            if (dist <= this.host.width * 0.2) {
+                this.goingToLastKnown = false;
+                this.searchingAfterLostTime = time.t;
+                this.mouseLastKnownPosition = null;
+                // Do NOT set Idle here; search phase will handle it
+                this.target = null;
+                // Start searching in place
+                return ZERO_VECTOR;
+            }
+            return this.goTo(this.mouseLastKnownPosition) ?? ZERO_VECTOR;
+        } else if (
+            this.state === CatState.Idle &&
+            !this.mouseLastKnownPosition &&
+            !this.goingToLastKnown &&
+            this.searchingAfterLostTime === 0
+        ) {
             if (this.target == null) {
                 this.target = getRandomPosition(this.space);
             }
@@ -192,6 +297,26 @@ export class CatAi {
                 this.target = getRandomPosition(this.space);
             }
         } else if (this.state === CatState.Alert) {
+            // Stay alert for linger time after last observation
+            if (
+                !hadObservation &&
+                time.t - this.lastObservationTime > OBSERVATION_LINGER_TIME
+            ) {
+                // Always go to last known/search if we have a last known position
+                if (this.mouseLastKnownPosition) {
+                    this.goingToLastKnown = true;
+                    return (
+                        this.goTo(this.mouseLastKnownPosition) ?? ZERO_VECTOR
+                    );
+                }
+                // Only set Idle if not going to/searching last known position
+                if (!this.goingToLastKnown && !this.searchingAfterLostTime) {
+                    this.state = CatState.Idle;
+                    this.target = null;
+                    this.alertPositionReachedTime = null;
+                    return ZERO_VECTOR;
+                }
+            }
             if (this.target == null) {
                 const hostCenter = getCenter(this.host);
                 this.target = notFarFrom(
@@ -213,11 +338,28 @@ export class CatAi {
             }
 
             return movement ?? ZERO_VECTOR;
-        } else if (
-            this.state === CatState.Chase &&
-            this.mouseLastObservedPosition
+        }
+        // Unconditional fallback: if we have a last known position and can't see/hear, always go to it and search
+        const canSee = seen && seen.accuracy > VAGUE_OBSERVATION_THRESHOLD;
+        const canHear = heard && heard.accuracy > VAGUE_OBSERVATION_THRESHOLD;
+        if (
+            this.mouseLastKnownPosition &&
+            ((!canSee && !canHear) || this.goingToLastKnown)
         ) {
-            return this.goTo(this.mouseLastObservedPosition) ?? ZERO_VECTOR;
+            this.goingToLastKnown = true;
+            // Move to last known position until reached
+            const hostCenter = getCenter(this.host);
+            const dist = distance(hostCenter, this.mouseLastKnownPosition);
+            if (dist > this.host.width * 0.2) {
+                return this.goTo(this.mouseLastKnownPosition) ?? ZERO_VECTOR;
+            } else {
+                // Start search phase
+                this.goingToLastKnown = false;
+                this.searchingAfterLostTime = time.t;
+                this.scanAngle = 0;
+                this.mouseLastKnownPosition = null;
+                return ZERO_VECTOR;
+            }
         }
 
         return ZERO_VECTOR;
@@ -230,10 +372,11 @@ export class CatAi {
         const distanceToMouse = distance(hostCenter, mouseCenter);
         const directionToMouse = normalize(subtract(mouseCenter, hostCenter));
 
-        const lookingDirectionFactor = Math.max(
-            0,
-            dotProduct(directionToMouse, this.host.direction),
-        );
+        // Calculate dot product for FOV
+        const dot = dotProduct(directionToMouse, this.host.direction);
+        // Only see mouse if within FOV
+        const inFov = dot > Math.cos(CAT_FOV / 2);
+        const lookingDirectionFactor = inFov ? dot : 0;
 
         const accuracy: number =
             lookingDirectionFactor *
@@ -241,7 +384,7 @@ export class CatAi {
             getSightAccuracyByDistance(distanceToMouse) *
             getMovementFactor(mouse);
 
-        return sighting.visibility > 0
+        return sighting.visibility > 0 && inFov
             ? { position: mouseCenter, accuracy }
             : null;
     }
