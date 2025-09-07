@@ -27,8 +27,15 @@ import type { TimeStep } from "./core/time/TimeStep";
 import { cx } from "./graphics";
 import { type BlackCatFacing, renderBlackCat } from "././BlackCatAnimation";
 import { CatAi, CatState } from "./CatAi";
-import { length, multiply, ZERO_VECTOR, type Vector } from "./core/math/Vector";
+import {
+    length,
+    multiply,
+    normalize,
+    ZERO_VECTOR,
+    type Vector,
+} from "./core/math/Vector";
 import type { Space } from "./Space";
+import type { Mouse } from "./Mouse";
 
 const SPEED = 0.01;
 
@@ -40,16 +47,17 @@ export class BlackCat implements Animal {
     height: number = 6;
 
     private movement: Vector = ZERO_VECTOR;
+    direction: Vector = ZERO_VECTOR;
     private dir: number = 1;
     private step: number = 0;
     private lastSpeed: number = 0;
 
     private ai: CatAi;
 
-    constructor(x: number, y: number, space: Space) {
+    constructor(x: number, y: number, space: Space, mouse: Mouse) {
         this.x = x;
         this.y = y;
-        this.ai = new CatAi(this, space);
+        this.ai = new CatAi(this, space, mouse);
     }
 
     getMovement(time: TimeStep): Vector {
@@ -59,6 +67,10 @@ export class BlackCat implements Animal {
 
     setActualMovement(movement: Vector): void {
         this.movement = movement;
+
+        if (movement.x !== 0 || movement.y !== 0) {
+            this.direction = normalize(movement);
+        }
 
         if (movement.x > 0.05) this.dir = 1;
         else if (movement.x < -0.05) this.dir = -1;
@@ -73,7 +85,7 @@ export class BlackCat implements Animal {
         const ax = Math.abs(mv.x);
         const ay = Math.abs(mv.y);
 
-        let facing: BlackCatFacing = "side";
+        let facing: BlackCatFacing = "down";
         if (ax > 0.01 && ay > 0.01) {
             if (mv.y < 0) facing = mv.x > 0 ? "up-right" : "up-left";
             else facing = mv.x > 0 ? "down-right" : "down-left";
@@ -98,5 +110,9 @@ export class BlackCat implements Animal {
             this.lastSpeed,
             time,
         );
+    }
+
+    reset() {
+        this.ai.reset();
     }
 }

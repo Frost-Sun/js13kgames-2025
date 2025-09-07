@@ -23,12 +23,8 @@
  */
 
 import {
-    bounceSfx,
     hitSfx,
     kbSfx,
-    teleportSfx,
-    countSfx,
-    goSfx,
     startSong,
     mouseSfx,
     mouseWalkNormalSfx,
@@ -52,15 +48,10 @@ import { setupAudioUnlock } from "../core/audio/unlock.ts";
 
 export const SFX_START = "start";
 export const SFX_RUNNING = "gamestarted";
-export const SFX_BOUNCE = "bounce";
+export const SFX_CHASE = "chase";
 export const SFX_HIT = "hit";
-export const SFX_TELEPORT = "teleport";
 export const SFX_KB = "keyboard";
-export const SFX_FINISHED = "finished";
 export const SFX_GAMEOVER = "gameover";
-export const SFX_RESTART = "restart";
-export const SFX_COUNT = "count";
-export const SFX_GO = "go";
 export const SFX_MOUSE_WALK_NORMAL = "mousewalknormal";
 
 type Tune = {
@@ -118,7 +109,6 @@ export const initializeAudio = () => {
     return Promise.all([
         initMusicPlayer(startTune, startSong, true),
         initMusicPlayer(gameTune, fightSong, true),
-        //    initMusicPlayer(gameoverFx, gameoverSfx, false),
     ]);
 };
 
@@ -127,11 +117,8 @@ export const playTune = async (tune: string, vol: number = 1) => {
 
     switch (tune) {
         case SFX_RUNNING: {
-            gameTune.currentTime = 0;
-            FadeOutIn(startTune, gameTune, 0.2);
-            break;
-        }
-        case SFX_FINISHED: {
+            startTune.currentTime = 0;
+            FadeOutIn(gameTune, startTune, 0.2);
             break;
         }
         case SFX_GAMEOVER: {
@@ -139,16 +126,14 @@ export const playTune = async (tune: string, vol: number = 1) => {
             FadeIn(gameTune);
             break;
         }
-        case SFX_RESTART: {
-            break;
-        }
         case SFX_START: {
             startTune.currentTime = 0;
             FadeOutIn(gameTune, startTune);
             break;
         }
-        case SFX_BOUNCE: {
-            zzfx(vol, ...bounceSfx);
+        case SFX_CHASE: {
+            gameTune.currentTime = 0;
+            FadeOutIn(startTune, gameTune);
             break;
         }
         case SFX_HIT: {
@@ -157,18 +142,6 @@ export const playTune = async (tune: string, vol: number = 1) => {
         }
         case SFX_KB: {
             zzfx(0.5, ...kbSfx);
-            break;
-        }
-        case SFX_TELEPORT: {
-            zzfx(vol, ...teleportSfx);
-            break;
-        }
-        case SFX_COUNT: {
-            zzfx(0.5, ...countSfx);
-            break;
-        }
-        case SFX_GO: {
-            zzfx(0.5, ...goSfx);
             break;
         }
         case SFX_MOUSE_WALK_NORMAL: {

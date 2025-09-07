@@ -117,7 +117,12 @@ export class Level implements Area, Space {
             this.width * 0.5,
             this.height - TILE_DRAW_HEIGHT,
         );
-        this.cat = new BlackCat(this.width * 0.4, this.height * 0.3, this);
+        this.cat = new BlackCat(
+            this.width * 0.4,
+            this.height * 0.3,
+            this,
+            this.player,
+        );
         this.animals = [this.player, this.cat];
 
         this.camera = new Camera(this, this.levelDrawArea);
@@ -155,7 +160,7 @@ export class Level implements Area, Space {
     }
 
     update(time: TimeStep): void {
-        this.camera.update(time);
+        this.camera.update();
 
         this.calculateMovement(time);
 
@@ -164,6 +169,8 @@ export class Level implements Area, Space {
             this.playerHasReachedFinish()
         ) {
             this.state = LevelState.Finished;
+            if (this.cat && typeof this.cat.reset === "function")
+                this.cat.reset();
             return;
         }
 

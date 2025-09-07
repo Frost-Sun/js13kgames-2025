@@ -77,7 +77,7 @@ export function renderBlackCat(
     const t = time.t,
         h = width / CAT_ASPECT_RATIO;
     cx.save();
-    cx.translate(0, -h * 0.25);
+    cx.translate(0, -h * 0.75);
     cx.translate(x + width / 2, y + h / 2);
     cx.scale(facing === "side" ? dir : 1, 1);
     cx.translate(
