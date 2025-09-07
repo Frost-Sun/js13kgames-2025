@@ -58,10 +58,10 @@ export const visibilityByTile: Readonly<Record<TileType, number>> = {
 };
 
 export const stepVolumeByTile: Readonly<Record<TileType, number>> = {
-    [TileType.Grass]: 0.7,
-    [TileType.Flower]: 1,
-    [TileType.Bush]: 0.5,
-    [TileType.Slate]: 0.1,
+    [TileType.Grass]: 0.1,
+    [TileType.Flower]: 0.3,
+    [TileType.Bush]: 0.3,
+    [TileType.Slate]: 0.4,
 };
 
 const asciiPatternCache: Record<string, CanvasPattern | null> = {};
