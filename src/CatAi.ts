@@ -43,11 +43,21 @@ import type { Space } from "./Space";
 import { TILE_DRAW_HEIGHT, TILE_SIZE } from "./tiles";
 import { playTune, SFX_CHASE, SFX_RUNNING } from "./audio/sfx";
 
+/*
+ * - The cat uses both sight and hearing to detect the mouse, with debug variables for both.
+ * - If the cat sees or hears the mouse above a threshold, it enters Chase mode and pursues the last known position.
+ * - If the cat loses track, it goes to the last known position and performs a search (rotating direction) for a few seconds before idling.
+ * - If the cat only vaguely detects the mouse, it enters Alert mode and investigates, but will eventually idle if no further clues are found.
+ * - The cat always goes to the last known position before giving up, never stops abruptly after losing sight/sound.
+ * - Audio cues (SFX_CHASE/SFX_RUNNING) are played based on chase state.
+ * - A reset() method allows the AI to be stopped/cleared when the mouse finds the hole or the level ends.
+ */
+
 export let sightAccuracyDebug: number = 0;
 export let hearAccuracyDebug: number = 0;
 
 const OBSERVE_PERIOD = 500;
-const SIGHT_ACCURACY_LOWERING_DISTANCE = 5 * TILE_SIZE;
+const SIGHT_ACCURACY_LOWERING_DISTANCE = 3.5 * TILE_SIZE;
 
 // Cat's field of view in radians (e.g., 160 degrees)
 const CAT_FOV = (160 * Math.PI) / 180;
@@ -116,7 +126,10 @@ export class CatAi {
     constructor(
         private host: Animal,
         private space: Space,
-    ) {}
+    ) {
+        // Default direction: down
+        this.host.direction = { x: 0, y: 1 };
+    }
 
     // Resets cat AI state and music (e.g. when level finishes)
     reset() {

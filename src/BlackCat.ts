@@ -84,7 +84,7 @@ export class BlackCat implements Animal {
         const ax = Math.abs(mv.x);
         const ay = Math.abs(mv.y);
 
-        let facing: BlackCatFacing = "side";
+        let facing: BlackCatFacing = "down";
         if (ax > 0.01 && ay > 0.01) {
             if (mv.y < 0) facing = mv.x > 0 ? "up-right" : "up-left";
             else facing = mv.x > 0 ? "down-right" : "down-left";
