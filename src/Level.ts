@@ -48,9 +48,7 @@ import {
     type Space,
 } from "./Space";
 import type { Animal } from "./Animal";
-import { createMap } from "./maps";
-import { Array2D } from "./Array2D";
-import { createTile, TileType, type Tile } from "./tiles";
+import { createIntroMap, createMap } from "./maps";
 import {
     GRASS_COLOR,
     stepVolumeByTile,
@@ -121,42 +119,14 @@ export class Level implements Area, Space {
 
     constructor(public number: number) {
         if (number === 0) {
-            const introWidth = 10;
-            const introHeight = 18;
-            const grid = new Array2D<Tile>(introWidth, introHeight);
-            const centerCol = Math.floor(introWidth / 2);
-            for (let iy = 0; iy < introHeight; iy++) {
-                for (let ix = 0; ix < introWidth; ix++) {
-                    const x = ix * TILE_SIZE;
-                    const y = iy * TILE_DRAW_HEIGHT;
-                    let type = TileType.Grass;
-                    // Place bushes and flowers at fixed positions, not in the center column
-                    if (
-                        (iy === 2 && ix === 2) ||
-                        (iy === 2 && ix === introWidth - 3) ||
-                        (iy === 4 && ix === 1) ||
-                        (iy === 4 && ix === introWidth - 2)
-                    ) {
-                        type = TileType.Bush;
-                    } else if (
-                        (iy === 3 && ix === 1) ||
-                        (iy === 3 && ix === introWidth - 2) ||
-                        (iy === 1 && ix === 3) ||
-                        (iy === 1 && ix === introWidth - 4)
-                    ) {
-                        type = TileType.Flower;
-                    }
-                    // Never place anything in the center column
-                    if (ix === centerCol) type = TileType.Slate;
-                    grid.setValue(ix, iy, createTile(type, x, y));
-                }
-            }
+            // Use intro map from maps.ts
+            const grid = createIntroMap();
             this.tileMap = new TileMap(grid);
-            this.width = introWidth * TILE_SIZE;
-            this.height = introHeight * TILE_DRAW_HEIGHT;
+            this.width = grid.xCount * TILE_SIZE;
+            this.height = grid.yCount * TILE_DRAW_HEIGHT;
             // Place mouse at bottom center
             const mouse = new Mouse(
-                Math.floor(introWidth / 2) * TILE_SIZE + TILE_SIZE / 2 - 1.5,
+                Math.floor(grid.xCount / 2) * TILE_SIZE + TILE_SIZE / 2 - 1.5,
                 this.height - TILE_DRAW_HEIGHT - 1,
             );
             this.setupPlayerAndCamera(mouse);
