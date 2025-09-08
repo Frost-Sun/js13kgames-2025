@@ -112,8 +112,26 @@ export enum CatState {
 }
 
 export class CatAi {
-    state: CatState = CatState.Idle;
+    private _state: CatState = CatState.Idle;
+    get state() {
+        return this._state;
+    }
+    set state(newState: CatState) {
+        if (this._state !== newState) {
+            this._state = newState;
+            this.updateMusic();
+        }
+    }
     private lastMusic: string | null = SFX_RUNNING;
+    private updateMusic() {
+        let newMusic = null;
+        if (this._state === CatState.Chase) newMusic = SFX_CHASE;
+        else newMusic = SFX_RUNNING;
+        if (newMusic !== this.lastMusic) {
+            playTune(newMusic);
+            this.lastMusic = newMusic;
+        }
+    }
 
     private alertPositionReachedTime: number | null = null;
     private lastObserveTime: number = 0;
@@ -152,7 +170,8 @@ export class CatAi {
 
     // Resets cat AI state and music (e.g. when level finishes)
     reset() {
-        this.state = CatState.Idle;
+        this._state = CatState.Idle;
+        this.updateMusic();
         this.target = null;
         this.mouseLastKnownPosition = null;
         this.goingToLastKnown = false;
@@ -168,10 +187,8 @@ export class CatAi {
         this.host.x = this.initialCatPos.x;
         this.host.y = this.initialCatPos.y;
         this.host.direction = { x: 0, y: 1 };
-        if (this.lastMusic !== SFX_RUNNING) {
-            playTune(SFX_RUNNING);
-            this.lastMusic = SFX_RUNNING;
-        }
+        playTune(SFX_RUNNING);
+        this.lastMusic = SFX_RUNNING;
     }
 
     getMovement(time: TimeStep): Vector {
@@ -463,14 +480,7 @@ export class CatAi {
             }
         }
 
-        // --- SFX logic ---
-        let newMusic = null;
-        if (this.state === CatState.Chase) newMusic = SFX_CHASE;
-        else newMusic = SFX_RUNNING;
-        if (newMusic !== this.lastMusic) {
-            playTune(newMusic);
-            this.lastMusic = newMusic;
-        }
+        // --- SFX logic is now handled in state setter ---
 
         // After jump, wait before chasing
         if (this.postJumpWait > 0) {
