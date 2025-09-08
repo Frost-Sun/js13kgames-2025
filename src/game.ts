@@ -66,7 +66,7 @@ const time: TimeStep = {
     dt: 0,
 };
 
-let level = new Level(0);
+let level: Level;
 
 const gameLoop = (t: number): void => {
     requestAnimationFrame(gameLoop);
@@ -101,7 +101,7 @@ const setState = (newState: GameState): void => {
         }
         case GameState.Running: {
             resetGameStartTime();
-            level = new Level(1);
+            level = new Level(0);
             break;
         }
         case GameState.GameOver: {
@@ -177,7 +177,7 @@ const draw = (time: TimeStep): void => {
             cx.restore();
 
             renderText(
-                "Backyard #" + level.number,
+                level.number > 0 ? "Backyard #" + level.number : "Outside",
                 TextSize.Small,
                 "Courier New",
                 1,

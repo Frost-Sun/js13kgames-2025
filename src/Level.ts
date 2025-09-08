@@ -48,7 +48,7 @@ import {
     type Space,
 } from "./Space";
 import type { Animal } from "./Animal";
-import { createMap } from "./maps";
+import { createIntroMap, createMap } from "./maps";
 import {
     GRASS_COLOR,
     stepVolumeByTile,
@@ -58,6 +58,7 @@ import {
 import { playTune } from "./audio/sfx";
 import { Bush } from "./Bush";
 import { renderGradient } from "./core/graphics/gradient";
+import { renderText, TextSize } from "./text";
 
 const HORIZON_HEIGHT_OF_CANVAS = 0.25;
 
@@ -80,6 +81,14 @@ interface ProducedSound extends Sound {
 }
 
 export class Level implements Area, Space {
+    private setupPlayerAndCamera(player: Mouse, cat?: BlackCat) {
+        this.player = player;
+        this.cat = cat;
+        this.animals = cat ? [player, cat] : [player];
+        this.camera = new Camera(this, this.levelDrawArea);
+        this.camera.zoom = 15;
+        this.camera.follow(this.player);
+    }
     private horizonDrawArea = new PartialArea(
         canvas,
         0,
@@ -93,7 +102,7 @@ export class Level implements Area, Space {
 
     private tileMap: TileMap;
 
-    private camera: Camera;
+    private camera!: Camera;
 
     state: LevelState = LevelState.Running;
 
@@ -102,32 +111,43 @@ export class Level implements Area, Space {
     width: number;
     height: number;
 
-    private player;
+    private player!: Mouse;
     private latestSoundByPlayer?: ProducedSound;
-    private cat;
+    private cat?: BlackCat;
 
-    private animals: Animal[];
+    private animals!: Animal[];
 
     constructor(public number: number) {
+        if (number === 0) {
+            // Use intro map from maps.ts
+            const grid = createIntroMap();
+            this.tileMap = new TileMap(grid);
+            this.width = grid.xCount * TILE_SIZE;
+            this.height = grid.yCount * TILE_DRAW_HEIGHT;
+            // Place mouse at bottom center
+            const mouse = new Mouse(
+                Math.floor(grid.xCount / 2) * TILE_SIZE + TILE_SIZE / 2 - 1.5,
+                this.height - TILE_DRAW_HEIGHT - 1,
+            );
+            this.setupPlayerAndCamera(mouse);
+            return;
+        }
+
         this.tileMap = new TileMap(createMap(number));
         this.width = this.tileMap.width;
         this.height = this.tileMap.height;
 
-        this.player = new Mouse(
+        const player = new Mouse(
             this.width * 0.5,
             this.height - TILE_DRAW_HEIGHT,
         );
-        this.cat = new BlackCat(
+        const cat = new BlackCat(
             this.width * 0.4,
             this.height * 0.3,
             this,
-            this.player,
+            player,
         );
-        this.animals = [this.player, this.cat];
-
-        this.camera = new Camera(this, this.levelDrawArea);
-        this.camera.zoom = 15;
-        this.camera.follow(this.player);
+        this.setupPlayerAndCamera(player, cat);
     }
 
     listen(time: TimeStep, listenerPosition: Vector): Sound | null {
@@ -230,6 +250,7 @@ export class Level implements Area, Space {
     }
 
     private checkCollisionsWithCat(): void {
+        if (!this.cat) return;
         const playerCenter = getCenter(this.player);
         const catCenter = getCenter(this.cat);
 
@@ -269,13 +290,36 @@ export class Level implements Area, Space {
         cx.translate(0, this.levelDrawArea.y);
 
         this.camera.apply(cx, () => {
-            // Default color for grass
             cx.fillStyle = GRASS_COLOR;
             cx.fillRect(this.x, this.y, this.width, this.height);
 
             this.tileMap.draw(visibleArea, objectsToDraw);
         });
         cx.restore();
+
+        // Show instruction in intro level
+        if (this.number === 0) {
+            renderText(
+                "Use arrow keys or WASD to move.",
+                TextSize.Small,
+                "Arial",
+                2,
+            );
+            renderText(
+                "Find the mouse hole to continue to the next backyard.",
+                TextSize.Small,
+                "Arial",
+                1,
+                2,
+            );
+            renderText(
+                "Be quiet or the black cat catches you!",
+                TextSize.Small,
+                "Arial",
+                1,
+                4,
+            );
+        }
 
         // The horizon is drawn after the tiles so that the tiles are sharply
         // "cut" at the horizon.
@@ -284,6 +328,10 @@ export class Level implements Area, Space {
         // Calculate player progress: 0 at bottom, 1 at top
         let progress = 1 - this.player.y / (this.height - TILE_DRAW_HEIGHT);
         progress = Math.max(0, Math.min(1, progress));
+        // In intro level, always show horizon as if finished (mouse hole/fence fully visible)
+        if (this.number === 0) {
+            progress = 1;
+        }
         drawHorizon(this.horizonDrawArea, 4, backgroundScrollAmount, progress);
 
         cx.save();
