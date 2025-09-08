@@ -60,6 +60,7 @@ import {
 import { playTune } from "./audio/sfx";
 import { Bush } from "./Bush";
 import { renderGradient } from "./core/graphics/gradient";
+import { renderText, TextSize } from "./text";
 
 const HORIZON_HEIGHT_OF_CANVAS = 0.25;
 
@@ -319,13 +320,36 @@ export class Level implements Area, Space {
         cx.translate(0, this.levelDrawArea.y);
 
         this.camera.apply(cx, () => {
-            // Default color for grass
             cx.fillStyle = GRASS_COLOR;
             cx.fillRect(this.x, this.y, this.width, this.height);
 
             this.tileMap.draw(visibleArea, objectsToDraw);
         });
         cx.restore();
+
+        // Show instruction in intro level
+        if (this.number === 0) {
+            renderText(
+                "Use arrow keys or WASD to move.",
+                TextSize.Small,
+                "Arial",
+                2,
+            );
+            renderText(
+                "Find the mouse hole to continue to the next backyard.",
+                TextSize.Small,
+                "Arial",
+                1,
+                2,
+            );
+            renderText(
+                "Be quiet or the black cat catches you!",
+                TextSize.Small,
+                "Arial",
+                1,
+                4,
+            );
+        }
 
         // The horizon is drawn after the tiles so that the tiles are sharply
         // "cut" at the horizon.
