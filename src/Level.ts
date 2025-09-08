@@ -55,7 +55,7 @@ import {
     TILE_DRAW_HEIGHT,
     TILE_SIZE,
 } from "./tiles";
-import { playTune } from "./audio/sfx";
+import { playTune, SFX_RUNNING } from "./audio/sfx";
 import { Bush } from "./Bush";
 import { renderGradient } from "./core/graphics/gradient";
 
@@ -169,8 +169,7 @@ export class Level implements Area, Space {
             this.playerHasReachedFinish()
         ) {
             this.state = LevelState.Finished;
-            if (this.cat && typeof this.cat.reset === "function")
-                this.cat.reset();
+            playTune(SFX_RUNNING);
             return;
         }
 

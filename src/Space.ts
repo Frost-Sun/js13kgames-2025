@@ -4,7 +4,7 @@ import type { TimeStep } from "./core/time/TimeStep";
 import type { Mouse } from "./Mouse";
 import { TILE_DRAW_HEIGHT } from "./tiles";
 
-export const SOUND_FADE_DISTANCE = 20 * TILE_DRAW_HEIGHT;
+export const SOUND_FADE_DISTANCE = 25 * TILE_DRAW_HEIGHT;
 
 export interface SpaceWithMouse extends Space {
     mouse?: Mouse;

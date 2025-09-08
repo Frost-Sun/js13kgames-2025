@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+import type { Vector } from "./Vector";
+
 /*
  * Returns a random number between [0, max).
  */
@@ -44,3 +46,11 @@ export const randomInt = (max: number): number =>
  */
 export const randomMinMax = (min: number, max: number): number =>
     Math.random() * (max - min) + min;
+
+export const randomDirection = (): Vector => {
+    const angle = random() * Math.PI * 2;
+    return {
+        x: Math.cos(angle),
+        y: Math.sin(angle),
+    };
+};
