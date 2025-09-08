@@ -120,15 +120,9 @@ function better(
     return a.accuracy > b.accuracy ? a : b;
 }
 
-export enum CatState {
-    Idle,
-    Alert,
-    Chase,
-}
-
 export class CatAi {
-    state: CatState = CatState.Idle;
     isAlert: boolean = false;
+
     private lastMusic: string | null = SFX_RUNNING;
 
     private lastHearingTime: number = 0;
