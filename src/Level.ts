@@ -49,6 +49,8 @@ import {
 } from "./Space";
 import type { Animal } from "./Animal";
 import { createMap } from "./maps";
+import { Array2D } from "./Array2D";
+import { createTile, TileType, type Tile } from "./tiles";
 import {
     GRASS_COLOR,
     stepVolumeByTile,
@@ -80,6 +82,14 @@ interface ProducedSound extends Sound {
 }
 
 export class Level implements Area, Space {
+    private setupPlayerAndCamera(player: Mouse, cat?: BlackCat) {
+        this.player = player;
+        this.cat = cat;
+        this.animals = cat ? [player, cat] : [player];
+        this.camera = new Camera(this, this.levelDrawArea);
+        this.camera.zoom = 15;
+        this.camera.follow(this.player);
+    }
     private horizonDrawArea = new PartialArea(
         canvas,
         0,
@@ -93,7 +103,7 @@ export class Level implements Area, Space {
 
     private tileMap: TileMap;
 
-    private camera: Camera;
+    private camera!: Camera;
 
     state: LevelState = LevelState.Running;
 
@@ -102,32 +112,71 @@ export class Level implements Area, Space {
     width: number;
     height: number;
 
-    private player;
+    private player!: Mouse;
     private latestSoundByPlayer?: ProducedSound;
-    private cat;
+    private cat?: BlackCat;
 
-    private animals: Animal[];
+    private animals!: Animal[];
 
     constructor(public number: number) {
+        if (number === 0) {
+            const introWidth = 10;
+            const introHeight = 18;
+            const grid = new Array2D<Tile>(introWidth, introHeight);
+            const centerCol = Math.floor(introWidth / 2);
+            for (let iy = 0; iy < introHeight; iy++) {
+                for (let ix = 0; ix < introWidth; ix++) {
+                    const x = ix * TILE_SIZE;
+                    const y = iy * TILE_DRAW_HEIGHT;
+                    let type = TileType.Grass;
+                    // Place bushes and flowers at fixed positions, not in the center column
+                    if (
+                        (iy === 2 && ix === 2) ||
+                        (iy === 2 && ix === introWidth - 3) ||
+                        (iy === 4 && ix === 1) ||
+                        (iy === 4 && ix === introWidth - 2)
+                    ) {
+                        type = TileType.Bush;
+                    } else if (
+                        (iy === 3 && ix === 1) ||
+                        (iy === 3 && ix === introWidth - 2) ||
+                        (iy === 1 && ix === 3) ||
+                        (iy === 1 && ix === introWidth - 4)
+                    ) {
+                        type = TileType.Flower;
+                    }
+                    // Never place anything in the center column
+                    if (ix === centerCol) type = TileType.Slate;
+                    grid.setValue(ix, iy, createTile(type, x, y));
+                }
+            }
+            this.tileMap = new TileMap(grid);
+            this.width = introWidth * TILE_SIZE;
+            this.height = introHeight * TILE_DRAW_HEIGHT;
+            // Place mouse at bottom center
+            const mouse = new Mouse(
+                Math.floor(introWidth / 2) * TILE_SIZE + TILE_SIZE / 2 - 1.5,
+                this.height - TILE_DRAW_HEIGHT - 1,
+            );
+            this.setupPlayerAndCamera(mouse);
+            return;
+        }
+
         this.tileMap = new TileMap(createMap(number));
         this.width = this.tileMap.width;
         this.height = this.tileMap.height;
 
-        this.player = new Mouse(
+        const player = new Mouse(
             this.width * 0.5,
             this.height - TILE_DRAW_HEIGHT,
         );
-        this.cat = new BlackCat(
+        const cat = new BlackCat(
             this.width * 0.4,
             this.height * 0.3,
             this,
-            this.player,
+            player,
         );
-        this.animals = [this.player, this.cat];
-
-        this.camera = new Camera(this, this.levelDrawArea);
-        this.camera.zoom = 15;
-        this.camera.follow(this.player);
+        this.setupPlayerAndCamera(player, cat);
     }
 
     listen(time: TimeStep, listenerPosition: Vector): Sound | null {
@@ -230,6 +279,7 @@ export class Level implements Area, Space {
     }
 
     private checkCollisionsWithCat(): void {
+        if (!this.cat) return;
         const playerCenter = getCenter(this.player);
         const catCenter = getCenter(this.cat);
 
@@ -284,6 +334,10 @@ export class Level implements Area, Space {
         // Calculate player progress: 0 at bottom, 1 at top
         let progress = 1 - this.player.y / (this.height - TILE_DRAW_HEIGHT);
         progress = Math.max(0, Math.min(1, progress));
+        // In intro level, always show horizon as if finished (mouse hole/fence fully visible)
+        if (this.number === 0) {
+            progress = 1;
+        }
         drawHorizon(this.horizonDrawArea, 4, backgroundScrollAmount, progress);
 
         cx.save();
