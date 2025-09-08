@@ -57,8 +57,6 @@ export enum GameState {
 
 let gameState: GameState = GameState.Load;
 
-let levelNumber = 0;
-
 const TIME_STEP = 1000 / 60;
 const MAX_FRAME = TIME_STEP * 5;
 
@@ -96,8 +94,6 @@ const setState = (newState: GameState): void => {
             break;
         }
         case GameState.StartScreen: {
-            levelNumber = 0;
-
             waitForProgressInput(SFX_RUNNING).then(() =>
                 setState(GameState.Running),
             );
@@ -105,7 +101,7 @@ const setState = (newState: GameState): void => {
         }
         case GameState.Running: {
             resetGameStartTime();
-            level = new Level(levelNumber++);
+            level = new Level(0);
             break;
         }
         case GameState.GameOver: {
