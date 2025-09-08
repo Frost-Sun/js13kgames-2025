@@ -480,8 +480,6 @@ export class CatAi {
             }
         }
 
-        // --- SFX logic is now handled in state setter ---
-
         // After jump, wait before chasing
         if (this.postJumpWait > 0) {
             if (time.t < this.postJumpWait) {
