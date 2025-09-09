@@ -42,6 +42,7 @@ import type { Mouse } from "./Mouse";
 import type { Space } from "./Space";
 import { TILE_DRAW_HEIGHT, TILE_SIZE } from "./tiles";
 import { playTune, SFX_CHASE, SFX_RUNNING } from "./audio/sfx";
+import type { GameObject } from "./GameObject";
 
 /*
  * Cat AI implementation:
@@ -119,6 +120,34 @@ function better(
     if (!a) return b;
     if (!b) return a;
     return a.accuracy > b.accuracy ? a : b;
+}
+
+function jumpMovement(
+    time: TimeStep,
+    startTime: number,
+    o: GameObject,
+    start: Vector,
+    end: Vector,
+): boolean {
+    const elapsed = time.t - startTime;
+    const duration = JUMP_DURATION;
+    let t = Math.min(1, elapsed / duration);
+
+    // Ease in-out
+    t = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+
+    const x = start.x + (end.x - start.x) * t;
+    const y = start.y + (end.y - start.y) * t;
+    o.x = x - o.width / 2;
+    o.y = y - o.height / 2;
+
+    if (elapsed >= duration) {
+        o.x = end.x - o.width / 2;
+        o.y = end.y - o.height / 2;
+        return true;
+    }
+
+    return false;
 }
 
 export class CatAi {
@@ -245,20 +274,15 @@ export class CatAi {
 
         if (this.jumpTarget) {
             // Jump!
-            const start = hostCenter;
-            const end = this.jumpTarget;
-            const elapsed = time.t - this.jumpStart;
-            const duration = JUMP_DURATION;
-            let t = Math.min(1, elapsed / duration);
-            // Ease in-out
-            t = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-            const x = start.x + (end.x - start.x) * t;
-            const y = start.y + (end.y - start.y) * t;
-            this.host.x = x - this.host.width / 2;
-            this.host.y = y - this.host.height / 2;
-            if (elapsed >= duration) {
-                this.host.x = end.x - this.host.width / 2;
-                this.host.y = end.y - this.host.height / 2;
+            const done = jumpMovement(
+                time,
+                this.jumpStart,
+                this.host,
+                hostCenter,
+                this.jumpTarget,
+            );
+
+            if (done) {
                 this.jumpTarget = null;
                 this.hasJumped = true;
             }
