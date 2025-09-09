@@ -60,8 +60,11 @@ export let sightAccuracyDebug: number = 0;
 export let hearAccuracyDebug: number = 0;
 
 const INITIAL_CAT_POS: Vector = { x: -1000, y: -1000 };
+
 const APPEARANCE_DURATION = 2000;
 const JUMP_DURATION: number = 1200; // ms
+const STILL_AFTER_JUMP_DURATION = 1000;
+
 const NOISE_SUM_THRESHOLD = 0.6; // total noise needed in 1s to trigger jump (must be > per-event cap)
 
 const HEARING_PERIOD = 450;
@@ -158,7 +161,8 @@ export class CatAi {
     private appearTime: number = 0;
 
     private jumpTarget: Vector | null = null;
-    private jumpStart: number = 0;
+    private jumpStartTime: number = 0;
+    private jumpFinishTime: number = 0;
     private hasJumped: boolean = false;
 
     private lastHearingTime: number = 0;
@@ -185,7 +189,7 @@ export class CatAi {
         this.observe(time, hostCenter);
 
         return (
-            this.appearance(time) ??
+            this.appear(time) ??
             this.jump(time, hostCenter) ??
             this.chase(time, hostCenter) ??
             this.noticeSomething(time, hostCenter) ??
@@ -237,7 +241,7 @@ export class CatAi {
         }
     }
 
-    private appearance(time: TimeStep): Vector | null {
+    private appear(time: TimeStep): Vector | null {
         if (this.host.x === INITIAL_CAT_POS.x) {
             if (enoughSoundToAppear(this.lastHearObservations)) {
                 // Appear to level
@@ -255,6 +259,11 @@ export class CatAi {
             return ZERO_VECTOR;
         }
 
+        if (time.t - this.appearTime < APPEARANCE_DURATION) {
+            // Appearance animation
+            return ZERO_VECTOR;
+        }
+
         return null;
     }
 
@@ -263,25 +272,20 @@ export class CatAi {
             return null;
         }
 
-        if (!this.jumpTarget) {
-            if (time.t - this.appearTime < APPEARANCE_DURATION) {
-                // Appearance animation
-                return ZERO_VECTOR;
-            } else {
-                // Ready to jump
-                this.jumpStart = time.t;
-                this.jumpTarget = {
-                    x: this.mouse.x + randomMinMax(-0.5, 1) * TILE_SIZE,
-                    y: this.mouse.y - 1.6 * TILE_SIZE,
-                };
-            }
+        if (!this.jumpStartTime) {
+            // Ready to jump
+            this.jumpStartTime = time.t;
+            this.jumpTarget = {
+                x: this.mouse.x + randomMinMax(-0.5, 1) * TILE_SIZE,
+                y: this.mouse.y - 1.6 * TILE_SIZE,
+            };
         }
 
-        if (this.jumpTarget) {
+        if (this.jumpTarget && !this.jumpFinishTime) {
             // Jump!
             const done = jumpMovement(
                 time,
-                this.jumpStart,
+                this.jumpStartTime,
                 this.host,
                 hostCenter,
                 this.jumpTarget,
@@ -289,10 +293,15 @@ export class CatAi {
 
             if (done) {
                 this.jumpTarget = null;
-                this.hasJumped = true;
+                this.jumpFinishTime = time.t;
             }
 
             // No movement during jump
+            return ZERO_VECTOR;
+        }
+
+        if (time.t - this.jumpFinishTime < STILL_AFTER_JUMP_DURATION) {
+            this.hasJumped = true;
             return ZERO_VECTOR;
         }
 
