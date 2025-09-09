@@ -35,6 +35,10 @@ export function drawHorizon(
     showCat: boolean = false,
     catProps?: BlackCatRenderProps,
 ): void {
+    // Draw sky before horizon (only top part)
+    cx.fillStyle = "rgb(0, 150, 255)";
+    cx.fillRect(area.x, area.y, area.width, area.height);
+
     cx.save(); // Begin objects further away
     cx.filter = `blur(${blur}px)`;
 

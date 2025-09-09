@@ -59,7 +59,6 @@ import { playTune } from "./audio/sfx";
 import { Bush } from "./Bush";
 import { renderGradient } from "./core/graphics/gradient";
 import { renderText, TextSize } from "./text";
-import { renderBlackCat } from "./BlackCatAnimation";
 
 const HORIZON_HEIGHT_OF_CANVAS = 0.25;
 
@@ -334,17 +333,6 @@ export class Level implements Area, Space {
         if (this.number === 0) {
             progress = 1;
         }
-
-        // Draw sky before horizon (only top part)
-        cx.save();
-        cx.fillStyle = "rgb(0, 150, 255)";
-        cx.fillRect(
-            0,
-            0,
-            cx.canvas.width,
-            cx.canvas.height * HORIZON_HEIGHT_OF_CANVAS,
-        );
-        cx.restore();
 
         const catW = TILE_SIZE * 6;
         const catH = catW / (3 / 4);
