@@ -59,6 +59,8 @@ import type { GameObject } from "./GameObject";
 export let sightAccuracyDebug: number = 0;
 export let hearAccuracyDebug: number = 0;
 
+// Make sure the cat does not appear on the screen at start as the horizon
+// takes care of drawing it when on the fence.
 const INITIAL_CAT_POS: Vector = { x: -1000, y: -1000 };
 
 const APPEARANCE_DURATION = 2000;
@@ -189,7 +191,7 @@ export class CatAi {
         this.observe(time, hostCenter);
 
         return (
-            this.appear(time) ??
+            this.stayOnTheFence(time) ??
             this.jump(time, hostCenter) ??
             this.chase(time, hostCenter) ??
             this.noticeSomething(time, hostCenter) ??
@@ -241,17 +243,17 @@ export class CatAi {
         }
     }
 
-    private appear(time: TimeStep): Vector | null {
+    private stayOnTheFence(time: TimeStep): Vector | null {
         if (this.host.x === INITIAL_CAT_POS.x) {
             if (enoughSoundToAppear(this.lastHearObservations)) {
-                // Appear to level
                 this.appearTime = time.t;
-                this.host.x =
-                    this.mouse.x +
-                    randomMinMax(-0.5, 0.5) * TILE_SIZE -
-                    this.host.width * 0.5;
+
+                // Position the cat such that it appears coming from the fence
+                this.host.x = this.mouse.x - this.host.width * 0.5;
                 this.host.y =
-                    this.mouse.y - 1.6 * TILE_SIZE - this.host.height * 0.5;
+                    this.mouse.y -
+                    20 * TILE_DRAW_HEIGHT -
+                    this.host.height * 0.5;
 
                 this.useMusic(SFX_CHASE);
             }
@@ -276,8 +278,8 @@ export class CatAi {
             // Ready to jump
             this.jumpStartTime = time.t;
             this.jumpTarget = {
-                x: this.mouse.x + randomMinMax(-0.5, 1) * TILE_SIZE,
-                y: this.mouse.y - 1.6 * TILE_SIZE,
+                x: this.mouse.x + randomMinMax(-3, 3) * TILE_SIZE,
+                y: this.mouse.y - 5 * TILE_DRAW_HEIGHT,
             };
         }
 
