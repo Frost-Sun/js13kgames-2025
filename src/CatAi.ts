@@ -212,7 +212,10 @@ export class CatAi {
                 this.jumpStart = time.t;
                 this.host.x = this.jumpTarget.x - this.host.width * 1.5;
                 this.host.y = this.jumpTarget.y - this.host.height * 1.5;
+
+                this.useMusic(SFX_CHASE);
             }
+
             return ZERO_VECTOR;
         }
 
@@ -242,6 +245,8 @@ export class CatAi {
     }
 
     private idle(hostCenter: Vector): Vector {
+        this.useMusic(SFX_RUNNING);
+
         if (this.target == null) {
             this.target = getRandomPosition(this.space);
         }
@@ -285,10 +290,9 @@ export class CatAi {
         ) {
             this.useMusic(SFX_CHASE);
             return this.goTo(this.lastCertainObservation.position, hostCenter);
-        } else {
-            this.useMusic(SFX_RUNNING);
-            return null;
         }
+
+        return null;
     }
 
     private lookAround(time: TimeStep): Vector | null {
