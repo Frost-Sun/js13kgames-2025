@@ -185,6 +185,7 @@ export class CatAi {
         this.observe(time, hostCenter);
 
         return (
+            this.appearance(time) ??
             this.jump(time, hostCenter) ??
             this.chase(time, hostCenter) ??
             this.noticeSomething(time, hostCenter) ??
@@ -236,11 +237,7 @@ export class CatAi {
         }
     }
 
-    private jump(time: TimeStep, hostCenter: Vector): Vector | null {
-        if (this.hasJumped) {
-            return null;
-        }
-
+    private appearance(time: TimeStep): Vector | null {
         if (this.host.x === INITIAL_CAT_POS.x) {
             if (enoughSoundToAppear(this.lastHearObservations)) {
                 // Appear to level
@@ -256,6 +253,14 @@ export class CatAi {
             }
 
             return ZERO_VECTOR;
+        }
+
+        return null;
+    }
+
+    private jump(time: TimeStep, hostCenter: Vector): Vector | null {
+        if (this.hasJumped) {
+            return null;
         }
 
         if (!this.jumpTarget) {
