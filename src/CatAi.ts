@@ -58,6 +58,11 @@ import { playTune, SFX_CHASE, SFX_RUNNING } from "./audio/sfx";
 export let sightAccuracyDebug: number = 0;
 export let hearAccuracyDebug: number = 0;
 
+const INITIAL_CAT_POS: Vector = { x: -1000, y: -1000 };
+const APPEARANCE_DURATION = 2000;
+const JUMP_DURATION: number = 1200; // ms
+const NOISE_SUM_THRESHOLD = 0.6; // total noise needed in 1s to trigger jump (must be > per-event cap)
+
 const HEARING_PERIOD = 450;
 const SIGHT_ACCURACY_LOWERING_DISTANCE = 6.5 * TILE_SIZE;
 
@@ -72,10 +77,6 @@ const NOTICE_IGNORE_TIME = 2000;
 const SEARCH_TIME = 5000;
 const LOOK_AROUND_INTERVAL = 1500;
 
-const INITIAL_CAT_POS: Vector = { x: -1000, y: -1000 };
-const JUMP_DURATION: number = 1200; // ms
-const NOISE_SUM_THRESHOLD = 0.6; // total noise needed in 1s to trigger jump (must be > per-event cap)
-
 type Observation = {
     t: number;
     position: Vector;
@@ -83,7 +84,7 @@ type Observation = {
     mouse?: Mouse;
 };
 
-function enoughSoundToTriggerJump(observations: Observation[]): boolean {
+function enoughSoundToAppear(observations: Observation[]): boolean {
     // Only jump if enough noise in last 1s AND at least 2 events
     const noiseSum = observations.reduce((sum, e) => sum + e.accuracy, 0);
     const noiseCount = observations.length;
@@ -125,15 +126,19 @@ export class CatAi {
 
     private lastMusic: string | null = SFX_RUNNING;
 
+    private appearTime: number = 0;
+
+    private jumpTarget: Vector | null = null;
+    private jumpStart: number = 0;
+    private hasJumped: boolean = false;
+
     private lastHearingTime: number = 0;
-    private target: Vector | null = null;
     private lastCertainObservation: Observation | null = null;
     private lastVagueObservation: Observation | null = null;
     private lastHearObservations: Observation[] = [];
     private lastLookAroundTime: number = 0;
 
-    private jumpTarget: Vector | null = null;
-    private jumpStart: number = 0;
+    private target: Vector | null = null;
 
     constructor(
         private host: Animal,
@@ -203,15 +208,20 @@ export class CatAi {
     }
 
     private jump(time: TimeStep, hostCenter: Vector): Vector | null {
+        if (this.hasJumped) {
+            return null;
+        }
+
         if (this.host.x === INITIAL_CAT_POS.x) {
-            if (enoughSoundToTriggerJump(this.lastHearObservations)) {
-                this.jumpTarget = {
-                    x: this.mouse.x + randomMinMax(-0.5, 1) * TILE_SIZE,
-                    y: this.mouse.y - 1.6 * TILE_SIZE,
-                };
-                this.jumpStart = time.t;
-                this.host.x = this.jumpTarget.x - this.host.width * 1.5;
-                this.host.y = this.jumpTarget.y - this.host.height * 1.5;
+            if (enoughSoundToAppear(this.lastHearObservations)) {
+                // Appear to level
+                this.appearTime = time.t;
+                this.host.x =
+                    this.mouse.x +
+                    randomMinMax(-0.5, 0.5) * TILE_SIZE -
+                    this.host.width * 0.5;
+                this.host.y =
+                    this.mouse.y - 1.6 * TILE_SIZE - this.host.height * 0.5;
 
                 this.useMusic(SFX_CHASE);
             }
@@ -219,7 +229,22 @@ export class CatAi {
             return ZERO_VECTOR;
         }
 
+        if (!this.jumpTarget) {
+            if (time.t - this.appearTime < APPEARANCE_DURATION) {
+                // Appearance animation
+                return ZERO_VECTOR;
+            } else {
+                // Ready to jump
+                this.jumpStart = time.t;
+                this.jumpTarget = {
+                    x: this.mouse.x + randomMinMax(-0.5, 1) * TILE_SIZE,
+                    y: this.mouse.y - 1.6 * TILE_SIZE,
+                };
+            }
+        }
+
         if (this.jumpTarget) {
+            // Jump!
             const start = hostCenter;
             const end = this.jumpTarget;
             const elapsed = time.t - this.jumpStart;
@@ -235,6 +260,7 @@ export class CatAi {
                 this.host.x = end.x - this.host.width / 2;
                 this.host.y = end.y - this.host.height / 2;
                 this.jumpTarget = null;
+                this.hasJumped = true;
             }
 
             // No movement during jump
