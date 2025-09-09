@@ -44,18 +44,6 @@ import { TILE_DRAW_HEIGHT, TILE_SIZE } from "./tiles";
 import { playTune, SFX_CHASE, SFX_RUNNING } from "./audio/sfx";
 import type { GameObject } from "./GameObject";
 
-/*
- * Cat AI implementation:
- * - The cat starts offscreen and cannot see the mouse until it has first heard enough noise to trigger a jump.
- * - Hearing is based on a rolling 1-second buffer of sound events (above a threshold, capped per event), requiring at least two events and a total sum to trigger the jump.
- * - After the first jump, the cat uses both sight and hearing to detect the mouse, with debug variables for both.
- * - If the cat sees or hears the mouse above a threshold, it enters Chase mode and pursues the last known position.
- * - If the cat loses track, it goes to the last known position and performs a search (rotating direction) for a few seconds before idling.
- * - If the cat only vaguely detects the mouse, it enters Alert mode and investigates, but will eventually idle if no further clues are found.
- * - The cat always goes to the last known position before giving up, never stops abruptly after losing sight/sound.
- * - Audio cues (SFX_CHASE/SFX_RUNNING) are played based on chase state, with music switching logic handled in getMovement.
- */
-
 export let sightAccuracyDebug: number = 0;
 export let hearAccuracyDebug: number = 0;
 
@@ -63,10 +51,14 @@ export let hearAccuracyDebug: number = 0;
 // takes care of drawing it when on the fence.
 const INITIAL_CAT_POS: Vector = { x: -1000, y: -1000 };
 
+const GOTO_FENCE_DURATION = 1000;
+const NOTICE_DURATION = 2000;
+
+const FENCE_HEARD_THRESHOLD = 0.1;
+const FENCE_NOTICE_THRESHOLD = 0.2;
+
 const JUMP_DURATION: number = 1200; // ms
 const STILL_AFTER_JUMP_DURATION = 1000;
-
-const NOISE_SUM_THRESHOLD = 0.6; // total noise needed in 1s to trigger jump (must be > per-event cap)
 
 const HEARING_PERIOD = 450;
 const SIGHT_ACCURACY_LOWERING_DISTANCE = 6.5 * TILE_SIZE;
@@ -88,13 +80,6 @@ type Observation = {
     accuracy: number;
     mouse?: Mouse;
 };
-
-function enoughSoundToAppear(observations: Observation[]): boolean {
-    // Only jump if enough noise in last 1s AND at least 2 events
-    const noiseSum = observations.reduce((sum, e) => sum + e.accuracy, 0);
-    const noiseCount = observations.length;
-    return noiseSum >= NOISE_SUM_THRESHOLD && noiseCount >= 2;
-}
 
 function getSightAccuracy(d: number) {
     return clamp(1 - d / SIGHT_ACCURACY_LOWERING_DISTANCE, 0.3, 1);
@@ -154,10 +139,28 @@ function jumpMovement(
     return false;
 }
 
+export enum FenceState {
+    // Has heard nothing yet.
+    Nothing,
+
+    // Heard something, coming to the fence to observe.
+    HeardSomething,
+
+    // Noticed the mouse, ready to jump.
+    Noticed,
+
+    // Already jumped off the fence, should not be drawn on the fence any more.
+    Jumped,
+}
+
 export class CatAi {
     isAlert: boolean = false;
+    fenceState: FenceState = FenceState.Nothing;
 
     private lastMusic: string | null = SFX_RUNNING;
+
+    private heardSomethingTime: number = 0;
+    private noticedTime: number = 0;
 
     private jumpTarget: Vector | null = null;
     private jumpStartTime: number = 0;
@@ -165,9 +168,10 @@ export class CatAi {
     private hasJumped: boolean = false;
 
     private lastHearingTime: number = 0;
+    private lastObservation: Observation | null = null;
+    private lastHearObservation: Observation | null = null;
     private lastCertainObservation: Observation | null = null;
     private lastVagueObservation: Observation | null = null;
-    private lastHearObservations: Observation[] = [];
     private lastLookAroundTime: number = 0;
 
     private target: Vector | null = null;
@@ -188,10 +192,10 @@ export class CatAi {
         this.observe(time, hostCenter);
 
         return (
-            this.stayOnTheFence() ??
+            this.stayOnTheFence(time) ??
             this.jump(time, hostCenter) ??
             this.chase(time, hostCenter) ??
-            this.noticeSomething(time, hostCenter) ??
+            this.followVagueObservation(time, hostCenter) ??
             this.lookAround(time) ??
             this.idle(hostCenter)
         );
@@ -209,52 +213,71 @@ export class CatAi {
 
         if (HEARING_PERIOD < time.t - this.lastHearingTime) {
             this.lastHearingTime = time.t;
-            // Before first jump, use the mouse's position as the hearing center
             const listenerPosition =
                 this.host.x !== INITIAL_CAT_POS.x
                     ? hostCenter
-                    : getCenter(this.mouse);
+                    : // On the fence
+                      {
+                          x: this.space.x + this.space.width / 2,
+                          y: this.space.y,
+                      };
 
             heard = this.listenForMouse(time, listenerPosition);
             hearAccuracyDebug = heard?.accuracy ?? 0;
 
             if (heard) {
-                // Clamp each event to max 0.3 so loud grass sounds can't trigger jump
-                const capped = Math.min(heard.accuracy, 0.3);
-                this.lastHearObservations.push({
-                    ...heard,
-                    accuracy: capped,
-                });
-                // Remove events older than 1s
-                const cutoff = time.t - 1000;
-                this.lastHearObservations = this.lastHearObservations.filter(
-                    (e) => e.t >= cutoff,
-                );
+                this.lastHearObservation = heard;
             }
         }
 
         const obs = better(seen, heard);
+
+        this.lastObservation = obs;
 
         if (obs && obs.accuracy > VAGUE_OBSERVATION_THRESHOLD) {
             this.lastVagueObservation = obs;
         }
     }
 
-    private stayOnTheFence(): Vector | null {
-        if (this.host.x === INITIAL_CAT_POS.x) {
-            if (enoughSoundToAppear(this.lastHearObservations)) {
-                // Position the cat such that it appears coming from the fence
-                this.host.x = this.mouse.x - this.host.width * 0.5;
-                this.host.y =
-                    this.mouse.y -
-                    20 * TILE_DRAW_HEIGHT -
-                    this.host.height * 0.5;
-            }
+    private stayOnTheFence(time: TimeStep): Vector | null {
+        if (this.host.x !== INITIAL_CAT_POS.x) {
+            return null;
+        }
 
+        if (
+            this.fenceState === FenceState.Nothing &&
+            this.lastHearObservation &&
+            this.lastHearObservation.accuracy > FENCE_HEARD_THRESHOLD
+        ) {
+            this.fenceState = FenceState.HeardSomething;
+            this.heardSomethingTime = time.t;
             return ZERO_VECTOR;
         }
 
-        return null;
+        if (
+            this.fenceState === FenceState.HeardSomething &&
+            GOTO_FENCE_DURATION < time.t - this.heardSomethingTime &&
+            this.lastObservation &&
+            this.lastObservation.accuracy > FENCE_NOTICE_THRESHOLD
+        ) {
+            this.fenceState = FenceState.Noticed;
+            this.noticedTime = time.t;
+            return ZERO_VECTOR;
+        }
+
+        if (
+            this.fenceState === FenceState.Noticed &&
+            NOTICE_DURATION < time.t - this.noticedTime
+        ) {
+            // Position the cat such that it appears coming from the fence
+            this.host.x = this.mouse.x - this.host.width * 0.5;
+            this.host.y =
+                this.mouse.y - 20 * TILE_DRAW_HEIGHT - this.host.height * 0.5;
+            this.fenceState = FenceState.Jumped;
+            return ZERO_VECTOR;
+        }
+
+        return ZERO_VECTOR;
     }
 
     private jump(time: TimeStep, hostCenter: Vector): Vector | null {
@@ -316,7 +339,10 @@ export class CatAi {
         return movement;
     }
 
-    private noticeSomething(time: TimeStep, hostCenter: Vector): Vector | null {
+    private followVagueObservation(
+        time: TimeStep,
+        hostCenter: Vector,
+    ): Vector | null {
         if (
             this.lastVagueObservation &&
             time.t - this.lastVagueObservation.t < NOTICE_IGNORE_TIME

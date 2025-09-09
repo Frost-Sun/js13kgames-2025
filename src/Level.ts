@@ -153,7 +153,7 @@ export class Level implements Area, Space {
     listen(time: TimeStep, listenerPosition: Vector): Sound | null {
         if (
             this.latestSoundByPlayer &&
-            time.t - this.latestSoundByPlayer.time < 1000
+            time.t - this.latestSoundByPlayer.time < 500
         ) {
             const d = distance(
                 listenerPosition,
