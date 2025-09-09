@@ -254,8 +254,6 @@ export class CatAi {
                     this.mouse.y -
                     20 * TILE_DRAW_HEIGHT -
                     this.host.height * 0.5;
-
-                this.useMusic(SFX_CHASE);
             }
 
             return ZERO_VECTOR;
@@ -281,6 +279,8 @@ export class CatAi {
                 x: this.mouse.x + randomMinMax(-3, 3) * TILE_SIZE,
                 y: this.mouse.y - 5 * TILE_DRAW_HEIGHT,
             };
+
+            this.useMusic(SFX_CHASE);
         }
 
         if (this.jumpTarget && !this.jumpFinishTime) {
@@ -311,10 +311,9 @@ export class CatAi {
     }
 
     private idle(hostCenter: Vector): Vector {
-        this.useMusic(SFX_RUNNING);
-
         if (this.target == null) {
             this.target = getRandomPosition(this.space);
+            this.useMusic(SFX_RUNNING);
         }
 
         const movement = this.goTo(this.target, hostCenter);
