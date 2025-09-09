@@ -63,7 +63,6 @@ export let hearAccuracyDebug: number = 0;
 // takes care of drawing it when on the fence.
 const INITIAL_CAT_POS: Vector = { x: -1000, y: -1000 };
 
-const APPEARANCE_DURATION = 2000;
 const JUMP_DURATION: number = 1200; // ms
 const STILL_AFTER_JUMP_DURATION = 1000;
 
@@ -160,8 +159,6 @@ export class CatAi {
 
     private lastMusic: string | null = SFX_RUNNING;
 
-    private appearTime: number = 0;
-
     private jumpTarget: Vector | null = null;
     private jumpStartTime: number = 0;
     private jumpFinishTime: number = 0;
@@ -191,7 +188,7 @@ export class CatAi {
         this.observe(time, hostCenter);
 
         return (
-            this.stayOnTheFence(time) ??
+            this.stayOnTheFence() ??
             this.jump(time, hostCenter) ??
             this.chase(time, hostCenter) ??
             this.noticeSomething(time, hostCenter) ??
@@ -243,11 +240,9 @@ export class CatAi {
         }
     }
 
-    private stayOnTheFence(time: TimeStep): Vector | null {
+    private stayOnTheFence(): Vector | null {
         if (this.host.x === INITIAL_CAT_POS.x) {
             if (enoughSoundToAppear(this.lastHearObservations)) {
-                this.appearTime = time.t;
-
                 // Position the cat such that it appears coming from the fence
                 this.host.x = this.mouse.x - this.host.width * 0.5;
                 this.host.y =
@@ -256,11 +251,6 @@ export class CatAi {
                     this.host.height * 0.5;
             }
 
-            return ZERO_VECTOR;
-        }
-
-        if (time.t - this.appearTime < APPEARANCE_DURATION) {
-            // Appearance animation
             return ZERO_VECTOR;
         }
 
