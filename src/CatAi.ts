@@ -25,7 +25,7 @@
 import type { Animal } from "./Animal";
 import { getCenter } from "./core/math/Area";
 import { clamp } from "./core/math/number";
-import { random, randomDirection } from "./core/math/random";
+import { random, randomDirection, randomMinMax } from "./core/math/random";
 import {
     add,
     distance,
@@ -206,8 +206,8 @@ export class CatAi {
         if (this.host.x === INITIAL_CAT_POS.x) {
             if (enoughSoundToTriggerJump(this.lastHearObservations)) {
                 this.jumpTarget = {
-                    x: this.mouse.x - 1.5 * TILE_SIZE,
-                    y: this.mouse.y - 2 * TILE_SIZE,
+                    x: this.mouse.x + randomMinMax(-0.5, 1) * TILE_SIZE,
+                    y: this.mouse.y - 1.6 * TILE_SIZE,
                 };
                 this.jumpStart = time.t;
                 this.host.x = this.jumpTarget.x - this.host.width * 1.5;
