@@ -76,7 +76,7 @@ export function renderCatEye(
     cx.fill();
 }
 
-// riseLevel: 0 = low, 1 = mid, 2 = high (for intro animation)
+// riseLevel: 0 = low, 1 = mid, 2 = high to jump next
 export function renderBlackCat(
     cx: CanvasRenderingContext2D,
     x: number,
@@ -93,7 +93,6 @@ export function renderBlackCat(
     const t = time.t,
         h = width / CAT_ASPECT_RATIO;
     cx.save();
-    // Animate rise for intro: 0=low, 1=mid, 2=high
     const amp = h * 0.005;
     let riseY = 0;
     if (riseLevel === 0) {
