@@ -34,11 +34,36 @@ export function drawHorizon(
     progress: number,
     catProps?: BlackCatRenderProps,
 ): void {
+    cx.save();
+
     // Draw sky before horizon (only top part)
     cx.fillStyle = "rgb(0, 150, 255)";
     cx.fillRect(area.x, area.y, area.width, area.height);
 
-    cx.save(); // Begin objects further away
+    drawObjectsFarAway(area, blur, scrollX);
+
+    // Optionally render cat before fence
+    if (catProps) {
+        renderBlackCat(cx, ...catProps);
+    }
+
+    // Fence
+    const fenceHeightNear = area.height / 1.5;
+    const fenceHeightFar = area.height / 3;
+    const fenceHeight =
+        fenceHeightFar + (fenceHeightNear - fenceHeightFar) * progress + 8;
+    const fenceY = area.y + area.height - fenceHeight;
+
+    drawFence(area.x, fenceY, area.width, fenceHeight, progress);
+
+    drawMouseHole(area, scrollX, progress);
+
+    cx.restore();
+}
+
+function drawObjectsFarAway(area: Area, blur: number, scrollX: number): void {
+    cx.save();
+
     cx.filter = `blur(${blur}px)`;
 
     cx.translate(scrollX / 2, 0);
@@ -61,18 +86,18 @@ export function drawHorizon(
     cx.fillStyle = "#8b0000";
     cx.fill();
 
-    cx.filter = "none";
-
-    // Optionally render cat before fence
-    if (catProps) {
-        renderBlackCat(cx, ...catProps);
-    }
-
     cx.restore();
+}
 
-    // Fence
-    const fenceHeightNear = area.height / 1.5;
-    const fenceHeightFar = area.height / 3;
+function drawFence(
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    progress: number,
+): void {
+    cx.save();
+
     // Make fence dynamically darker based on progress (0 = near, 1 = far)
     function lerpColor(a: string, b: string, t: number) {
         // a, b: hex colors like #882222, #441111
@@ -87,6 +112,7 @@ export function drawHorizon(
         const ch = ah.map((v, i) => Math.round(v + (bh[i] - v) * t));
         return `#${ch.map((x) => x.toString(16).padStart(2, "0")).join("")}`;
     }
+
     // Fence is darkest and most blurred at progress=0 (far), lightest/sharpest at progress=1 (close)
     const t = 1 - Math.max(0, Math.min(progress, 1));
     const fenceColor = lerpColor(
@@ -94,23 +120,20 @@ export function drawHorizon(
         "#664848", // far (very dark)
         t,
     );
+
     // Blur decreases as progress increases
     if (progress < 1) {
-        cx.save();
         cx.filter = `blur(${Math.round((1 - progress) * 4)}px)`;
     }
 
     // Fence
-    const h =
-        fenceHeightFar + (fenceHeightNear - fenceHeightFar) * progress + 8;
-    const y = area.y + area.height - h;
-    cx.save();
     cx.fillStyle = fenceColor;
-    cx.fillRect(area.x, y, area.width, h);
-    if (progress < 1) {
-        cx.restore();
-    }
+    cx.fillRect(x, y, w, h);
 
+    cx.restore();
+}
+
+function drawMouseHole(area: Area, scrollX: number, progress: number): void {
     // Mouse hole: grows from 0 to full size at the bottom as progress goes from 0.95 to 1
     const HOLE_GROW_START = 0.8;
     const HOLE_GROW_END = 1.0;
@@ -138,6 +161,4 @@ export function drawHorizon(
         cx.fill();
         cx.restore();
     }
-
-    cx.restore();
 }
