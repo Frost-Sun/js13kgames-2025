@@ -65,7 +65,7 @@ export class Flower implements GameObject {
     draw(time: TimeStep): void {
         cx.save();
 
-        // Draw longer shadow at flower world position, before transforms
+        // Shadow
         cx.save();
         cx.globalAlpha = 0.1;
         cx.fillStyle = "black";
