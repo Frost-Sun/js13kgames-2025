@@ -57,6 +57,24 @@ export function renderMouse(
     const t = time.t,
         h = w / MOUSE_ASPECT_RATIO,
         PI2 = Math.PI * 2;
+
+    // Shadow
+    ctx.save();
+    ctx.globalAlpha = 0.28;
+    ctx.fillStyle = "black";
+    ctx.beginPath();
+    ctx.ellipse(
+        x + w / 2,
+        y + h / 2 + h * (facing.startsWith("down") ? 0.7 : 0.5) - h * 0.6,
+        w * 0.45,
+        h * 0.24,
+        0,
+        0,
+        Math.PI * 2,
+    );
+    ctx.fill();
+    ctx.restore();
+
     ctx.save();
     ctx.translate(0, -h * 0.6);
     ctx.translate(x + w / 2, y + h / 2);
@@ -84,22 +102,6 @@ export function renderMouse(
             ctx.stroke();
         }
     };
-
-    ctx.save();
-    ctx.globalAlpha = 0.18;
-    ctx.fillStyle = "black";
-    ctx.beginPath();
-    ctx.ellipse(
-        0,
-        h * (facing.startsWith("down") ? 0.7 : 0.5),
-        w * 0.45,
-        h * 0.24,
-        0,
-        0,
-        PI2,
-    );
-    ctx.fill();
-    ctx.restore();
 
     if (facing === "side") {
         renderSideView(ctx, t, step, mv, fse);

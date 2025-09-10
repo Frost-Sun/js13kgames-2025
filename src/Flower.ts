@@ -65,6 +65,23 @@ export class Flower implements GameObject {
     draw(time: TimeStep): void {
         cx.save();
 
+        // Draw longer shadow at flower world position, before transforms
+        cx.save();
+        cx.globalAlpha = 0.1;
+        cx.fillStyle = "black";
+        cx.beginPath();
+        cx.ellipse(
+            this.x + this.width * 0.5,
+            this.y + this.height * 0.8,
+            this.width * 0.42,
+            this.height * 0.38,
+            0,
+            0,
+            Math.PI * 2,
+        );
+        cx.fill();
+        cx.restore();
+
         cx.translate(this.x + this.width * 0.5, this.y + this.height * 0.5);
 
         const hitAngleMultiplier =

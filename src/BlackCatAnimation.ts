@@ -76,6 +76,24 @@ export function renderBlackCat(
 ) {
     const t = time.t,
         h = width / CAT_ASPECT_RATIO;
+
+    // Shadow
+    cx.save();
+    cx.globalAlpha = 0.28;
+    cx.fillStyle = "black";
+    cx.beginPath();
+    cx.ellipse(
+        x + width / 2,
+        y + h / 2 + h * 0.5 - h * 0.75,
+        width * 0.45,
+        h * 0.24,
+        0,
+        0,
+        Math.PI * 2,
+    );
+    cx.fill();
+    cx.restore();
+
     cx.save();
     cx.translate(0, -h * 0.75);
     cx.translate(x + width / 2, y + h / 2);
