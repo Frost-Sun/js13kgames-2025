@@ -177,13 +177,13 @@ const draw = (time: TimeStep): void => {
             cx.restore();
 
             renderText(
-                level.number > 0 ? "Backyard #" + level.number : "Outside",
+                level.number > 0 ? "BACKYARD " + level.number : "Outside",
                 TextSize.Small,
                 "Courier New",
                 1,
                 2,
                 false,
-                0,
+                25,
             );
 
             break;

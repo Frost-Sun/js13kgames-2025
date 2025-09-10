@@ -100,16 +100,12 @@ export function drawHorizon(
         cx.save();
         cx.filter = `blur(${Math.round((1 - progress) * 4)}px)`;
     }
-    // Draw opaque background behind the fence
+
+    // Fence
     const h =
         fenceHeightFar + (fenceHeightNear - fenceHeightFar) * progress + 8;
     const y = area.y + area.height - h;
     cx.save();
-    cx.globalAlpha = 1;
-    cx.fillStyle = "#a05a2c"; // Opaque brown, adjust as needed
-    cx.fillRect(area.x, y, area.width, h);
-    cx.restore();
-    // Draw the actual fence
     cx.fillStyle = fenceColor;
     cx.fillRect(area.x, y, area.width, h);
     if (progress < 1) {
