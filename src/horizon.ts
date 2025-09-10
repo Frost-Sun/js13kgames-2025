@@ -32,7 +32,6 @@ export function drawHorizon(
     blur: number,
     scrollX: number,
     progress: number,
-    showCat: boolean = false,
     catProps?: BlackCatRenderProps,
 ): void {
     // Draw sky before horizon (only top part)
@@ -65,7 +64,7 @@ export function drawHorizon(
     cx.filter = "none";
 
     // Optionally render cat before fence
-    if (showCat && catProps) {
+    if (catProps) {
         renderBlackCat(cx, ...catProps);
     }
 
