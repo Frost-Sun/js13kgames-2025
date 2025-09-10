@@ -296,29 +296,6 @@ export class Level implements Area, Space {
         });
         cx.restore();
 
-        // Show instruction in intro level
-        if (this.number === 0) {
-            renderText(
-                "Find the mouse hole to continue to the next backyard.",
-                TextSize.Small,
-                "Courier New",
-            );
-            renderText(
-                "Be quiet or the black cat catches you!",
-                TextSize.Small,
-                "Courier New",
-                1,
-                2,
-            );
-            renderText(
-                "Use arrow keys or WASD to move.",
-                TextSize.Small,
-                "Courier New",
-                1,
-                6,
-            );
-        }
-
         // The horizon is drawn after the tiles so that the tiles are sharply
         // "cut" at the horizon.
         const backgroundScrollAmount =
@@ -361,6 +338,29 @@ export class Level implements Area, Space {
         });
 
         cx.restore();
+
+        // Show instruction in intro level
+        if (this.number === 0) {
+            renderText(
+                "Find the mouse hole to continue to the next backyard.",
+                TextSize.Small,
+                "Courier New",
+            );
+            renderText(
+                "Be quiet or the black cat catches you!",
+                TextSize.Small,
+                "Courier New",
+                1,
+                2,
+            );
+            renderText(
+                "Use arrow keys or WASD to move.",
+                TextSize.Small,
+                "Courier New",
+                1,
+                6,
+            );
+        }
 
         drawRain(time.t, cx.canvas.width, cx.canvas.height);
 
