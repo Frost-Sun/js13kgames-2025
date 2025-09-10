@@ -300,24 +300,23 @@ export class Level implements Area, Space {
         // Show instruction in intro level
         if (this.number === 0) {
             renderText(
-                "Use arrow keys or WASD to move.",
-                TextSize.Small,
-                "Arial",
-                2,
-            );
-            renderText(
                 "Find the mouse hole to continue to the next backyard.",
                 TextSize.Small,
-                "Arial",
-                1,
-                2,
+                "Courier New",
             );
             renderText(
                 "Be quiet or the black cat catches you!",
                 TextSize.Small,
-                "Arial",
+                "Courier New",
                 1,
-                4,
+                2,
+            );
+            renderText(
+                "Use arrow keys or WASD to move.",
+                TextSize.Small,
+                "Courier New",
+                1,
+                6,
             );
         }
 
@@ -328,11 +327,32 @@ export class Level implements Area, Space {
         // Calculate player progress: 0 at bottom, 1 at top
         let progress = 1 - this.player.y / (this.height - TILE_DRAW_HEIGHT);
         progress = Math.max(0, Math.min(1, progress));
+
         // In intro level, always show horizon as if finished (mouse hole/fence fully visible)
         if (this.number === 0) {
             progress = 1;
         }
-        drawHorizon(this.horizonDrawArea, 4, backgroundScrollAmount, progress);
+
+        // Make cat size relative to the horizon area width so it scales with canvas
+        const horizonArea = this.horizonDrawArea;
+        const catW = horizonArea.width * 0.04; // 4% of horizon width
+        const catH = catW / (3 / 4);
+        const canvasW = cx.canvas.width;
+        const fenceY = TILE_DRAW_HEIGHT * 2.2;
+        const peekAmount = catH * 0.18; // upper body/face
+        const topY = fenceY - peekAmount + catH * 1.3;
+        const lowY = fenceY + catH * 0.75 + catH * 1.3;
+        const t = (Math.sin(time.t / 700) + 1) / 2;
+        const catY = topY * (1 - t) + lowY * t;
+        const centerX = canvasW / 2;
+        drawHorizon(
+            this.horizonDrawArea,
+            4,
+            backgroundScrollAmount,
+            progress,
+            this.number === 0,
+            [centerX - catW / 2, catY, catW, "up", true, 1, 0, 0, time, 0],
+        );
 
         cx.save();
         cx.translate(0, this.levelDrawArea.y);
@@ -385,7 +405,6 @@ export class Level implements Area, Space {
         }
     }
 }
-
 const isBehind = (o: GameObject, obstacle: GameObject): boolean =>
     o.y + o.height / 2 < obstacle.y + obstacle.height / 2 &&
     obstacle.y - 4 * TILE_DRAW_HEIGHT < o.y &&

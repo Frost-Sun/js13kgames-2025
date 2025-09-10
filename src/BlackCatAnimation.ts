@@ -22,6 +22,20 @@
  * SOFTWARE.
  */
 
+// Tuple type for renderBlackCat arguments (excluding cx)
+export type BlackCatRenderProps = [
+    x: number,
+    y: number,
+    width: number,
+    facing: BlackCatFacing,
+    eyesOpen: boolean,
+    dir: number,
+    step: number,
+    lastSpeed: number,
+    time: TimeStep,
+    riseLevel?: 0 | 1 | 2,
+];
+
 export type BlackCatFacing =
     | "side"
     | "up"
@@ -62,6 +76,7 @@ export function renderCatEye(
     cx.fill();
 }
 
+// riseLevel: 0 = low, 1 = mid, 2 = high to jump next
 export function renderBlackCat(
     cx: CanvasRenderingContext2D,
     x: number,
@@ -73,12 +88,24 @@ export function renderBlackCat(
     step: number,
     lastSpeed: number,
     time: TimeStep,
+    riseLevel: 0 | 1 | 2 = 0,
 ) {
     const t = time.t,
         h = width / CAT_ASPECT_RATIO;
     cx.save();
-    cx.translate(0, -h * 0.75);
-    cx.translate(x + width / 2, y + h / 2);
+    const amp = h * 0.005;
+    let riseY = 0;
+    if (riseLevel === 0) {
+        riseY = Math.min(Math.sin(t / 400) * (h * 0.0002), 0); // only allow nearly invisible downward movement
+    } else if (riseLevel === 1) {
+        riseY = -h * 0.25 + Math.sin(t / 400) * amp;
+        riseY = Math.max(riseY, -h * 0.248);
+    } else if (riseLevel === 2) {
+        riseY = -h * 0.45 + amp; // move cat to the top and keep it there
+    }
+    const baseYOffset = -h * 0.5;
+    cx.translate(0, baseYOffset + riseY);
+    cx.translate(x + width / 2, y + h * 0.1);
     cx.scale(facing === "side" ? dir : 1, 1);
     cx.translate(
         0,

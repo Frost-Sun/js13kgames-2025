@@ -25,16 +25,17 @@
 import type { Area } from "./core/math/Area";
 import { cx } from "./graphics";
 import { GRASS_COLOR } from "./tiles";
+import { renderBlackCat, type BlackCatRenderProps } from "./BlackCatAnimation";
 
 export function drawHorizon(
     area: Area,
     blur: number,
     scrollX: number,
     progress: number,
+    showCat: boolean = false,
+    catProps?: BlackCatRenderProps,
 ): void {
-    cx.save();
-
-    // Sky
+    // Draw sky before horizon (only top part)
     cx.fillStyle = "rgb(0, 150, 255)";
     cx.fillRect(area.x, area.y, area.width, area.height);
 
@@ -60,6 +61,13 @@ export function drawHorizon(
     cx.closePath();
     cx.fillStyle = "#8b0000";
     cx.fill();
+
+    cx.filter = "none";
+
+    // Optionally render cat before fence
+    if (showCat && catProps) {
+        renderBlackCat(cx, ...catProps);
+    }
 
     cx.restore();
 
@@ -92,11 +100,13 @@ export function drawHorizon(
         cx.save();
         cx.filter = `blur(${Math.round((1 - progress) * 4)}px)`;
     }
-    cx.fillStyle = fenceColor;
-    // If blurred, extend the fence below the bottom to hide background color bleed
+
+    // Fence
     const h =
         fenceHeightFar + (fenceHeightNear - fenceHeightFar) * progress + 8;
     const y = area.y + area.height - h;
+    cx.save();
+    cx.fillStyle = fenceColor;
     cx.fillRect(area.x, y, area.width, h);
     if (progress < 1) {
         cx.restore();
