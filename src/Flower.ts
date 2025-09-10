@@ -67,7 +67,7 @@ export class Flower implements GameObject {
 
         // Shadow
         cx.save();
-        cx.fillStyle = "rgb(90, 174, 90)";
+        cx.fillStyle = "rgb(80, 164, 80)";
         cx.beginPath();
         cx.ellipse(
             this.x + this.width * 0.5,
