@@ -55,7 +55,7 @@ import {
     TILE_DRAW_HEIGHT,
     TILE_SIZE,
 } from "./tiles";
-import { playTune } from "./audio/sfx";
+import { playTune, SFX_RUNNING } from "./audio/sfx";
 import { Bush } from "./Bush";
 import { renderGradient } from "./core/graphics/gradient";
 import { renderText, TextSize } from "./text";
@@ -153,7 +153,7 @@ export class Level implements Area, Space {
     listen(time: TimeStep, listenerPosition: Vector): Sound | null {
         if (
             this.latestSoundByPlayer &&
-            time.t - this.latestSoundByPlayer.time < 1000
+            time.t - this.latestSoundByPlayer.time < 500
         ) {
             const d = distance(
                 listenerPosition,
@@ -189,8 +189,7 @@ export class Level implements Area, Space {
             this.playerHasReachedFinish()
         ) {
             this.state = LevelState.Finished;
-            if (this.cat && typeof this.cat.reset === "function")
-                this.cat.reset();
+            playTune(SFX_RUNNING);
             return;
         }
 

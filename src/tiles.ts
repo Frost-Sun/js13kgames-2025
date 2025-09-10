@@ -53,15 +53,15 @@ export interface Tile {
 export const visibilityByTile: Readonly<Record<TileType, number>> = {
     [TileType.Grass]: 0.9,
     [TileType.Flower]: 0.6,
-    [TileType.Bush]: 0.4,
+    [TileType.Bush]: 0.1,
     [TileType.Slate]: 1,
 };
 
 export const stepVolumeByTile: Readonly<Record<TileType, number>> = {
     [TileType.Grass]: 0.1,
-    [TileType.Flower]: 0.3,
-    [TileType.Bush]: 0.3,
-    [TileType.Slate]: 0.4,
+    [TileType.Flower]: 0.6,
+    [TileType.Bush]: 0.4,
+    [TileType.Slate]: 0.2,
 };
 
 const asciiPatternCache: Record<string, CanvasPattern | null> = {};

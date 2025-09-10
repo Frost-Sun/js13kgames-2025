@@ -26,7 +26,7 @@ import type { Animal } from "./Animal";
 import type { TimeStep } from "./core/time/TimeStep";
 import { cx } from "./graphics";
 import { type BlackCatFacing, renderBlackCat } from "././BlackCatAnimation";
-import { CatAi, CatState } from "./CatAi";
+import { CatAi } from "./CatAi";
 import {
     length,
     multiply,
@@ -46,7 +46,6 @@ export class BlackCat implements Animal {
     width: number = 12;
     height: number = 6;
 
-    private movement: Vector = ZERO_VECTOR;
     direction: Vector = ZERO_VECTOR;
     private dir: number = 1;
     private step: number = 0;
@@ -66,8 +65,6 @@ export class BlackCat implements Animal {
     }
 
     setActualMovement(movement: Vector): void {
-        this.movement = movement;
-
         if (movement.x !== 0 || movement.y !== 0) {
             this.direction = normalize(movement);
         }
@@ -81,7 +78,7 @@ export class BlackCat implements Animal {
     }
 
     draw(time: TimeStep): void {
-        const mv = this.movement;
+        const mv = this.direction;
         const ax = Math.abs(mv.x);
         const ay = Math.abs(mv.y);
 
@@ -96,7 +93,7 @@ export class BlackCat implements Animal {
             this.dir = mv.x >= 0 ? 1 : -1;
         }
 
-        const eyesOpen: boolean = this.ai.state === CatState.Alert;
+        const eyesOpen: boolean = this.ai.isAlert;
 
         renderBlackCat(
             cx,
@@ -110,9 +107,22 @@ export class BlackCat implements Animal {
             this.lastSpeed,
             time,
         );
-    }
 
-    reset() {
-        this.ai.reset();
+        // Debug draw the direction the cat is facing.
+        // const pos: Vector = {
+        //     x: this.x + this.width / 2,
+        //     y: this.y + this.height / 2,
+        // };
+        // const dirPos: Vector = add(
+        //     pos,
+        //     multiply(this.direction, this.width / 2),
+        // );
+        // const r = this.width / 10;
+        // cx.save();
+        // cx.fillStyle = "blue";
+        // cx.beginPath();
+        // cx.ellipse(dirPos.x, dirPos.y, r, r, 0, 0, 2 * Math.PI);
+        // cx.fill();
+        // cx.restore();
     }
 }
