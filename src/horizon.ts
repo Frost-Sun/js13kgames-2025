@@ -26,13 +26,17 @@ import type { Area } from "./core/math/Area";
 import { cx } from "./graphics";
 import { GRASS_COLOR } from "./tiles";
 import { renderBlackCat, type BlackCatRenderProps } from "./BlackCatAnimation";
+import type { BlackCat } from "./BlackCat";
+import type { TimeStep } from "./core/time/TimeStep";
+import { FenceState } from "./CatAi";
 
 export function drawHorizon(
+    time: TimeStep,
     area: Area,
     blur: number,
     scrollX: number,
     progress: number,
-    catProps?: BlackCatRenderProps,
+    cat?: BlackCat,
 ): void {
     cx.save();
 
@@ -42,17 +46,18 @@ export function drawHorizon(
 
     drawObjectsFarAway(area, blur, scrollX);
 
-    // Optionally render cat before fence
-    if (catProps) {
-        renderBlackCat(cx, ...catProps);
-    }
-
-    // Fence
+    // Fence props needed for drawing the cat in the right hight.
     const fenceHeightNear = area.height / 1.5;
     const fenceHeightFar = area.height / 3;
     const fenceHeight =
         fenceHeightFar + (fenceHeightNear - fenceHeightFar) * progress + 8;
     const fenceY = area.y + area.height - fenceHeight;
+
+    // Optionally render cat before fence
+    const catProps = getCatPropsOnTheFence(cat, time, area, fenceY);
+    if (catProps) {
+        renderBlackCat(cx, ...catProps);
+    }
 
     drawFence(area.x, fenceY, area.width, fenceHeight, progress);
 
@@ -162,3 +167,46 @@ function drawMouseHole(area: Area, scrollX: number, progress: number): void {
         cx.restore();
     }
 }
+
+const getCatPropsOnTheFence = (
+    cat: BlackCat | undefined,
+    time: TimeStep,
+    horizonArea: Area,
+    fenceY: number,
+): BlackCatRenderProps | undefined => {
+    if (!cat || cat.ai.fenceState === FenceState.Jumped) {
+        return undefined;
+    }
+
+    // Make cat size relative to the horizon area width so it scales with canvas
+    const catW = horizonArea.width * 0.04; // 4% of horizon width
+    const catH = catW / (3 / 4);
+    const canvasW = cx.canvas.width;
+    const centerX = canvasW / 2;
+
+    let catY: number;
+
+    switch (cat.ai.fenceState) {
+        case FenceState.Nothing: {
+            return undefined;
+        }
+        case FenceState.HeardSomething: {
+            const peekAmount = catH * 0.1; // upper body/face
+            const topY = fenceY + catH / 2 - peekAmount;
+            const lowY = fenceY + catH / 2;
+            const t = (Math.sin(time.t / 700) + 1) / 2;
+            catY = topY * (1 - t) + lowY * t;
+            break;
+        }
+        case FenceState.Noticed: {
+            const peekAmount = catH * 0.5;
+            const topY = fenceY + catH / 2 - peekAmount;
+            catY = topY;
+            break;
+        }
+        default:
+            return undefined;
+    }
+
+    return [centerX - catW / 2, catY, catW, "up", true, 1, 0, 0, time, 0];
+};

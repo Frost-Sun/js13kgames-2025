@@ -59,8 +59,6 @@ import { playTune, SFX_RUNNING } from "./audio/sfx";
 import { Bush } from "./Bush";
 import { renderGradient } from "./core/graphics/gradient";
 import { renderText, TextSize } from "./text";
-import type { BlackCatRenderProps } from "./BlackCatAnimation";
-import { FenceState } from "./CatAi";
 
 const HORIZON_HEIGHT_OF_CANVAS = 0.25;
 
@@ -81,49 +79,6 @@ export enum LevelState {
 interface ProducedSound extends Sound {
     time: number;
 }
-
-const getCatPropsOnTheFence = (
-    cat: BlackCat | undefined,
-    time: TimeStep,
-    horizonArea: Area,
-): BlackCatRenderProps | undefined => {
-    if (!cat || cat.ai.fenceState === FenceState.Jumped) {
-        return undefined;
-    }
-
-    // Make cat size relative to the horizon area width so it scales with canvas
-    const catW = horizonArea.width * 0.04; // 4% of horizon width
-    const catH = catW / (3 / 4);
-    const canvasW = cx.canvas.width;
-    const fenceY = TILE_DRAW_HEIGHT * 2.2;
-    const centerX = canvasW / 2;
-
-    let catY: number;
-
-    switch (cat.ai.fenceState) {
-        case FenceState.Nothing: {
-            return undefined;
-        }
-        case FenceState.HeardSomething: {
-            const peekAmount = catH * 0.18; // upper body/face
-            const topY = fenceY - peekAmount + catH * 1.3;
-            const lowY = fenceY + catH * 0.75 + catH * 1.3;
-            const t = (Math.sin(time.t / 700) + 1) / 2;
-            catY = topY * (1 - t) + lowY * t;
-            break;
-        }
-        case FenceState.Noticed: {
-            const peekAmount = catH * 0.18; // upper body/face
-            const topY = fenceY - peekAmount + catH * 1.3;
-            catY = topY;
-            break;
-        }
-        default:
-            return undefined;
-    }
-
-    return [centerX - catW / 2, catY, catW, "up", true, 1, 0, 0, time, 0];
-};
 
 export class Level implements Area, Space {
     private setupPlayerAndCamera(player: Mouse, cat?: BlackCat) {
@@ -355,11 +310,12 @@ export class Level implements Area, Space {
         }
 
         drawHorizon(
+            time,
             this.horizonDrawArea,
             4,
             backgroundScrollAmount,
             progress,
-            getCatPropsOnTheFence(this.cat, time, this.horizonDrawArea),
+            this.cat,
         );
 
         cx.save();
