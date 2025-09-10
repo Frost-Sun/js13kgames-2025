@@ -79,8 +79,7 @@ export function renderBlackCat(
 
     // Shadow
     cx.save();
-    cx.globalAlpha = 0.28;
-    cx.fillStyle = "black";
+    cx.fillStyle = "rgba(0,0,0,0.30)";
     cx.beginPath();
     cx.ellipse(
         x + width / 2,

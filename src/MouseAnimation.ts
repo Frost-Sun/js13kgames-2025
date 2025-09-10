@@ -60,8 +60,7 @@ export function renderMouse(
 
     // Shadow
     ctx.save();
-    ctx.globalAlpha = 0.28;
-    ctx.fillStyle = "black";
+    ctx.fillStyle = "rgba(0,0,0,0.28)";
     ctx.beginPath();
     ctx.ellipse(
         x + w / 2,
