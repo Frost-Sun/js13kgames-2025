@@ -51,7 +51,7 @@ export const renderText = (
     color: string | [string, string] = "white", // One color or a pair for gradient
 ) => {
     cx.save();
-    cx.shadowColor = "rgba(0,0,0,0.7)";
+    cx.shadowColor = "rgba(0,0,0,0.8)";
     cx.shadowBlur = 4;
     cx.shadowOffsetX = 2;
     cx.shadowOffsetY = 2;

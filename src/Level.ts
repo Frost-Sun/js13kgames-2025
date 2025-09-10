@@ -300,24 +300,23 @@ export class Level implements Area, Space {
         // Show instruction in intro level
         if (this.number === 0) {
             renderText(
-                "Use arrow keys or WASD to move.",
-                TextSize.Small,
-                "Arial",
-                2,
-            );
-            renderText(
                 "Find the mouse hole to continue to the next backyard.",
                 TextSize.Small,
-                "Arial",
-                1,
-                2,
+                "Courier New",
             );
             renderText(
                 "Be quiet or the black cat catches you!",
                 TextSize.Small,
-                "Arial",
+                "Courier New",
                 1,
-                4,
+                2,
+            );
+            renderText(
+                "Use arrow keys or WASD to move.",
+                TextSize.Small,
+                "Courier New",
+                1,
+                6,
             );
         }
 
