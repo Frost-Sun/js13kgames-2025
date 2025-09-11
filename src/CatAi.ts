@@ -39,7 +39,7 @@ import {
 } from "./core/math/Vector";
 import type { TimeStep } from "./core/time/TimeStep";
 import type { Mouse } from "./Mouse";
-import type { Space } from "./Space";
+import type { Observation, Space } from "./Space";
 import { TILE_DRAW_HEIGHT, TILE_SIZE } from "./tiles";
 import { playTune, SFX_CHASE, SFX_RUNNING } from "./audio/sfx";
 import type { GameObject } from "./GameObject";
@@ -78,13 +78,6 @@ const LOOK_AROUND_INTERVAL = 1500;
 const SPEED_IDLE = 0.8;
 const SPEED_VAGUE_OBSERVATION = 0.4; // Slow approach to pray (as cats do)
 const SPEED_CHASE = 1.0;
-
-type Observation = {
-    t: number;
-    position: Vector;
-    accuracy: number;
-    mouse?: Mouse;
-};
 
 function getSightAccuracy(d: number) {
     return clamp(1 - d / SIGHT_ACCURACY_LOWERING_DISTANCE, 0.3, 1);
@@ -227,7 +220,7 @@ export class CatAi {
                           y: this.space.y,
                       };
 
-            heard = this.listenForMouse(time, listenerPosition);
+            heard = this.space.listen(time, listenerPosition);
             hearAccuracyDebug = heard?.accuracy ?? 0;
 
             if (heard) {
@@ -413,40 +406,23 @@ export class CatAi {
         time: TimeStep,
         hostCenter: Vector,
     ): Observation | null {
-        const sighting = this.space.lookForMouse();
-        const mouse = sighting.target;
-        const mouseCenter = getCenter(mouse);
-        const d = distance(hostCenter, mouseCenter);
-        const directionToMouse = normalize(subtract(mouseCenter, hostCenter));
+        const sighting = this.space.lookForMouse(time);
+        const d = distance(hostCenter, sighting.position);
+        const directionToMouse = normalize(
+            subtract(sighting.position, hostCenter),
+        );
         const dot = dotProduct(directionToMouse, this.host.direction);
         const inFov = dot > Math.cos(CAT_FOV / 2);
         const fovFactor = inFov ? dot : 0;
         const accuracy =
             fovFactor *
-            sighting.visibility *
+            sighting.accuracy *
             getSightAccuracy(d) *
-            getMoveFactor(mouse);
+            getMoveFactor(this.mouse);
 
-        return sighting.visibility > 0 && inFov
-            ? { t: time.t, position: mouseCenter, accuracy, mouse: mouse }
+        return sighting.accuracy > 0 && inFov
+            ? { ...sighting, accuracy }
             : null;
-    }
-
-    private listenForMouse(
-        time: TimeStep,
-        hostCenter: Vector,
-    ): Observation | null {
-        const sound = this.space.listen(time, hostCenter);
-        if (!sound) {
-            return null;
-        }
-        // Try to get the mouse from the space if possible
-        return {
-            t: time.t,
-            position: sound.position,
-            accuracy: sound.volume,
-            mouse: this.mouse,
-        };
     }
 
     private goTo(
