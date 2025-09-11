@@ -88,11 +88,12 @@ export function renderBlackCat(
     time: TimeStep,
     riseLevel: 0 | 1 | 2 = 0,
 ) {
+    cx.save();
+
     const t = time.t,
         h = width / CAT_ASPECT_RATIO;
 
     // Shadow
-    cx.save();
     cx.fillStyle = "rgba(0,0,0,0.20)";
     cx.beginPath();
     cx.ellipse(
@@ -105,9 +106,7 @@ export function renderBlackCat(
         Math.PI * 2,
     );
     cx.fill();
-    cx.restore();
 
-    cx.save();
     // Rising to fence
     const amp = h * 0.005;
     let riseY = 0;
@@ -159,7 +158,6 @@ export function renderBlackCat(
             [width * 0.03, earW * 0.7, earH * 0.7, 0.1],
             [width * 0.13, earW, earH, 0],
         ].forEach(([ex, ew, eh, yoff]) => {
-            cx.save();
             cx.beginPath();
             cx.moveTo(ex, earY + earH * yoff);
             cx.lineTo(ex + ew / 2, earY + eh + earH * yoff);
@@ -167,8 +165,8 @@ export function renderBlackCat(
             cx.closePath();
             cx.fillStyle = "#000";
             cx.fill();
-            cx.restore();
         });
+
         // Nose
         cx.fillStyle = "#e68686";
         cx.beginPath();
@@ -182,6 +180,7 @@ export function renderBlackCat(
             Math.PI * 2,
         );
         cx.fill();
+
         // Whiskers (right only)
         cx.strokeStyle = "#e6d6e6";
         cx.lineWidth = Math.max(0.1, width * 0.012);
@@ -278,5 +277,6 @@ export function renderBlackCat(
             cx.stroke();
         });
     }
+
     cx.restore();
 }
