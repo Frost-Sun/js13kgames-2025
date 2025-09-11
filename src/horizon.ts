@@ -26,20 +26,49 @@ import type { Area } from "./core/math/Area";
 import { cx } from "./graphics";
 import { GRASS_COLOR } from "./tiles";
 import { renderBlackCat, type BlackCatRenderProps } from "./BlackCatAnimation";
+import type { BlackCat } from "./BlackCat";
+import type { TimeStep } from "./core/time/TimeStep";
+import { FenceState } from "./CatAi";
 
 export function drawHorizon(
+    time: TimeStep,
     area: Area,
     blur: number,
     scrollX: number,
     progress: number,
-    showCat: boolean = false,
-    catProps?: BlackCatRenderProps,
+    cat?: BlackCat,
 ): void {
+    cx.save();
+
     // Draw sky before horizon (only top part)
     cx.fillStyle = "rgb(0, 150, 255)";
     cx.fillRect(area.x, area.y, area.width, area.height);
 
-    cx.save(); // Begin objects further away
+    drawObjectsFarAway(area, blur, scrollX);
+
+    // Fence props needed for drawing the cat in the right hight.
+    const fenceHeightNear = area.height / 1.5;
+    const fenceHeightFar = area.height / 3;
+    const fenceHeight =
+        fenceHeightFar + (fenceHeightNear - fenceHeightFar) * progress + 8;
+    const fenceY = area.y + area.height - fenceHeight;
+
+    // Optionally render cat before fence
+    const catProps = getCatPropsOnTheFence(cat, time, area, fenceY);
+    if (catProps) {
+        renderBlackCat(cx, ...catProps);
+    }
+
+    drawFence(area.x, fenceY, area.width, fenceHeight, progress);
+
+    drawMouseHole(area, scrollX, progress);
+
+    cx.restore();
+}
+
+function drawObjectsFarAway(area: Area, blur: number, scrollX: number): void {
+    cx.save();
+
     cx.filter = `blur(${blur}px)`;
 
     cx.translate(scrollX / 2, 0);
@@ -62,18 +91,18 @@ export function drawHorizon(
     cx.fillStyle = "#8b0000";
     cx.fill();
 
-    cx.filter = "none";
-
-    // Optionally render cat before fence
-    if (showCat && catProps) {
-        renderBlackCat(cx, ...catProps);
-    }
-
     cx.restore();
+}
 
-    // Fence
-    const fenceHeightNear = area.height / 1.5;
-    const fenceHeightFar = area.height / 3;
+function drawFence(
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    progress: number,
+): void {
+    cx.save();
+
     // Make fence dynamically darker based on progress (0 = near, 1 = far)
     function lerpColor(a: string, b: string, t: number) {
         // a, b: hex colors like #882222, #441111
@@ -88,6 +117,7 @@ export function drawHorizon(
         const ch = ah.map((v, i) => Math.round(v + (bh[i] - v) * t));
         return `#${ch.map((x) => x.toString(16).padStart(2, "0")).join("")}`;
     }
+
     // Fence is darkest and most blurred at progress=0 (far), lightest/sharpest at progress=1 (close)
     const t = 1 - Math.max(0, Math.min(progress, 1));
     const fenceColor = lerpColor(
@@ -95,23 +125,20 @@ export function drawHorizon(
         "#664848", // far (very dark)
         t,
     );
+
     // Blur decreases as progress increases
     if (progress < 1) {
-        cx.save();
         cx.filter = `blur(${Math.round((1 - progress) * 4)}px)`;
     }
 
     // Fence
-    const h =
-        fenceHeightFar + (fenceHeightNear - fenceHeightFar) * progress + 8;
-    const y = area.y + area.height - h;
-    cx.save();
     cx.fillStyle = fenceColor;
-    cx.fillRect(area.x, y, area.width, h);
-    if (progress < 1) {
-        cx.restore();
-    }
+    cx.fillRect(x, y, w, h);
 
+    cx.restore();
+}
+
+function drawMouseHole(area: Area, scrollX: number, progress: number): void {
     // Mouse hole: grows from 0 to full size at the bottom as progress goes from 0.95 to 1
     const HOLE_GROW_START = 0.8;
     const HOLE_GROW_END = 1.0;
@@ -139,6 +166,47 @@ export function drawHorizon(
         cx.fill();
         cx.restore();
     }
-
-    cx.restore();
 }
+
+const getCatPropsOnTheFence = (
+    cat: BlackCat | undefined,
+    time: TimeStep,
+    horizonArea: Area,
+    fenceY: number,
+): BlackCatRenderProps | undefined => {
+    if (!cat || cat.ai.fenceState === FenceState.Jumped) {
+        return undefined;
+    }
+
+    // Make cat size relative to the horizon area width so it scales with canvas
+    const catW = horizonArea.width * 0.04; // 4% of horizon width
+    const catH = catW / (3 / 4);
+    const canvasW = cx.canvas.width;
+    const centerX = canvasW / 2;
+
+    let catY: number;
+
+    switch (cat.ai.fenceState) {
+        case FenceState.Nothing: {
+            return undefined;
+        }
+        case FenceState.HeardSomething: {
+            const peekAmount = catH * 0.1; // upper body/face
+            const topY = fenceY + catH / 2 - peekAmount;
+            const lowY = fenceY + catH / 2;
+            const t = (Math.sin(time.t / 700) + 1) / 2;
+            catY = topY * (1 - t) + lowY * t;
+            break;
+        }
+        case FenceState.Noticed: {
+            const peekAmount = catH * 0.5;
+            const topY = fenceY + catH / 2 - peekAmount;
+            catY = topY;
+            break;
+        }
+        default:
+            return undefined;
+    }
+
+    return [centerX - catW / 2, catY, catW, "up", true, 1, 0, 0, time, 0];
+};

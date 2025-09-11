@@ -296,6 +296,37 @@ export class Level implements Area, Space {
         });
         cx.restore();
 
+        // The horizon is drawn after the tiles so that the tiles are sharply
+        // "cut" at the horizon.
+        const backgroundScrollAmount =
+            -(this.camera.x - this.width / 2) * this.camera.zoom;
+        // Calculate player progress: 0 at bottom, 1 at top
+        let progress = 1 - this.player.y / (this.height - TILE_DRAW_HEIGHT);
+        progress = Math.max(0, Math.min(1, progress));
+
+        // In intro level, always show horizon as if finished (mouse hole/fence fully visible)
+        if (this.number === 0) {
+            progress = 1;
+        }
+
+        drawHorizon(
+            time,
+            this.horizonDrawArea,
+            4,
+            backgroundScrollAmount,
+            progress,
+            this.cat,
+        );
+
+        cx.save();
+        cx.translate(0, this.levelDrawArea.y);
+
+        this.camera.apply(cx, () => {
+            this.drawObjects(time, visibleArea, objectsToDraw);
+        });
+
+        cx.restore();
+
         // Show instruction in intro level
         if (this.number === 0) {
             renderText(
@@ -318,49 +349,6 @@ export class Level implements Area, Space {
                 6,
             );
         }
-
-        // The horizon is drawn after the tiles so that the tiles are sharply
-        // "cut" at the horizon.
-        const backgroundScrollAmount =
-            -(this.camera.x - this.width / 2) * this.camera.zoom;
-        // Calculate player progress: 0 at bottom, 1 at top
-        let progress = 1 - this.player.y / (this.height - TILE_DRAW_HEIGHT);
-        progress = Math.max(0, Math.min(1, progress));
-
-        // In intro level, always show horizon as if finished (mouse hole/fence fully visible)
-        if (this.number === 0) {
-            progress = 1;
-        }
-
-        // Make cat size relative to the horizon area width so it scales with canvas
-        const horizonArea = this.horizonDrawArea;
-        const catW = horizonArea.width * 0.04; // 4% of horizon width
-        const catH = catW / (3 / 4);
-        const canvasW = cx.canvas.width;
-        const fenceY = TILE_DRAW_HEIGHT * 2.2;
-        const peekAmount = catH * 0.18; // upper body/face
-        const topY = fenceY - peekAmount + catH * 1.3;
-        const lowY = fenceY + catH * 0.75 + catH * 1.3;
-        const t = (Math.sin(time.t / 700) + 1) / 2;
-        const catY = topY * (1 - t) + lowY * t;
-        const centerX = canvasW / 2;
-        drawHorizon(
-            this.horizonDrawArea,
-            4,
-            backgroundScrollAmount,
-            progress,
-            this.number === 0,
-            [centerX - catW / 2, catY, catW, "up", true, 1, 0, 0, time, 0],
-        );
-
-        cx.save();
-        cx.translate(0, this.levelDrawArea.y);
-
-        this.camera.apply(cx, () => {
-            this.drawObjects(time, visibleArea, objectsToDraw);
-        });
-
-        cx.restore();
 
         drawRain(time.t, cx.canvas.width, cx.canvas.height);
 
