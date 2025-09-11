@@ -36,8 +36,9 @@ import {
 } from "./core/math/Vector";
 import type { Space } from "./Space";
 import type { Mouse } from "./Mouse";
+import { TILE_SIZE } from "./tiles";
 
-const SPEED = 0.01;
+const SPEED = TILE_SIZE * 0.0011;
 
 export class BlackCat implements Animal {
     x: number = 0;

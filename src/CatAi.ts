@@ -74,6 +74,11 @@ const NOTICE_IGNORE_TIME = 1600;
 const SEARCH_TIME = 5000;
 const LOOK_AROUND_INTERVAL = 1500;
 
+// Speeds relative to the actual speed in BlackCat.ts.
+const SPEED_IDLE = 0.8;
+const SPEED_VAGUE_OBSERVATION = 0.4; // Slow approach to pray (as cats do)
+const SPEED_CHASE = 1.0;
+
 type Observation = {
     t: number;
     position: Vector;
@@ -329,14 +334,14 @@ export class CatAi {
             this.useMusic(SFX_RUNNING);
         }
 
-        const movement = this.goTo(this.target, hostCenter);
+        const direction = this.goTo(this.target, hostCenter, SPEED_IDLE);
 
-        if (!movement) {
+        if (!direction) {
             this.target = null;
             return ZERO_VECTOR;
         }
 
-        return movement;
+        return direction;
     }
 
     private followVagueObservation(
@@ -357,7 +362,7 @@ export class CatAi {
                           this.lastVagueObservation.position,
                       );
 
-            return this.goTo(target, hostCenter);
+            return this.goTo(target, hostCenter, SPEED_VAGUE_OBSERVATION);
         }
 
         this.isAlert = false;
@@ -370,7 +375,11 @@ export class CatAi {
             time.t - this.lastCertainObservation.t < KEEP_CHASING_TIME
         ) {
             this.useMusic(SFX_CHASE);
-            return this.goTo(this.lastCertainObservation.position, hostCenter);
+            return this.goTo(
+                this.lastCertainObservation.position,
+                hostCenter,
+                SPEED_CHASE,
+            );
         }
 
         return null;
@@ -440,7 +449,11 @@ export class CatAi {
         };
     }
 
-    private goTo(target: Vector, hostCenter: Vector): Vector | null {
+    private goTo(
+        target: Vector,
+        hostCenter: Vector,
+        multiplier: number,
+    ): Vector | null {
         const distanceToMousePosition = distance(hostCenter, target);
 
         if (distanceToMousePosition <= this.host.width * 0.2) {
@@ -448,6 +461,6 @@ export class CatAi {
         }
 
         const direction: Vector = normalize(subtract(target, hostCenter));
-        return direction;
+        return multiply(direction, multiplier);
     }
 }
