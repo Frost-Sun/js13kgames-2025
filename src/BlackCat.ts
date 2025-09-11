@@ -51,7 +51,7 @@ export class BlackCat implements Animal {
     private step: number = 0;
     private lastSpeed: number = 0;
 
-    ai: CatAi;
+    public ai: CatAi;
 
     constructor(x: number, y: number, space: Space, mouse: Mouse) {
         this.x = x;

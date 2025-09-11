@@ -163,7 +163,7 @@ export class CatAi {
     private noticedTime: number = 0;
 
     private jumpTarget: Vector | null = null;
-    private jumpStartTime: number = 0;
+    jumpStartTime: number = 0;
     private jumpFinishTime: number = 0;
     private hasJumped: boolean = false;
 

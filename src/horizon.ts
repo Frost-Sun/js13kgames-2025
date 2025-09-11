@@ -174,8 +174,8 @@ const getCatPropsOnTheFence = (
     horizonArea: Area,
     fenceY: number,
 ): BlackCatRenderProps | undefined => {
-    if (!cat || cat.ai.fenceState === FenceState.Jumped) {
-        return undefined;
+    if (!cat) {
+        return;
     }
 
     // Make cat size relative to the horizon area width so it scales with canvas
@@ -188,7 +188,7 @@ const getCatPropsOnTheFence = (
 
     switch (cat.ai.fenceState) {
         case FenceState.Nothing: {
-            return undefined;
+            return;
         }
         case FenceState.HeardSomething: {
             const peekAmount = catH * 0.1; // upper body/face
@@ -204,9 +204,27 @@ const getCatPropsOnTheFence = (
             catY = topY;
             break;
         }
+        case FenceState.Jumped: {
+            // Calculate jump animation time since jumpStartTime
+            if (cat.ai.jumpStartTime == null) return;
+            const jumpElapsed = Math.max(0, time.t - cat.ai.jumpStartTime);
+            // Place cat at the fence for the jump animation
+            return [
+                centerX - catW / 2,
+                fenceY,
+                catW,
+                "down",
+                true,
+                1,
+                0,
+                0,
+                { ...time, t: jumpElapsed },
+                2,
+            ];
+        }
         default:
-            return undefined;
+            return;
     }
 
-    return [centerX - catW / 2, catY, catW, "up", true, 1, 0, 0, time, 0];
+    return [centerX - catW / 2, catY, catW, "down", true, 1, 0, 0, time, 0];
 };
