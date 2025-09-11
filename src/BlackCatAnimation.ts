@@ -98,7 +98,7 @@ export function renderBlackCat(
     cx.beginPath();
     cx.ellipse(
         x + width / 2,
-        y + h / 2 + h * 0.5 - h * 0.75,
+        y + h / 2 + h * 0.5 - h,
         width * 0.45,
         h * 0.24,
         0,

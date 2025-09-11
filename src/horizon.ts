@@ -56,7 +56,9 @@ export function drawHorizon(
     // Optionally render cat before fence
     const catProps = getCatPropsOnTheFence(cat, time, area, fenceY);
     if (catProps) {
+        cx.filter = `blur(${blur / 2}px)`;
         renderBlackCat(cx, ...catProps);
+        cx.filter = `blur(0)`;
     }
 
     drawFence(area.x, fenceY, area.width, fenceHeight, progress);
