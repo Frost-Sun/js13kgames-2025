@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "start": "vite",
-    "build": "tsc && vite build && roadroller dist/assets/index.js -o dist/assets/index.js",
+    "build": "tsc && vite build && roadroller dist/assets/index.js -o dist/assets/index.js -Zab18 -Zlr2501 -Zmc3 -Zmd94 -Zpr15 -S0,1,2,3,5,7,13,15,26,42,113,385",
     "postbuild": "node createDeployPackage.js",
     "preview": "vite preview",
     "lint": "eslint ."
