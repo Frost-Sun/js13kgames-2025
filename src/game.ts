@@ -39,8 +39,8 @@ import {
     initializeControls,
     renderWaitForProgressInput,
     updateControls,
-    waitForProgressInput,
 } from "./controls";
+import { waitForEnter } from "./core/controls/keyboard";
 import type { TimeStep } from "./core/time/TimeStep";
 import { canvas, clearCanvas, cx } from "./graphics";
 import { Level, LevelState, resetGameStartTime } from "./Level";
@@ -84,19 +84,15 @@ const setState = (newState: GameState): void => {
 
     switch (gameState) {
         case GameState.Load: {
-            waitForProgressInput().then(() => setState(GameState.Ready));
+            waitForEnter().then(() => setState(GameState.Ready));
             break;
         }
         case GameState.Ready: {
-            waitForProgressInput(SFX_START).then(() =>
-                setState(GameState.StartScreen),
-            );
+            waitForEnter(SFX_START).then(() => setState(GameState.StartScreen));
             break;
         }
         case GameState.StartScreen: {
-            waitForProgressInput(SFX_RUNNING).then(() =>
-                setState(GameState.Running),
-            );
+            waitForEnter(SFX_RUNNING).then(() => setState(GameState.Running));
             break;
         }
         case GameState.Running: {
@@ -106,9 +102,7 @@ const setState = (newState: GameState): void => {
         }
         case GameState.GameOver: {
             playTune(SFX_GAMEOVER);
-            waitForProgressInput(SFX_START).then(() =>
-                setState(GameState.StartScreen),
-            );
+            waitForEnter(SFX_START).then(() => setState(GameState.StartScreen));
             break;
         }
         default:

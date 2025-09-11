@@ -22,18 +22,8 @@
  * SOFTWARE.
  */
 
-import {
-    getKeys,
-    initializeKeyboard,
-    waitForEnter,
-} from "./core/controls/keyboard";
-import {
-    hasTouchScreen,
-    initializeTouchscreen,
-    waitForTap,
-} from "./core/controls/touchscreen";
+import { getKeys, initializeKeyboard } from "./core/controls/keyboard";
 import { normalize, ZERO_VECTOR, type Vector } from "./core/math/Vector";
-import { canvas } from "./graphics";
 import { renderText, TextSize } from "./text";
 
 export interface Controls {
@@ -46,7 +36,6 @@ const controls: Controls = {
 
 export const initializeControls = (): void => {
     initializeKeyboard();
-    initializeTouchscreen();
 };
 
 export const updateControls = (): void => {
@@ -74,20 +63,11 @@ export const getControls = (): Controls => {
     return controls;
 };
 
-export const waitForProgressInput = async (
-    soundToPlay?: string,
-): Promise<void> => {
-    await (hasTouchScreen
-        ? waitForTap(canvas, undefined, soundToPlay)
-        : waitForEnter(soundToPlay));
-};
-
 export const renderWaitForProgressInput = (
     action = "continue",
     y = 7.7,
 ): void => {
-    const text =
-        (hasTouchScreen ? "Tap the screen to " : "Press ENTER to ") + action;
+    const text = "Press ENTER to " + action;
 
     renderText(text, TextSize.Small, "Courier New", 1, y, true, 0, text);
 };
