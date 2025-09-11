@@ -23,7 +23,7 @@
  */
 
 import { renderWaitForProgressInput } from "./controls";
-import { clearCanvas } from "./graphics";
+import { canvas, clearCanvas } from "./graphics";
 import { renderText, TextSize } from "./text";
 import { renderBlackCat } from "./BlackCatAnimation";
 import { renderGradient } from "./core/graphics/gradient";
@@ -42,10 +42,9 @@ export const drawStartScreen = (cx: CanvasRenderingContext2D): void => {
     clearCanvas("rgb(20, 20, 20)");
 
     renderBlackCat(
-        cx,
-        cx.canvas.width / 2 - cx.canvas.width * 0.18,
-        cx.canvas.height / 2 + cx.canvas.width * 0.17,
-        cx.canvas.width * 0.36,
+        canvas.width / 2 - canvas.width * 0.18,
+        canvas.height / 2 + canvas.width * 0.17,
+        canvas.width * 0.36,
         "down",
         true,
         1,
@@ -72,5 +71,5 @@ export const drawStartScreen = (cx: CanvasRenderingContext2D): void => {
 
     renderWaitForProgressInput("start");
 
-    renderGradient(cx.canvas, cx);
+    renderGradient(canvas, cx);
 };

@@ -350,18 +350,18 @@ export class Level implements Area, Space {
             );
         }
 
-        drawRain(time.t, cx.canvas.width, cx.canvas.height);
+        drawRain(time.t, canvas.width, canvas.height);
 
         const elapsed = time.t - GAME_START_TIME;
         cx.save();
         cx.globalAlpha = Math.min(elapsed / NIGHT_FADE_DURATION, 0.9);
         cx.fillStyle = "#000";
-        cx.fillRect(0, 0, cx.canvas.width, cx.canvas.height);
+        cx.fillRect(0, 0, canvas.width, canvas.height);
         cx.restore();
 
         drawThunder();
 
-        renderGradient(cx.canvas, cx, 0.9);
+        renderGradient(canvas, cx, 0.9);
     }
 
     private drawObjects(

@@ -24,7 +24,6 @@
 
 import type { Animal } from "./Animal";
 import type { TimeStep } from "./core/time/TimeStep";
-import { cx } from "./graphics";
 import { type BlackCatFacing, renderBlackCat } from "././BlackCatAnimation";
 import { CatAi } from "./CatAi";
 import {
@@ -97,7 +96,6 @@ export class BlackCat implements Animal {
         const eyesOpen: boolean = this.ai.isAlert;
 
         renderBlackCat(
-            cx,
             this.x,
             this.y,
             this.width,

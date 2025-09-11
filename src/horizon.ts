@@ -23,7 +23,7 @@
  */
 
 import type { Area } from "./core/math/Area";
-import { cx } from "./graphics";
+import { canvas, cx } from "./graphics";
 import { GRASS_COLOR } from "./tiles";
 import { renderBlackCat, type BlackCatRenderProps } from "./BlackCatAnimation";
 import type { BlackCat } from "./BlackCat";
@@ -57,7 +57,7 @@ export function drawHorizon(
     const catProps = getCatPropsOnTheFence(cat, time, area, fenceY);
     if (catProps) {
         cx.filter = `blur(${blur / 2}px)`;
-        renderBlackCat(cx, ...catProps);
+        renderBlackCat(...catProps);
         cx.filter = `blur(0)`;
     }
 
@@ -183,7 +183,7 @@ const getCatPropsOnTheFence = (
     // Make cat size relative to the horizon area width so it scales with canvas
     const catW = horizonArea.width * 0.04; // 4% of horizon width
     const catH = catW / (3 / 4);
-    const canvasW = cx.canvas.width;
+    const canvasW = canvas.width;
     const centerX = canvasW / 2;
 
     let catY: number;

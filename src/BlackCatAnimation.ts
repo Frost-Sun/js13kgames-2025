@@ -46,12 +46,12 @@ export type BlackCatFacing =
     | "down-right";
 
 import type { TimeStep } from "./core/time/TimeStep";
+import { cx } from "./graphics";
 
 const CAT_ASPECT_RATIO = 3 / 4;
 
 // Draws a cat eye at (x, y) with open/closed state
 export function renderCatEye(
-    cx: CanvasRenderingContext2D,
     x: number,
     y: number,
     width: number,
@@ -77,7 +77,6 @@ export function renderCatEye(
 
 // riseLevel: 0 = low, 1 = mid, 2 = high to jump next
 export function renderBlackCat(
-    cx: CanvasRenderingContext2D,
     x: number,
     y: number,
     width: number,
@@ -155,7 +154,7 @@ export function renderBlackCat(
         earH = h * 0.18;
     if (facing === "side") {
         // Eye (profile)
-        renderCatEye(cx, width * 0.19, -h * 0.18, width, eyesOpen);
+        renderCatEye(width * 0.19, -h * 0.18, width, eyesOpen);
         [
             [width * 0.03, earW * 0.7, earH * 0.7, 0.1],
             [width * 0.13, earW, earH, 0],
@@ -240,7 +239,7 @@ export function renderBlackCat(
         cx.save();
         cx.translate(0, -h * 0.18);
         [-width * 0.09, width * 0.09].forEach((dx) =>
-            renderCatEye(cx, dx, 0, width, eyesOpen),
+            renderCatEye(dx, 0, width, eyesOpen),
         );
         cx.restore();
         // Nose
