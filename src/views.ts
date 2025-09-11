@@ -68,7 +68,7 @@ export const drawStartScreen = (cx: CanvasRenderingContext2D): void => {
 
     renderText("presents", TextSize.Tiny, "Impact", 0.5, 5.25, false);
 
-    renderText("[THE BLACK CAT]", TextSize.Xl, "Impact", 1, 1.8);
+    renderText("MIDNIGHT PAWS", TextSize.Xl, "Impact", 1, 1.8);
 
     renderWaitForProgressInput("start");
 

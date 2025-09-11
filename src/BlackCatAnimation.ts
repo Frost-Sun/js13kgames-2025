@@ -59,7 +59,6 @@ export function renderCatEye(
 ) {
     const eo = open ? 1 : 0.7;
     [
-        [width * 0.07, width * 0.04 * eo, "#fff"],
         [width * 0.06, width * 0.03 * eo, "green"],
         [width * 0.025, width * 0.018 * eo, "#181818"],
     ].forEach((item) => {
@@ -95,11 +94,11 @@ export function renderBlackCat(
 
     // Shadow
     cx.save();
-    cx.fillStyle = "rgba(0,0,0,0.30)";
+    cx.fillStyle = "rgba(0,0,0,0.20)";
     cx.beginPath();
     cx.ellipse(
         x + width / 2,
-        y + h / 2 + h * 0.5 - h * 0.75,
+        y + h / 2 + h * 0.5 - h,
         width * 0.45,
         h * 0.24,
         0,
@@ -110,6 +109,7 @@ export function renderBlackCat(
     cx.restore();
 
     cx.save();
+    // Rising to fence
     const amp = h * 0.005;
     let riseY = 0;
     if (riseLevel === 0) {
@@ -118,7 +118,18 @@ export function renderBlackCat(
         riseY = -h * 0.25 + Math.sin(t / 400) * amp;
         riseY = Math.max(riseY, -h * 0.248);
     } else if (riseLevel === 2) {
-        riseY = -h * 0.45 + amp; // move cat to the top and keep it there
+        // Jump up quickly (0.3s), then stay above the screen
+        const jumpDuration = 150; // ms
+        // You must provide a reference time for when riseLevel became 2 for a true one-shot jump.
+        // For now, if time.t is reset on riseLevel change, this works:
+        if (time.t > jumpDuration) {
+            riseY = -h * 2;
+        } else {
+            const progress = Math.min(time.t / jumpDuration, 1);
+            // Ease out: fast at first, slow at end
+            const ease = 1 - Math.pow(1 - progress, 2);
+            riseY = -h * 0.45 - ease * (h * 1.55);
+        }
     }
     const baseYOffset = -h * 0.5;
     cx.translate(0, baseYOffset + riseY);
