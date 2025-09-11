@@ -71,7 +71,7 @@ export const VAGUE_OBSERVATION_THRESHOLD = 0.2;
 
 const KEEP_CHASING_TIME = 500;
 const NOTICE_IGNORE_TIME = 1600;
-const SEARCH_TIME = 5000;
+const SEARCH_TIME = 8000;
 const LOOK_AROUND_INTERVAL = 1500;
 
 // Speeds relative to the actual speed in BlackCat.ts.
