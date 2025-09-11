@@ -22,11 +22,7 @@
  * SOFTWARE.
  */
 
-import {
-    getKeys,
-    initializeKeyboard,
-    waitForEnter,
-} from "./core/controls/keyboard";
+import { getKeys, initializeKeyboard } from "./core/controls/keyboard";
 import { normalize, ZERO_VECTOR, type Vector } from "./core/math/Vector";
 import { renderText, TextSize } from "./text";
 
@@ -65,12 +61,6 @@ export const updateControls = (): void => {
 
 export const getControls = (): Controls => {
     return controls;
-};
-
-export const waitForProgressInput = async (
-    soundToPlay?: string,
-): Promise<void> => {
-    await waitForEnter(soundToPlay);
 };
 
 export const renderWaitForProgressInput = (
