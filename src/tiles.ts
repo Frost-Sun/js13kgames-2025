@@ -64,6 +64,13 @@ export const stepVolumeByTile: Readonly<Record<TileType, number>> = {
     [TileType.Slate]: 0.2,
 };
 
+export const speedByTile: Readonly<Record<TileType, number>> = {
+    [TileType.Grass]: 1,
+    [TileType.Flower]: 0.9,
+    [TileType.Bush]: 0.7,
+    [TileType.Slate]: 1.2,
+};
+
 const asciiPatternCache: Record<string, CanvasPattern | null> = {};
 function createAsciiPattern(
     width: number,
