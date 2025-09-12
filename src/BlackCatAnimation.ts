@@ -72,7 +72,7 @@ export function renderCatEye(
         cx.fill();
     });
     // Eye highlight only if eye is open enough
-    if (eo > 0.4) {
+    if (eo > 0.5) {
         cx.beginPath();
         cx.arc(
             x - width * 0.02,
@@ -120,17 +120,17 @@ export function renderBlackCat(
 
     // Animate cat eyes: flash (blink) like mouse
     // Cat blink: less frequent, eyes shut for a short period
-    let catEyesOpen = eyesOpen;
-    // Blink every ~3 seconds, eyes closed for 120ms
-    const blinkCycle = 3000; // ms
-    const blinkDuration = 120; // ms
-    const blinkTime = time.t % blinkCycle;
-    if (blinkTime < blinkDuration) {
-        catEyesOpen = false;
-    }
-    let catEyeNarrow = false;
-    if (blinkTime < blinkDuration) {
-        catEyeNarrow = true;
+    // eyesOpen: boolean, if false, max open-ness is half-shut (0.2)
+    // During blink, eyes are almost fully shut (0.05)
+    let catEyesOpen = eyesOpen ? 1 : 0.6;
+    if (eyesOpen) {
+        // Blink every ~3 seconds, eyes closed for 120ms
+        const blinkCycle = 3000; // ms
+        const blinkDuration = 120; // ms
+        const blinkTime = time.t % blinkCycle;
+        if (blinkTime < blinkDuration) {
+            catEyesOpen = 0.1;
+        }
     }
 
     // Rising to fence
@@ -179,12 +179,7 @@ export function renderBlackCat(
         earH = h * 0.18;
     if (facing === "side") {
         // Eye (profile)
-        renderCatEye(
-            width * 0.19,
-            -h * 0.18,
-            width,
-            catEyeNarrow ? 0.2 : catEyesOpen,
-        );
+        renderCatEye(width * 0.19, -h * 0.18, width, catEyesOpen);
         [
             [width * 0.03, earW * 0.7, earH * 0.7, 0.1],
             [width * 0.13, earW, earH, 0],
@@ -269,7 +264,7 @@ export function renderBlackCat(
         cx.save();
         cx.translate(0, -h * 0.18);
         [-width * 0.09, width * 0.09].forEach((dx) =>
-            renderCatEye(dx, 0, width, catEyeNarrow ? 0.2 : catEyesOpen),
+            renderCatEye(dx, 0, width, catEyesOpen),
         );
         cx.restore();
         // Nose
