@@ -57,7 +57,7 @@ const NOTICE_DURATION = 2000;
 const FENCE_HEARD_THRESHOLD = 0.1;
 const FENCE_NOTICE_THRESHOLD = 0.2;
 
-const JUMP_DURATION: number = 1200; // ms
+const JUMP_DURATION: number = 2500; // ms
 const STILL_AFTER_JUMP_DURATION = 1000;
 
 const HEARING_PERIOD = 450;
@@ -66,8 +66,8 @@ const SIGHT_ACCURACY_LOWERING_DISTANCE = 6.5 * TILE_SIZE;
 // Cat's field of view in radians (e.g., 160 degrees)
 const CAT_FOV = (160 * Math.PI) / 180;
 
-export const CERTAIN_OBSERVATION_THERSHOLD = 0.45;
-export const VAGUE_OBSERVATION_THRESHOLD = 0.25;
+export const CERTAIN_OBSERVATION_THERSHOLD = 0.4;
+export const VAGUE_OBSERVATION_THRESHOLD = 0.2;
 
 const VAGUE_OBSERVATION_IGNORE_TIME = 2500;
 const SEARCH_TIME = 8000;
@@ -289,7 +289,7 @@ export class CatAi {
             // Ready to jump
             this.jumpStartTime = time.t;
             this.jumpTarget = {
-                x: this.mouse.x + randomMinMax(-3, 3) * TILE_SIZE,
+                x: this.mouse.x + randomMinMax(-0.5, 0.5) * TILE_SIZE,
                 y: this.mouse.y - 5 * TILE_DRAW_HEIGHT,
             };
 
