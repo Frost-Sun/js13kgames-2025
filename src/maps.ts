@@ -67,7 +67,7 @@ export const createMap = (number: number): Array2D<Tile> => {
             }
 
             const x = ix * TILE_SIZE;
-            const tileType =
+            let tileType =
                 ix === ixPath
                     ? TileType.Slate
                     : random() < plantPropability
@@ -76,12 +76,29 @@ export const createMap = (number: number): Array2D<Tile> => {
                           : TileType.Flower
                       : TileType.Grass;
 
+            if (isInFrontOfMouseHole(grid, ix, iy)) {
+                // Make sure that the mouse hole is visible.
+                tileType = ix === ixPath ? TileType.Slate : TileType.Grass;
+            }
+
             const tile = createTile(tileType, x, y);
             grid.setValue(ix, iy, tile);
         }
     }
 
     return grid;
+};
+
+const isInFrontOfMouseHole = (
+    grid: Array2D<Tile>,
+    ix: number,
+    iy: number,
+): boolean => {
+    return (
+        (ix === Math.floor(grid.xCount / 2) - 1 ||
+            ix === Math.floor(grid.xCount / 2)) &&
+        (iy === 0 || iy === 1)
+    );
 };
 
 export const createIntroMap = (): Array2D<Tile> => {
