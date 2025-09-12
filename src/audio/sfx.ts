@@ -106,7 +106,6 @@ export const playTune = async (tune: string, vol: number = 1) => {
 
     switch (tune) {
         case SFX_RUNNING: {
-            startTune.currentTime = 0;
             FadeOutIn(gameTune, startTune, 0.2);
             break;
         }
