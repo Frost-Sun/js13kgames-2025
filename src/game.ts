@@ -222,9 +222,16 @@ const draw = (time: TimeStep): void => {
             cx.fillStyle = "#000";
             cx.fillRect(0, 0, canvas.width, canvas.height);
             cx.restore();
-            renderText("GAME OVER ☹", TextSize.Huge, 1, 0, true, 0);
             renderText(
-                "You reached backyard #" + level.number,
+                "The cat catches the mouse ☹",
+                TextSize.Large,
+                1,
+                0,
+                true,
+                0,
+            );
+            renderText(
+                "Backyard #" + level.number + " was reached.",
                 TextSize.Normal,
                 1,
                 3,
