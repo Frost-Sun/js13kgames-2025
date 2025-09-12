@@ -54,7 +54,7 @@ export function drawHorizon(
     const fenceY = area.y + area.height - fenceHeight;
 
     // Optionally render cat before fence
-    const catProps = getCatPropsOnTheFence(cat, time, area, fenceY);
+    const catProps = getCatPropsOnTheFence(cat, time, area, fenceY, progress);
     if (catProps) {
         cx.filter = `blur(${blur / 2}px)`;
         renderBlackCat(...catProps);
@@ -179,13 +179,16 @@ const getCatPropsOnTheFence = (
     time: TimeStep,
     horizonArea: Area,
     fenceY: number,
+    progress: number,
 ): BlackCatRenderProps | undefined => {
     if (!cat) {
         return;
     }
 
-    // Make cat size relative to the horizon area width so it scales with canvas
-    const catW = horizonArea.width * 0.04; // 4% of horizon width
+    // Cat is smaller when fence is far (progress=0), larger when close (progress=1)
+    const minCatW = horizonArea.width * 0.02;
+    const maxCatW = horizonArea.width * 0.06;
+    const catW = minCatW + (maxCatW - minCatW) * progress;
     const catH = catW / (3 / 4);
     const canvasW = canvas.width;
     const centerX = canvasW / 2;
@@ -215,6 +218,7 @@ const getCatPropsOnTheFence = (
             if (cat.ai.jumpStartTime == null) return;
             const jumpElapsed = Math.max(0, time.t - cat.ai.jumpStartTime);
             // Place cat at the fence for the jump animation
+
             return [
                 centerX - catW / 2,
                 fenceY,
