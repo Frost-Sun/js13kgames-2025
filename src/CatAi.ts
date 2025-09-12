@@ -54,10 +54,10 @@ const INITIAL_CAT_POS: Vector = { x: -1000, y: -1000 };
 const GOTO_FENCE_DURATION = 1000;
 const NOTICE_DURATION = 2000;
 
-const FENCE_HEARD_THRESHOLD = 0.1;
+const FENCE_HEARD_THRESHOLD = 0.07;
 const FENCE_NOTICE_THRESHOLD = 0.2;
 
-const JUMP_DURATION: number = 2500; // ms
+const JUMP_DURATION: number = 2300; // ms
 const STILL_AFTER_JUMP_DURATION = 1000;
 
 const HEARING_PERIOD = 450;
@@ -66,16 +66,16 @@ const SIGHT_ACCURACY_LOWERING_DISTANCE = 6.5 * TILE_SIZE;
 // Cat's field of view in radians (e.g., 160 degrees)
 const CAT_FOV = (160 * Math.PI) / 180;
 
-export const CERTAIN_OBSERVATION_THERSHOLD = 0.4;
-export const VAGUE_OBSERVATION_THRESHOLD = 0.2;
+export const CERTAIN_OBSERVATION_THERSHOLD = 0.42;
+export const VAGUE_OBSERVATION_THRESHOLD = 0.22;
 
-const VAGUE_OBSERVATION_IGNORE_TIME = 2500;
+const VAGUE_OBSERVATION_IGNORE_TIME = 2000;
 const SEARCH_TIME = 8000;
 const LOOK_AROUND_INTERVAL = 1500;
 
 // Speeds relative to the actual speed in BlackCat.ts.
-const SPEED_IDLE = 0.8;
-const SPEED_VAGUE_OBSERVATION = 0.4; // Slow approach to pray (as cats do)
+const SPEED_IDLE = 0.4;
+const SPEED_VAGUE_OBSERVATION = 0.6;
 const SPEED_CHASE = 1.0;
 
 function getSightAccuracy(d: number) {
@@ -96,7 +96,7 @@ function getPointBetween(from: Vector, to: Vector): Vector {
     const difference = subtract(to, from),
         dist = length(difference),
         direction = normalize(difference);
-    return add(from, multiply(direction, dist / 3));
+    return add(from, multiply(direction, dist * 0.5));
 }
 
 function better(
