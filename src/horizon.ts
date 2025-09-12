@@ -23,7 +23,7 @@
  */
 
 import type { Area } from "./core/math/Area";
-import { cx } from "./graphics";
+import { canvas, cx } from "./graphics";
 import { GRASS_COLOR } from "./tiles";
 import { renderBlackCat, type BlackCatRenderProps } from "./BlackCatAnimation";
 import type { BlackCat } from "./BlackCat";
@@ -57,13 +57,13 @@ export function drawHorizon(
     const catProps = getCatPropsOnTheFence(cat, time, area, fenceY);
     if (catProps) {
         cx.filter = `blur(${blur / 2}px)`;
-        renderBlackCat(cx, ...catProps);
+        renderBlackCat(...catProps);
         cx.filter = `blur(0)`;
     }
 
     drawFence(area.x, fenceY, area.width, fenceHeight, progress);
 
-    drawMouseHole(area, scrollX, progress);
+    drawMouseHole(area.width / 2, area.y + area.height, scrollX, progress);
 
     cx.restore();
 }
@@ -140,7 +140,12 @@ function drawFence(
     cx.restore();
 }
 
-function drawMouseHole(area: Area, scrollX: number, progress: number): void {
+function drawMouseHole(
+    x: number,
+    y: number,
+    scrollX: number,
+    progress: number,
+): void {
     // Mouse hole: grows from 0 to full size at the bottom as progress goes from 0.95 to 1
     const HOLE_GROW_START = 0.8;
     const HOLE_GROW_END = 1.0;
@@ -156,15 +161,14 @@ function drawMouseHole(area: Area, scrollX: number, progress: number): void {
         );
         const holeWidth = maxHoleWidth * t;
         const holeHeight = maxHoleHeight * t;
-        // Place the hole at the very bottom of the canvas, regardless of fence or blur
-        const holeBaseY = area.y + area.height - holeHeight;
+
         cx.fillStyle = GRASS_COLOR;
         cx.beginPath();
-        cx.moveTo(area.width / 2 - holeWidth / 2, holeBaseY + holeHeight);
-        cx.lineTo(area.width / 2 - holeWidth / 2, holeBaseY);
-        cx.lineTo(area.width / 2, holeBaseY - holeHeight * 0.2);
-        cx.lineTo(area.width / 2 + holeWidth / 2, holeBaseY);
-        cx.lineTo(area.width / 2 + holeWidth / 2, holeBaseY + holeHeight);
+        cx.moveTo(x - holeWidth / 2, y);
+        cx.lineTo(x - holeWidth / 2, y - holeHeight);
+        cx.lineTo(x, y - holeHeight * 1.2);
+        cx.lineTo(x + holeWidth / 2, y - holeHeight);
+        cx.lineTo(x + holeWidth / 2, y);
         cx.fill();
         cx.restore();
     }
@@ -183,7 +187,7 @@ const getCatPropsOnTheFence = (
     // Make cat size relative to the horizon area width so it scales with canvas
     const catW = horizonArea.width * 0.04; // 4% of horizon width
     const catH = catW / (3 / 4);
-    const canvasW = cx.canvas.width;
+    const canvasW = canvas.width;
     const centerX = canvasW / 2;
 
     let catY: number;

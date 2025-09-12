@@ -24,7 +24,6 @@
 
 import type { Animal } from "./Animal";
 import type { TimeStep } from "./core/time/TimeStep";
-import { cx } from "./graphics";
 import { type BlackCatFacing, renderBlackCat } from "././BlackCatAnimation";
 import { CatAi } from "./CatAi";
 import {
@@ -36,8 +35,9 @@ import {
 } from "./core/math/Vector";
 import type { Space } from "./Space";
 import type { Mouse } from "./Mouse";
+import { TILE_SIZE } from "./tiles";
 
-const SPEED = 0.01;
+const SPEED = TILE_SIZE * 0.0011;
 
 export class BlackCat implements Animal {
     x: number = 0;
@@ -96,7 +96,6 @@ export class BlackCat implements Animal {
         const eyesOpen: boolean = this.ai.isAlert;
 
         renderBlackCat(
-            cx,
             this.x,
             this.y,
             this.width,

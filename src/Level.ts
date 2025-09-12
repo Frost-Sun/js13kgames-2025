@@ -41,12 +41,7 @@ import type { GameObject } from "./GameObject";
 import { Flower } from "./Flower";
 import { distance, type Vector } from "./core/math/Vector";
 import { BlackCat } from "./BlackCat";
-import {
-    SOUND_FADE_DISTANCE,
-    type Sighting,
-    type Sound,
-    type Space,
-} from "./Space";
+import { SOUND_FADE_DISTANCE, type Observation, type Space } from "./Space";
 import type { Animal } from "./Animal";
 import { createIntroMap, createMap } from "./maps";
 import {
@@ -74,10 +69,6 @@ export enum LevelState {
     Running,
     Lose,
     Finished,
-}
-
-interface ProducedSound extends Sound {
-    time: number;
 }
 
 export class Level implements Area, Space {
@@ -112,7 +103,7 @@ export class Level implements Area, Space {
     height: number;
 
     private player!: Mouse;
-    private latestSoundByPlayer?: ProducedSound;
+    private latestSoundByPlayer?: Observation;
     private cat?: BlackCat;
 
     private animals!: Animal[];
@@ -150,10 +141,10 @@ export class Level implements Area, Space {
         this.setupPlayerAndCamera(player, cat);
     }
 
-    listen(time: TimeStep, listenerPosition: Vector): Sound | null {
+    listen(time: TimeStep, listenerPosition: Vector): Observation | null {
         if (
             this.latestSoundByPlayer &&
-            time.t - this.latestSoundByPlayer.time < 500
+            time.t - this.latestSoundByPlayer.t < 500
         ) {
             const d = distance(
                 listenerPosition,
@@ -163,19 +154,20 @@ export class Level implements Area, Space {
 
             return {
                 ...this.latestSoundByPlayer,
-                volume: this.latestSoundByPlayer.volume * fadeFactor,
+                accuracy: this.latestSoundByPlayer.accuracy * fadeFactor,
             };
         }
 
         return null;
     }
 
-    lookForMouse(): Sighting {
+    lookForMouse(time: TimeStep): Observation {
         const mouse = this.player;
 
         return {
-            target: mouse,
-            visibility: this.tileMap.getVisibility(mouse),
+            t: time.t,
+            position: getCenter(this.player),
+            accuracy: this.tileMap.getVisibility(mouse),
         };
     }
 
@@ -229,8 +221,8 @@ export class Level implements Area, Space {
                 if (o instanceof Mouse) {
                     this.latestSoundByPlayer = {
                         position: getCenter(o),
-                        volume,
-                        time: time.t,
+                        accuracy: volume,
+                        t: time.t,
                     };
                 }
             };
@@ -350,18 +342,18 @@ export class Level implements Area, Space {
             );
         }
 
-        drawRain(time.t, cx.canvas.width, cx.canvas.height);
+        drawRain(time.t, canvas.width, canvas.height);
 
         const elapsed = time.t - GAME_START_TIME;
         cx.save();
         cx.globalAlpha = Math.min(elapsed / NIGHT_FADE_DURATION, 0.9);
         cx.fillStyle = "#000";
-        cx.fillRect(0, 0, cx.canvas.width, cx.canvas.height);
+        cx.fillRect(0, 0, canvas.width, canvas.height);
         cx.restore();
 
         drawThunder();
 
-        renderGradient(cx.canvas, cx, 0.9);
+        renderGradient(canvas, cx, 0.9);
     }
 
     private drawObjects(

@@ -33,8 +33,9 @@ import {
 } from "./MouseAnimation";
 import { length, multiply, ZERO_VECTOR, type Vector } from "./core/math/Vector";
 import { SFX_MOUSE_WALK_NORMAL } from "./audio/sfx";
+import { TILE_SIZE } from "./tiles";
 
-const SPEED = 0.01;
+const SPEED = 0.001 * TILE_SIZE;
 
 export class Mouse implements Animal {
     x: number;

@@ -46,12 +46,12 @@ export type BlackCatFacing =
     | "down-right";
 
 import type { TimeStep } from "./core/time/TimeStep";
+import { cx } from "./graphics";
 
 const CAT_ASPECT_RATIO = 3 / 4;
 
 // Draws a cat eye at (x, y) with open/closed state
 export function renderCatEye(
-    cx: CanvasRenderingContext2D,
     x: number,
     y: number,
     width: number,
@@ -77,7 +77,6 @@ export function renderCatEye(
 
 // riseLevel: 0 = low, 1 = mid, 2 = high to jump next
 export function renderBlackCat(
-    cx: CanvasRenderingContext2D,
     x: number,
     y: number,
     width: number,
@@ -89,11 +88,12 @@ export function renderBlackCat(
     time: TimeStep,
     riseLevel: 0 | 1 | 2 = 0,
 ) {
+    cx.save();
+
     const t = time.t,
         h = width / CAT_ASPECT_RATIO;
 
     // Shadow
-    cx.save();
     cx.fillStyle = "rgba(0,0,0,0.20)";
     cx.beginPath();
     cx.ellipse(
@@ -106,9 +106,7 @@ export function renderBlackCat(
         Math.PI * 2,
     );
     cx.fill();
-    cx.restore();
 
-    cx.save();
     // Rising to fence
     const amp = h * 0.005;
     let riseY = 0;
@@ -155,12 +153,11 @@ export function renderBlackCat(
         earH = h * 0.18;
     if (facing === "side") {
         // Eye (profile)
-        renderCatEye(cx, width * 0.19, -h * 0.18, width, eyesOpen);
+        renderCatEye(width * 0.19, -h * 0.18, width, eyesOpen);
         [
             [width * 0.03, earW * 0.7, earH * 0.7, 0.1],
             [width * 0.13, earW, earH, 0],
         ].forEach(([ex, ew, eh, yoff]) => {
-            cx.save();
             cx.beginPath();
             cx.moveTo(ex, earY + earH * yoff);
             cx.lineTo(ex + ew / 2, earY + eh + earH * yoff);
@@ -168,8 +165,8 @@ export function renderBlackCat(
             cx.closePath();
             cx.fillStyle = "#000";
             cx.fill();
-            cx.restore();
         });
+
         // Nose
         cx.fillStyle = "#e68686";
         cx.beginPath();
@@ -183,6 +180,7 @@ export function renderBlackCat(
             Math.PI * 2,
         );
         cx.fill();
+
         // Whiskers (right only)
         cx.strokeStyle = "#e6d6e6";
         cx.lineWidth = Math.max(0.1, width * 0.012);
@@ -240,7 +238,7 @@ export function renderBlackCat(
         cx.save();
         cx.translate(0, -h * 0.18);
         [-width * 0.09, width * 0.09].forEach((dx) =>
-            renderCatEye(cx, dx, 0, width, eyesOpen),
+            renderCatEye(dx, 0, width, eyesOpen),
         );
         cx.restore();
         // Nose
@@ -279,5 +277,6 @@ export function renderBlackCat(
             cx.stroke();
         });
     }
+
     cx.restore();
 }

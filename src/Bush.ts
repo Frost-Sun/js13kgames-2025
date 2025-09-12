@@ -21,9 +21,8 @@ export class Bush implements GameObject {
 
     draw(time: TimeStep): void {
         cx.save();
+
         // Draw longer shadow at bush world position, before transforms
-        cx.save();
-        cx.fillStyle = "black";
         cx.fillStyle = "rgb(90, 174, 90)";
         cx.beginPath();
         cx.ellipse(
@@ -36,7 +35,6 @@ export class Bush implements GameObject {
             Math.PI * 2,
         );
         cx.fill();
-        cx.restore();
 
         cx.translate(this.x + this.width / 2, this.y);
 
