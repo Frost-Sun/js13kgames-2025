@@ -264,7 +264,7 @@ function renderUpView(
     }
 
     // Body
-    fse(diag ? 1.5 : 0, 0, 18, 10, "#fff");
+    fse(diag ? 1.5 : 0, 0, 12, 10, "#fff");
 
     if (!diag) {
         fse(-6, -14, 5, 5, "#ffe2e6");
@@ -339,7 +339,8 @@ function renderDownView(
         ctx.stroke();
     }
 
-    fse(diag ? 1.5 : 0, 0, 18, 10, "#fff");
+    // Body (halve width for down view)
+    fse(diag ? 1.5 : 0, 0, 9, 10, "#fff");
 
     ctx.save();
     const g = ctx.createRadialGradient(0, 4, 2, 0, 4, 18);
