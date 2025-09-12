@@ -178,7 +178,7 @@ const draw = (time: TimeStep): void => {
             break;
 
         case GameState.StartScreen:
-            drawStartScreen(cx);
+            drawStartScreen(cx, time);
             break;
 
         case GameState.Running: {

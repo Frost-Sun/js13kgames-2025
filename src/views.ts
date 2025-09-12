@@ -23,10 +23,17 @@
  */
 
 import { renderWaitForProgressInput } from "./controls";
-import { canvas, clearCanvas, drawThunder, updateThunder } from "./graphics";
+import {
+    canvas,
+    clearCanvas,
+    drawRain,
+    drawThunder,
+    updateThunder,
+} from "./graphics";
 import { renderText, TextSize } from "./text";
 import { renderBlackCat } from "./BlackCatAnimation";
 import { renderGradient } from "./core/graphics/gradient";
+import type { TimeStep } from "./core/time/TimeStep";
 
 const startScreenAnim = { t: 0, thunderTimer: 0, nextThunder: 0 };
 const readyViewAnim = { t: 0 };
@@ -59,7 +66,10 @@ export const drawReadyView = (): void => {
     drawThunder();
 };
 
-export const drawStartScreen = (cx: CanvasRenderingContext2D): void => {
+export const drawStartScreen = (
+    cx: CanvasRenderingContext2D,
+    time: TimeStep,
+): void => {
     clearCanvas("rgb(20, 20, 20)");
 
     // Animate cat bobbing up and down
@@ -87,6 +97,7 @@ export const drawStartScreen = (cx: CanvasRenderingContext2D): void => {
 
     renderWaitForProgressInput("start");
 
+    drawRain(time.t, canvas.width, canvas.height, 0.2);
     drawThunder();
 
     renderGradient(canvas, cx);

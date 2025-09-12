@@ -103,20 +103,32 @@ const raindrops = Array.from({ length: 200 }, () => ({
     speed: 2 + Math.random() * 3,
     drift: (Math.random() - 0.5) * 0.3, // slight horizontal drift
     length: 12 + Math.random() * 10,
+    jitter: Math.random() * 2 * Math.PI, // phase offset for jitter
 }));
 
-export const drawRain = (time: number, width: number, height: number) => {
-    const rainColor = "rgba(255,255,255,0.6)";
-    cx.strokeStyle = rainColor;
+export const drawRain = (
+    time: number,
+    width: number,
+    height: number,
+    opacity: number = 1,
+) => {
     cx.lineWidth = 1;
 
     for (const drop of raindrops) {
-        const x = (drop.x * width + drop.drift * time) % width;
-        const y = (drop.y * height + drop.speed * time) % height;
-
+        // Add a little jitter to x and y for more randomness
+        const jitterX = Math.sin(time * 0.002 + drop.jitter) * 1.5;
+        const jitterY = Math.cos(time * 0.003 + drop.jitter) * 1.5;
+        const x =
+            (((drop.x * width + drop.drift * time + jitterX) % width) + width) %
+            width;
+        const y =
+            (((drop.y * height + drop.speed * time + jitterY) % height) +
+                height) %
+            height;
+        cx.strokeStyle = `rgba(255,255,255,${opacity})`;
         cx.beginPath();
         cx.moveTo(x, y);
-        cx.lineTo(x, y + drop.length);
+        cx.lineTo(x, y + drop.length * (0.7 + Math.random() * 0.6));
         cx.stroke();
     }
 };
