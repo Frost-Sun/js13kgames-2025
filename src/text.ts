@@ -34,55 +34,43 @@ export enum TextSize {
     Huge = 80,
 }
 
-const scaleFontSize = (textSize: TextSize): number => {
-    const scale = canvas.width / 1000;
-    return Math.floor(textSize * scale);
-};
-
 export const renderText = (
     text: string,
     textSize: TextSize,
-    fontName: string,
     alpha = 1,
-    yAdjust = 0, // Relative "rem" units
+    yAdjust = 0,
     centerY = true,
     xAdjust = 0,
-    referenceText?: string, // Optional reference text for sizing
-    color: string | [string, string] = "white", // One color or a pair for gradient
+    referenceText?: string,
+    color: string | [string, string] = "white",
 ) => {
     cx.save();
     cx.shadowColor = "rgba(0,0,0,0.8)";
     cx.shadowBlur = 4;
     cx.shadowOffsetX = 2;
     cx.shadowOffsetY = 2;
-
-    const fontSize = scaleFontSize(textSize);
-    const remUnitSize = scaleFontSize(TextSize.Tiny);
+    const fontSize = Math.floor(textSize * (canvas.width / 1000));
+    const rem = Math.floor(TextSize.Tiny * (canvas.width / 1000));
     cx.globalAlpha = Math.max(alpha, 0);
-    cx.font = `${fontSize}px ${fontName}`;
-
-    const actualText = referenceText ?? text;
-    const metrics = cx.measureText(actualText);
-    const ascent = metrics.actualBoundingBoxAscent ?? fontSize * 0.8;
-    const descent = metrics.actualBoundingBoxDescent ?? fontSize * 0.2;
-
-    const textWidth = metrics.width;
-    const xAdjustAbsolute = xAdjust * remUnitSize;
-    const yAdjustAbsolute = yAdjust * remUnitSize;
-    const x = (canvas.width - textWidth) / 2 + xAdjustAbsolute;
-    const y = (centerY ? canvas.height / 2 : 0) + yAdjustAbsolute;
-
+    cx.font =
+        fontSize +
+        "px " +
+        (textSize >= TextSize.Large ? "Impact" : "Courier New");
+    const t = referenceText ?? text,
+        m = cx.measureText(t);
+    const a = m.actualBoundingBoxAscent ?? fontSize * 0.8,
+        d = m.actualBoundingBoxDescent ?? fontSize * 0.2;
+    const w = m.width,
+        x = (canvas.width - w) / 2 + xAdjust * rem,
+        y = (centerY ? canvas.height / 2 : 0) + yAdjust * rem;
     if (Array.isArray(color) && color.length === 2) {
-        const top = y - ascent;
-        const bottom = y + descent;
-        const gradient = cx.createLinearGradient(0, top, 0, bottom);
-        gradient.addColorStop(0.2, color[0]);
-        gradient.addColorStop(1, color[1]);
-        cx.fillStyle = gradient;
+        const g = cx.createLinearGradient(0, y - a, 0, y + d);
+        g.addColorStop(0.2, color[0]);
+        g.addColorStop(1, color[1]);
+        cx.fillStyle = g;
     } else {
         cx.fillStyle = color;
     }
-
     cx.textBaseline = "alphabetic";
     cx.fillText(text, x, y);
     cx.restore();

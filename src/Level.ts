@@ -322,24 +322,16 @@ export class Level implements Area, Space {
         // Show instruction in intro level
         if (this.number === 0) {
             renderText(
-                "Find the mouse hole to continue to the next backyard.",
+                "Find the mouse holes to the next backyards.",
                 TextSize.Small,
-                "Courier New",
             );
             renderText(
-                "Be quiet or the black cat catches you!",
+                "Be quiet, hide behind bushes or the black cat catches you!",
                 TextSize.Small,
-                "Courier New",
                 1,
                 2,
             );
-            renderText(
-                "Use arrow keys or WASD to move.",
-                TextSize.Small,
-                "Courier New",
-                1,
-                6,
-            );
+            renderText("Use arrow keys or WASD to move.", TextSize.Small, 1, 6);
         }
 
         drawRain(time.t, canvas.width, canvas.height);

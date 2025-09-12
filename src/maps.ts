@@ -88,7 +88,7 @@ export const createIntroMap = (): Array2D<Tile> => {
     const introWidth = 10;
     const introHeight = 18;
     const grid = new Array2D<Tile>(introWidth, introHeight);
-    const centerCol = Math.floor(introWidth / 2);
+    const centerCol = Math.floor(introWidth / 2) + 1;
     for (let iy = 0; iy < introHeight; iy++) {
         for (let ix = 0; ix < introWidth; ix++) {
             const x = ix * TILE_SIZE;

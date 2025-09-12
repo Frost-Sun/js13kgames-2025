@@ -171,9 +171,8 @@ const draw = (time: TimeStep): void => {
             cx.restore();
 
             renderText(
-                level.number > 0 ? "BACKYARD " + level.number : "Outside",
+                level.number > 0 ? "BACKYARD " + level.number : "FRONT YARD",
                 TextSize.Small,
-                "Courier New",
                 1,
                 2,
                 false,
@@ -190,11 +189,19 @@ const draw = (time: TimeStep): void => {
             cx.fillStyle = "#000";
             cx.fillRect(0, 0, canvas.width, canvas.height);
             cx.restore();
-            renderText("GAME OVER ☹", TextSize.Huge, "Impact");
+            renderText(
+                "GAME OVER ☹",
+                TextSize.Huge,
+                1,
+                0,
+                true,
+                0,
+                undefined,
+                "white",
+            );
             renderText(
                 "You reached backyard #" + level.number,
                 TextSize.Normal,
-                "Courier New",
                 1,
                 3,
             );
