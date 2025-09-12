@@ -326,7 +326,7 @@ export class Level implements Area, Space {
                 TextSize.Small,
             );
             renderText(
-                "Be quiet, hide behind bushes or the black cat catches you!",
+                "Be quiet, hide in bushes or the black cat catches you!",
                 TextSize.Small,
                 1,
                 2,
