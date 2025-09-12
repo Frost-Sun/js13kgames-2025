@@ -42,10 +42,23 @@ import {
 } from "./controls";
 import { waitForEnter } from "./core/controls/keyboard";
 import type { TimeStep } from "./core/time/TimeStep";
-import { canvas, clearCanvas, cx } from "./graphics";
+import {
+    canvas,
+    clearCanvas,
+    cx,
+    triggerThunder,
+    drawThunder,
+} from "./graphics";
 import { Level, LevelState, resetGameStartTime } from "./Level";
 import { renderText, TextSize } from "./text";
-import { drawLoadingView, drawReadyView, drawStartScreen } from "./views";
+import {
+    drawLoadingView,
+    drawReadyView,
+    drawStartScreen,
+    updateStartScreen,
+    updateReadyView,
+    updateGameOverView,
+} from "./views";
 
 export enum GameState {
     Load,
@@ -88,19 +101,23 @@ const setState = (newState: GameState): void => {
             break;
         }
         case GameState.Ready: {
+            triggerThunder();
             waitForEnter(SFX_START).then(() => setState(GameState.StartScreen));
             break;
         }
         case GameState.StartScreen: {
+            triggerThunder();
             waitForEnter(SFX_RUNNING).then(() => setState(GameState.Running));
             break;
         }
         case GameState.Running: {
+            triggerThunder();
             resetGameStartTime();
             level = new Level(0);
             break;
         }
         case GameState.GameOver: {
+            triggerThunder();
             playTune(SFX_GAMEOVER);
             waitForEnter(SFX_START).then(() => setState(GameState.StartScreen));
             break;
@@ -124,7 +141,18 @@ const update = (time: TimeStep): void => {
             }
             break;
         }
-
+        case GameState.StartScreen: {
+            updateStartScreen(time.dt);
+            break;
+        }
+        case GameState.Ready: {
+            updateReadyView(time.dt);
+            break;
+        }
+        case GameState.GameOver: {
+            updateGameOverView(time.dt);
+            break;
+        }
         default:
             break;
     }
@@ -134,6 +162,11 @@ const draw = (time: TimeStep): void => {
     cx.save();
 
     clearCanvas();
+
+    // Draw thunder for all states except Load
+    if (gameState !== GameState.Load) {
+        drawThunder();
+    }
 
     switch (gameState) {
         case GameState.Load:

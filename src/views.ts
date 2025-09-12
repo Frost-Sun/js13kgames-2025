@@ -23,10 +23,30 @@
  */
 
 import { renderWaitForProgressInput } from "./controls";
-import { canvas, clearCanvas } from "./graphics";
+import { canvas, clearCanvas, drawThunder, updateThunder } from "./graphics";
 import { renderText, TextSize } from "./text";
 import { renderBlackCat } from "./BlackCatAnimation";
 import { renderGradient } from "./core/graphics/gradient";
+
+const startScreenAnim = { t: 0, thunderTimer: 0, nextThunder: 0 };
+const readyViewAnim = { t: 0 };
+const gameOverAnim = { t: 0 };
+
+export const updateStartScreen = (dt: number) => {
+    startScreenAnim.t += dt;
+    startScreenAnim.thunderTimer += dt;
+    updateThunder(dt);
+};
+
+export const updateReadyView = (dt: number) => {
+    readyViewAnim.t += dt;
+    updateThunder(dt);
+};
+
+export const updateGameOverView = (dt: number) => {
+    gameOverAnim.t += dt;
+    updateThunder(dt);
+};
 
 export const drawLoadingView = (): void => {
     clearCanvas("rgb(0, 0, 0)");
@@ -36,21 +56,24 @@ export const drawLoadingView = (): void => {
 export const drawReadyView = (): void => {
     clearCanvas("rgb(0, 0, 0)");
     renderText("Press ENTER to start", TextSize.Normal);
+    drawThunder();
 };
 
 export const drawStartScreen = (cx: CanvasRenderingContext2D): void => {
     clearCanvas("rgb(20, 20, 20)");
 
+    // Animate cat bobbing up and down
+    const bob = Math.sin(startScreenAnim.t * 0.003) * canvas.height * 0.02;
     renderBlackCat(
         canvas.width / 2 - canvas.width * 0.18,
-        canvas.height / 2 + canvas.width * 0.17,
+        canvas.height / 2 + canvas.width * 0.17 + bob,
         canvas.width * 0.36,
         "down",
         true,
         1,
         0,
         0,
-        { t: 0, dt: 0 },
+        { t: startScreenAnim.t, dt: 0 },
     );
 
     renderText("FROST𖤓SUN", TextSize.Large, 1, 4, false, 0, "FROST𖤓SUN", [
@@ -63,6 +86,8 @@ export const drawStartScreen = (cx: CanvasRenderingContext2D): void => {
     renderText("MIDNIGHT PAWS", TextSize.Xl, 1, 1.8);
 
     renderWaitForProgressInput("start");
+
+    drawThunder();
 
     renderGradient(canvas, cx);
 };

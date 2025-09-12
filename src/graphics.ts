@@ -36,6 +36,13 @@ export const clearCanvas = (color: string = "black"): void => {
 
 let thunderTimer = 0;
 let thunderActive = false;
+
+// Call this to trigger a single thunder flash immediately
+export const triggerThunder = () => {
+    thunderActive = true;
+    thunderTimer = 0;
+};
+
 let lastThunder = 0;
 let nextThunderInterval = 10800 + Math.random() * 10800;
 
@@ -55,6 +62,7 @@ export const updateThunder = (frame: number) => {
     }
 };
 
+// Draw thunder effect if active. Do not use rightAway anymore; use triggerThunder() to start a flash.
 export const drawThunder = () => {
     if (thunderActive) {
         cx.save();

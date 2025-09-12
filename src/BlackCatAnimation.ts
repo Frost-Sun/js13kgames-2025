@@ -55,9 +55,12 @@ export function renderCatEye(
     x: number,
     y: number,
     width: number,
-    open: boolean,
+    open: boolean | number,
 ) {
-    const eo = open ? 1 : 0.7;
+    // open: true/false or 0..1 (0 = shut, 1 = open, 0.2 = almost shut)
+    let eo = 1;
+    if (typeof open === "number") eo = open;
+    else eo = open ? 1 : 0.1;
     [
         [width * 0.06, width * 0.03 * eo, "green"],
         [width * 0.025, width * 0.018 * eo, "#181818"],
@@ -68,11 +71,19 @@ export function renderCatEye(
         cx.fillStyle = fill;
         cx.fill();
     });
-    // Eye highlight
-    cx.beginPath();
-    cx.arc(x - width * 0.02, y - width * 0.01, width * 0.01, 0, Math.PI * 2);
-    cx.fillStyle = "#fff";
-    cx.fill();
+    // Eye highlight only if eye is open enough
+    if (eo > 0.4) {
+        cx.beginPath();
+        cx.arc(
+            x - width * 0.02,
+            y - width * 0.01,
+            width * 0.01,
+            0,
+            Math.PI * 2,
+        );
+        cx.fillStyle = "#fff";
+        cx.fill();
+    }
 }
 
 // riseLevel: 0 = low, 1 = mid, 2 = high to jump next
@@ -106,6 +117,21 @@ export function renderBlackCat(
         Math.PI * 2,
     );
     cx.fill();
+
+    // Animate cat eyes: flash (blink) like mouse
+    // Cat blink: less frequent, eyes shut for a short period
+    let catEyesOpen = eyesOpen;
+    // Blink every ~3 seconds, eyes closed for 120ms
+    const blinkCycle = 3000; // ms
+    const blinkDuration = 120; // ms
+    const blinkTime = time.t % blinkCycle;
+    if (blinkTime < blinkDuration) {
+        catEyesOpen = false;
+    }
+    let catEyeNarrow = false;
+    if (blinkTime < blinkDuration) {
+        catEyeNarrow = true;
+    }
 
     // Rising to fence
     const amp = h * 0.005;
@@ -153,7 +179,12 @@ export function renderBlackCat(
         earH = h * 0.18;
     if (facing === "side") {
         // Eye (profile)
-        renderCatEye(width * 0.19, -h * 0.18, width, eyesOpen);
+        renderCatEye(
+            width * 0.19,
+            -h * 0.18,
+            width,
+            catEyeNarrow ? 0.2 : catEyesOpen,
+        );
         [
             [width * 0.03, earW * 0.7, earH * 0.7, 0.1],
             [width * 0.13, earW, earH, 0],
@@ -238,7 +269,7 @@ export function renderBlackCat(
         cx.save();
         cx.translate(0, -h * 0.18);
         [-width * 0.09, width * 0.09].forEach((dx) =>
-            renderCatEye(dx, 0, width, eyesOpen),
+            renderCatEye(dx, 0, width, catEyeNarrow ? 0.2 : catEyesOpen),
         );
         cx.restore();
         // Nose
