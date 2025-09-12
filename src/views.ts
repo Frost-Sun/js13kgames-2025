@@ -30,12 +30,12 @@ import { renderGradient } from "./core/graphics/gradient";
 
 export const drawLoadingView = (): void => {
     clearCanvas("rgb(0, 0, 0)");
-    renderText("Loading...", TextSize.Normal, "Courier New");
+    renderText("Loading...", TextSize.Normal);
 };
 
 export const drawReadyView = (): void => {
     clearCanvas("rgb(0, 0, 0)");
-    renderText("Press ENTER to start", TextSize.Normal, "Courier New");
+    renderText("Press ENTER to start", TextSize.Normal);
 };
 
 export const drawStartScreen = (cx: CanvasRenderingContext2D): void => {
@@ -53,21 +53,14 @@ export const drawStartScreen = (cx: CanvasRenderingContext2D): void => {
         { t: 0, dt: 0 },
     );
 
-    renderText(
-        "FROST𖤓SUN",
-        TextSize.Small,
-        "Impact",
-        1,
-        4,
-        false,
-        0,
-        "FROST𖤓SUN",
-        ["#ACD5F3", "orange"],
-    );
+    renderText("FROST𖤓SUN", TextSize.Large, 1, 4, false, 0, "FROST𖤓SUN", [
+        "#ACD5F3",
+        "orange",
+    ]);
 
-    renderText("presents", TextSize.Tiny, "Impact", 0.5, 5.25, false);
+    renderText("presents", TextSize.Tiny, 0.5, 5.25, false);
 
-    renderText("MIDNIGHT PAWS", TextSize.Xl, "Impact", 1, 1.8);
+    renderText("MIDNIGHT PAWS", TextSize.Xl, 1, 1.8);
 
     renderWaitForProgressInput("start");
 

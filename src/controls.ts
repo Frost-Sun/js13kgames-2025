@@ -69,5 +69,5 @@ export const renderWaitForProgressInput = (
 ): void => {
     const text = "Press ENTER to " + action;
 
-    renderText(text, TextSize.Small, "Courier New", 1, y, true, 0, text);
+    renderText(text, TextSize.Small, 1, y, true, 0, text);
 };

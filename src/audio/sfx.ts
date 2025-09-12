@@ -23,7 +23,6 @@
  */
 
 import {
-    hitSfx,
     kbSfx,
     startSong,
     mouseSfx,
@@ -44,7 +43,6 @@ import { zzfx } from "../core/audio/sfxPlayer.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import CPlayer from "../core/audio/musicplayer.js";
-import { setupAudioUnlock } from "../core/audio/unlock.ts";
 
 export const SFX_START = "start";
 export const SFX_RUNNING = "gamestarted";
@@ -97,15 +95,6 @@ export const initMusicPlayer = (
 };
 
 export const initializeAudio = () => {
-    const silentAudio = document.createElement("audio");
-    silentAudio.setAttribute(
-        "src",
-        "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjIwLjEwMAAAAAAAAAAAAAAA//tUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABGwD///////////////////////////////////////////8AAAA8TEFNRTMuMTAwA8MAAAAAAAAAABQgJAUHQQAB9AAAARvMPHBz//////////////////////////////////////////////////////////////////8AAAA",
-    );
-
-    // Set up audio unlock automatically
-    setupAudioUnlock(silentAudio);
-
     return Promise.all([
         initMusicPlayer(startTune, startSong, true),
         initMusicPlayer(gameTune, fightSong, true),
@@ -134,10 +123,6 @@ export const playTune = async (tune: string, vol: number = 1) => {
         case SFX_CHASE: {
             gameTune.currentTime = 0;
             FadeOutIn(startTune, gameTune);
-            break;
-        }
-        case SFX_HIT: {
-            zzfx(vol, ...hitSfx);
             break;
         }
         case SFX_KB: {

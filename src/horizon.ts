@@ -56,7 +56,7 @@ export function drawHorizon(
     // Optionally render cat before fence
     const catProps = getCatPropsOnTheFence(cat, time, area, fenceY, progress);
     if (catProps) {
-        cx.filter = `blur(${blur / 2}px)`;
+        cx.filter = `blur(${blur / 2.5}px)`;
         renderBlackCat(...catProps);
         cx.filter = `blur(0)`;
     }
@@ -217,8 +217,9 @@ const getCatPropsOnTheFence = (
             // Calculate jump animation time since jumpStartTime
             if (cat.ai.jumpStartTime == null) return;
             const jumpElapsed = Math.max(0, time.t - cat.ai.jumpStartTime);
+            // Hide the cat after 150 milliseconds
+            if (jumpElapsed > 150) return;
             // Place cat at the fence for the jump animation
-
             return [
                 centerX - catW / 2,
                 fenceY,
