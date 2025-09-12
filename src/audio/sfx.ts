@@ -23,7 +23,6 @@
  */
 
 import {
-    hitSfx,
     kbSfx,
     startSong,
     mouseSfx,
@@ -134,10 +133,6 @@ export const playTune = async (tune: string, vol: number = 1) => {
         case SFX_CHASE: {
             gameTune.currentTime = 0;
             FadeOutIn(startTune, gameTune);
-            break;
-        }
-        case SFX_HIT: {
-            zzfx(vol, ...hitSfx);
             break;
         }
         case SFX_KB: {
