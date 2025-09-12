@@ -39,13 +39,14 @@ import { drawHorizon } from "./horizon";
 import { getTileIndexOfObject, TileMap } from "./TileMap";
 import type { GameObject } from "./GameObject";
 import { Flower } from "./Flower";
-import { distance, type Vector } from "./core/math/Vector";
+import { distance, multiply, type Vector } from "./core/math/Vector";
 import { BlackCat } from "./BlackCat";
 import { SOUND_FADE_DISTANCE, type Observation, type Space } from "./Space";
 import type { Animal } from "./Animal";
 import { createIntroMap, createMap } from "./maps";
 import {
     GRASS_COLOR,
+    speedByTile,
     stepVolumeByTile,
     TILE_DRAW_HEIGHT,
     TILE_SIZE,
@@ -194,7 +195,15 @@ export class Level implements Area, Space {
     private calculateMovement(time: TimeStep): void {
         for (let i = 0; i < this.animals.length; i++) {
             const o = this.animals[i];
-            const movement = o.getMovement(time);
+            let movement = o.getMovement(time);
+
+            if (o instanceof Mouse) {
+                // Speed according to tile type
+                const tileIndex = getTileIndexOfObject(this.player);
+                const tile = this.tileMap.getTile(tileIndex);
+                const multiplier = tile ? speedByTile[tile.type] : 1;
+                movement = multiply(movement, multiplier);
+            }
 
             if (movement.x < 0 && this.x <= o.x + movement.x) {
                 o.x += movement.x;

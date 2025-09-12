@@ -57,7 +57,7 @@ const NOTICE_DURATION = 2000;
 const FENCE_HEARD_THRESHOLD = 0.1;
 const FENCE_NOTICE_THRESHOLD = 0.2;
 
-const JUMP_DURATION: number = 1200; // ms
+const JUMP_DURATION: number = 2500; // ms
 const STILL_AFTER_JUMP_DURATION = 1000;
 
 const HEARING_PERIOD = 450;
@@ -69,8 +69,7 @@ const CAT_FOV = (160 * Math.PI) / 180;
 export const CERTAIN_OBSERVATION_THERSHOLD = 0.4;
 export const VAGUE_OBSERVATION_THRESHOLD = 0.2;
 
-const KEEP_CHASING_TIME = 500;
-const NOTICE_IGNORE_TIME = 1600;
+const VAGUE_OBSERVATION_IGNORE_TIME = 2500;
 const SEARCH_TIME = 8000;
 const LOOK_AROUND_INTERVAL = 1500;
 
@@ -84,7 +83,7 @@ function getSightAccuracy(d: number) {
 }
 
 function getMoveFactor(m: Mouse) {
-    return clamp(length(m.movement) / 0.16, 0.4, 1);
+    return clamp(length(m.movement) / 0.16, 0.3, 1);
 }
 
 function getRandomPosition(s: Space): Vector {
@@ -170,7 +169,9 @@ export class CatAi {
     private lastHearObservation: Observation | null = null;
     private lastCertainObservation: Observation | null = null;
     private lastVagueObservation: Observation | null = null;
-    private lastLookAroundTime: number = 0;
+
+    private lookAroundStartTime: number = 0;
+    private lastTurnTime: number = 0;
 
     private target: Vector | null = null;
 
@@ -258,6 +259,7 @@ export class CatAi {
             this.lastObservation &&
             this.lastObservation.accuracy > FENCE_NOTICE_THRESHOLD
         ) {
+            this.lastCertainObservation = this.lastObservation;
             this.fenceState = FenceState.Noticed;
             this.noticedTime = time.t;
             return ZERO_VECTOR;
@@ -287,7 +289,7 @@ export class CatAi {
             // Ready to jump
             this.jumpStartTime = time.t;
             this.jumpTarget = {
-                x: this.mouse.x + randomMinMax(-3, 3) * TILE_SIZE,
+                x: this.mouse.x + randomMinMax(-0.5, 0.5) * TILE_SIZE,
                 y: this.mouse.y - 5 * TILE_DRAW_HEIGHT,
             };
 
@@ -327,14 +329,14 @@ export class CatAi {
             this.useMusic(SFX_RUNNING);
         }
 
-        const direction = this.goTo(this.target, hostCenter, SPEED_IDLE);
+        const movement = this.goTo(this.target, hostCenter, SPEED_IDLE);
 
-        if (!direction) {
+        if (!movement) {
             this.target = null;
             return ZERO_VECTOR;
         }
 
-        return direction;
+        return movement;
     }
 
     private followVagueObservation(
@@ -343,7 +345,7 @@ export class CatAi {
     ): Vector | null {
         if (
             this.lastVagueObservation &&
-            time.t - this.lastVagueObservation.t < NOTICE_IGNORE_TIME
+            time.t - this.lastVagueObservation.t < VAGUE_OBSERVATION_IGNORE_TIME
         ) {
             this.isAlert = true;
             const d = distance(hostCenter, this.lastVagueObservation.position);
@@ -363,36 +365,38 @@ export class CatAi {
     }
 
     private chase(time: TimeStep, hostCenter: Vector): Vector | null {
-        if (
-            this.lastCertainObservation &&
-            time.t - this.lastCertainObservation.t < KEEP_CHASING_TIME
-        ) {
+        if (this.lastCertainObservation) {
             this.useMusic(SFX_CHASE);
-            return this.goTo(
+            const movement = this.goTo(
                 this.lastCertainObservation.position,
                 hostCenter,
                 SPEED_CHASE,
             );
+
+            if (movement == null) {
+                this.lastCertainObservation = null;
+                this.lookAroundStartTime = time.t;
+            }
+
+            return movement;
         }
 
         return null;
     }
 
     private lookAround(time: TimeStep): Vector | null {
-        const lastObservation = this.lastCertainObservation;
+        if (time.t - this.lookAroundStartTime < SEARCH_TIME) {
+            if (LOOK_AROUND_INTERVAL < time.t - this.lastTurnTime) {
+                this.lastTurnTime = time.t;
 
-        if (!lastObservation || SEARCH_TIME < time.t - lastObservation.t) {
-            return null;
+                // Move a little to turn to another direction
+                return randomDirection();
+            }
+
+            return ZERO_VECTOR;
         }
 
-        if (LOOK_AROUND_INTERVAL < time.t - this.lastLookAroundTime) {
-            this.lastLookAroundTime = time.t;
-
-            // Move a little to turn to another direction
-            return randomDirection();
-        }
-
-        return ZERO_VECTOR;
+        return null;
     }
 
     private useMusic(tune: string): void {
