@@ -322,7 +322,7 @@ export class Level implements Area, Space {
         // Show instruction in intro level
         if (this.number === 0) {
             renderText(
-                "Find the mouse holes to the next backyards.",
+                "It is almost midnight. Find the mouse holes to the next backyards.",
                 TextSize.Small,
             );
             renderText(
@@ -339,7 +339,7 @@ export class Level implements Area, Space {
         const elapsed = time.t - GAME_START_TIME;
         cx.save();
         cx.globalAlpha = Math.min(elapsed / NIGHT_FADE_DURATION, 0.9);
-        cx.fillStyle = "#000";
+        cx.fillStyle = "#001";
         cx.fillRect(0, 0, canvas.width, canvas.height);
         cx.restore();
 

@@ -36,6 +36,13 @@ export const clearCanvas = (color: string = "black"): void => {
 
 let thunderTimer = 0;
 let thunderActive = false;
+
+// Call this to trigger a single thunder flash immediately
+export const triggerThunder = () => {
+    thunderActive = true;
+    thunderTimer = 0;
+};
+
 let lastThunder = 0;
 let nextThunderInterval = 10800 + Math.random() * 10800;
 
@@ -55,6 +62,7 @@ export const updateThunder = (frame: number) => {
     }
 };
 
+// Draw thunder effect if active. Do not use rightAway anymore; use triggerThunder() to start a flash.
 export const drawThunder = () => {
     if (thunderActive) {
         cx.save();
@@ -95,20 +103,32 @@ const raindrops = Array.from({ length: 200 }, () => ({
     speed: 2 + Math.random() * 3,
     drift: (Math.random() - 0.5) * 0.3, // slight horizontal drift
     length: 12 + Math.random() * 10,
+    jitter: Math.random() * 2 * Math.PI, // phase offset for jitter
 }));
 
-export const drawRain = (time: number, width: number, height: number) => {
-    const rainColor = "rgba(255,255,255,0.6)";
-    cx.strokeStyle = rainColor;
+export const drawRain = (
+    time: number,
+    width: number,
+    height: number,
+    opacity: number = 1,
+) => {
     cx.lineWidth = 1;
 
     for (const drop of raindrops) {
-        const x = (drop.x * width + drop.drift * time) % width;
-        const y = (drop.y * height + drop.speed * time) % height;
-
+        // Add a little jitter to x and y for more randomness
+        const jitterX = Math.sin(time * 0.002 + drop.jitter) * 1.5;
+        const jitterY = Math.cos(time * 0.003 + drop.jitter) * 1.5;
+        const x =
+            (((drop.x * width + drop.drift * time + jitterX) % width) + width) %
+            width;
+        const y =
+            (((drop.y * height + drop.speed * time + jitterY) % height) +
+                height) %
+            height;
+        cx.strokeStyle = `rgba(255,255,255,${opacity})`;
         cx.beginPath();
         cx.moveTo(x, y);
-        cx.lineTo(x, y + drop.length);
+        cx.lineTo(x, y + drop.length * (0.7 + Math.random() * 0.6));
         cx.stroke();
     }
 };
