@@ -55,7 +55,7 @@ const GOTO_FENCE_DURATION = 1000;
 const NOTICE_DURATION = 2000;
 
 const FENCE_HEARD_THRESHOLD = 0.07;
-const FENCE_NOTICE_THRESHOLD = 0.2;
+const FENCE_NOTICE_THRESHOLD = 0.15;
 
 const JUMP_DURATION: number = 2300; // ms
 const STILL_AFTER_JUMP_DURATION = 1000;
@@ -75,7 +75,7 @@ const LOOK_AROUND_INTERVAL = 1500;
 
 // Speeds relative to the actual speed in BlackCat.ts.
 const SPEED_IDLE = 0.4;
-const SPEED_VAGUE_OBSERVATION = 0.6;
+const SPEED_VAGUE_OBSERVATION = 0.8;
 const SPEED_CHASE = 1.0;
 
 function getSightAccuracy(d: number) {
