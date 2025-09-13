@@ -33,19 +33,22 @@ import {
 } from "./tiles";
 
 export const createMap = (number: number): Array2D<Tile> => {
-    const grid = new Array2D<Tile>(10, 50);
+    const grid = new Array2D<Tile>(11, 50);
+
+    const plantPropability = Math.max(0.1, 0.8 - number * 0.05);
+    const bushPropability = Math.max(0.1, 0.35 - number * 0.05);
 
     const turningYIndices: number[] = [4, 12, 18, 29, 34, 41, 47];
 
-    const plantPropability = Math.max(0.1, 0.8 - number * 0.05);
-
-    let ixPath = 4;
+    // Note: Paving the road starts from the top of the map!
+    let ixPath = 3 + randomInt(5);
+    let previousIxPath: number = ixPath;
 
     for (let iy = 0; iy < grid.yCount; iy++) {
         const y = iy * TILE_DRAW_HEIGHT;
 
         if (turningYIndices.includes(iy)) {
-            const previousIxPath = ixPath;
+            previousIxPath = ixPath;
             ixPath = 1 + randomInt(grid.xCount - 1);
 
             // Add horizontal road
@@ -55,9 +58,33 @@ export const createMap = (number: number): Array2D<Tile> => {
             for (let ix = ixMin; ix < ixMax + 1; ix++) {
                 const x = ix * TILE_SIZE;
 
-                const tile = createTile(TileType.Slate, x, y);
+                const tile = createTile(
+                    TileType.Slate,
+                    x,
+                    iy * TILE_DRAW_HEIGHT,
+                );
                 grid.setValue(ix, iy, tile);
             }
+        } else if (turningYIndices.includes(iy - 1)) {
+            // Add another horizontal road so that it's not too thin.
+            const ixMin = Math.min(previousIxPath, ixPath);
+            const ixMax = Math.max(previousIxPath, ixPath);
+
+            for (let ix = ixMin; ix < ixMax + 1; ix++) {
+                const x = ix * TILE_SIZE;
+
+                const tile = createTile(
+                    TileType.Slate,
+                    x,
+                    iy * TILE_DRAW_HEIGHT,
+                );
+                grid.setValue(ix, iy, tile);
+            }
+        } else {
+            const ix = ixPath;
+            const x = ix * TILE_SIZE;
+            const tile = createTile(TileType.Slate, x, y);
+            grid.setValue(ix, iy, tile);
         }
 
         for (let ix = 0; ix < grid.xCount; ix++) {
@@ -68,17 +95,15 @@ export const createMap = (number: number): Array2D<Tile> => {
 
             const x = ix * TILE_SIZE;
             let tileType =
-                ix === ixPath
-                    ? TileType.Slate
-                    : random() < plantPropability
-                      ? random() < 0.1
-                          ? TileType.Bush
-                          : TileType.Flower
-                      : TileType.Grass;
+                random() < plantPropability
+                    ? random() < bushPropability
+                        ? TileType.Bush
+                        : TileType.Flower
+                    : TileType.Grass;
 
             if (isInFrontOfMouseHole(grid, ix, iy)) {
                 // Make sure that the mouse hole is visible.
-                tileType = ix === ixPath ? TileType.Slate : TileType.Grass;
+                tileType = TileType.Grass;
             }
 
             const tile = createTile(tileType, x, y);
@@ -94,11 +119,7 @@ const isInFrontOfMouseHole = (
     ix: number,
     iy: number,
 ): boolean => {
-    return (
-        (ix === Math.floor(grid.xCount / 2) - 1 ||
-            ix === Math.floor(grid.xCount / 2)) &&
-        (iy === 0 || iy === 1)
-    );
+    return ix === Math.floor(grid.xCount / 2) && iy < 6;
 };
 
 export const createIntroMap = (): Array2D<Tile> => {
