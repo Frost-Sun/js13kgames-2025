@@ -44,8 +44,8 @@ import { TILE_DRAW_HEIGHT, TILE_SIZE } from "./tiles";
 import { playTune, SFX_CHASE, SFX_RUNNING } from "./audio/sfx";
 import type { GameObject } from "./GameObject";
 
-export let sightAccuracyDebug: number = 0;
-export let hearAccuracyDebug: number = 0;
+// export let sightAccuracyDebug: number = 0;
+// export let hearAccuracyDebug: number = 0;
 
 // Make sure the cat does not appear on the screen at start as the horizon
 // takes care of drawing it when on the fence.
@@ -204,7 +204,7 @@ export class CatAi {
         const seen = this.lookForMouse(time, hostCenter);
         let heard: Observation | null = null;
 
-        sightAccuracyDebug = seen?.accuracy ?? 0;
+        // sightAccuracyDebug = seen?.accuracy ?? 0;
 
         if (seen && seen.accuracy > CERTAIN_OBSERVATION_THERSHOLD) {
             this.lastCertainObservation = seen;
@@ -222,7 +222,7 @@ export class CatAi {
                       };
 
             heard = this.space.listen(time, listenerPosition);
-            hearAccuracyDebug = heard?.accuracy ?? 0;
+            // hearAccuracyDebug = heard?.accuracy ?? 0;
 
             if (heard) {
                 this.lastHearObservation = heard;
