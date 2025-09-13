@@ -169,18 +169,17 @@ function renderSideView(
     fse(8, -10, 5, 5, "#ffe2e6");
     fse(8, -10, 3, 3, "#ffc8d0", "#eec3c9");
 
-    const bpBlink = (t / 1400) % 1;
-    let eo = 1;
-    if (bpBlink < 0.06) eo = Math.max(0.15, 1 - bpBlink / 0.06);
-    else if (bpBlink < 0.12) eo = Math.max(0.15, (bpBlink - 0.06) / 0.06);
-
+    // Simple blinking logic
+    const blink = (t / 1400) % 1 < 0.08 ? 0.2 : 1;
     ctx.save();
     ctx.translate(18, -4);
-    bp(0, 0, 1.8, 1.8 * eo);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 1.8, 1.8 * blink, 0, 0, PI2);
     ctx.fillStyle = "#222";
     ctx.fill();
-    if (eo > 0.3) {
-        bp(-0.4, -0.5 * eo, 0.5, 0.35 * eo);
+    if (blink > 0.5) {
+        ctx.beginPath();
+        ctx.ellipse(-0.4, -0.5 * blink, 0.5, 0.35 * blink, 0, 0, PI2);
         ctx.fillStyle = "rgba(255,255,255,0.9)";
         ctx.fill();
     }
@@ -359,34 +358,30 @@ function renderDownView(
     fse(hx + 6, hy - 6, 3, 3, "#ffc8d0", "#eec3c9");
     fse(hx, hy, 9, 7, "#fff");
 
-    const bpBlink = (t / 1400) % 1;
-    let eo = 1;
-    if (bpBlink < 0.06) eo = Math.max(0.15, 1 - bpBlink / 0.06);
-    else if (bpBlink < 0.12) eo = Math.max(0.15, (bpBlink - 0.06) / 0.06);
-
+    // Simple blinking logic for both eyes
+    const blink = (t / 1400) % 1 < 0.08 ? 0.2 : 1;
     ctx.fillStyle = "#222";
     if (!diag) {
-        bp(hx - 3.2, hy - 2, 1.6, 1.6 * eo);
+        bp(hx - 3.2, hy - 2, 1.6, 1.6 * blink);
         ctx.fill();
-        bp(hx + 3.2, hy - 2, 1.6, 1.6 * eo);
+        bp(hx + 3.2, hy - 2, 1.6, 1.6 * blink);
         ctx.fill();
-        if (eo > 0.3) {
+        if (blink > 0.5) {
             ctx.fillStyle = "rgba(255,255,255,0.9)";
-            bp(hx - 3.7, hy - 2.6 * eo, 0.4, 0.3 * eo);
+            bp(hx - 3.7, hy - 2.6 * blink, 0.4, 0.3 * blink);
             ctx.fill();
-            bp(hx + 2.7, hy - 2.6 * eo, 0.4, 0.3 * eo);
+            bp(hx + 2.7, hy - 2.6 * blink, 0.4, 0.3 * blink);
             ctx.fill();
         }
     } else {
-        bp(hx - 2.6, hy - 2.1, 1.3, 1.3 * eo);
+        bp(hx - 2.6, hy - 2.1, 1.3, 1.3 * blink);
         ctx.fill();
-        bp(hx + 3.8, hy - 1.9, 1.8, 1.8 * eo);
+        bp(hx + 3.8, hy - 1.9, 1.8, 1.8 * blink);
         ctx.fill();
-        if (eo > 0.3) {
+        if (blink > 0.5) {
             ctx.fillStyle = "rgba(255,255,255,0.9)";
-            bp(hx - 3, hy - 2.4 * eo, 0.35, 0.25 * eo);
+            bp(hx - 3, hy - 2.4 * blink, 0.35, 0.25 * blink);
             ctx.fill();
-            ctx.beginPath(); // near highlight path start
         }
     }
 
