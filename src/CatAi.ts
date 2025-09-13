@@ -51,8 +51,8 @@ import type { GameObject } from "./GameObject";
 // takes care of drawing it when on the fence.
 const INITIAL_CAT_POS: Vector = { x: -1000, y: -1000 };
 
-const GOTO_FENCE_DURATION = 1000;
-const NOTICE_DURATION = 2000;
+const GOTO_FENCE_DURATION = 800;
+const NOTICE_DURATION = 1500;
 
 const FENCE_HEARD_THRESHOLD = 0.06;
 const FENCE_NOTICE_THRESHOLD = 0.14;
@@ -265,7 +265,7 @@ export class CatAi {
                 position: {
                     x: lastObservation.position.x,
                     // Anticipate that the mouse is going forward
-                    y: lastObservation.position.y - TILE_DRAW_HEIGHT * 6,
+                    y: lastObservation.position.y - TILE_DRAW_HEIGHT * 8,
                 },
             };
             this.fenceState = FenceState.Noticed;
