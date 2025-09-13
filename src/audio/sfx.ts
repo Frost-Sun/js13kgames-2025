@@ -30,12 +30,7 @@ import {
     fightSong,
 } from "./sfxData.ts";
 
-import {
-    createTune,
-    FadeIn,
-    FadeOutIn,
-    type SongData,
-} from "../core/audio/music.js";
+import { createTune, FadeOutIn, type SongData } from "../core/audio/music.js";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
