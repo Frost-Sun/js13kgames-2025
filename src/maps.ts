@@ -33,7 +33,7 @@ import {
 } from "./tiles";
 
 export const createMap = (number: number): Array2D<Tile> => {
-    const grid = new Array2D<Tile>(11, 60);
+    const grid = new Array2D<Tile>(11, 50 + number * 5);
 
     const plantPropability = Math.max(0.1, 0.8 - number * 0.05);
     const bushPropability = Math.max(0.1, 0.35 - number * 0.05);
