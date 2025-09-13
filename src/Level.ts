@@ -177,10 +177,13 @@ export class Level implements Area, Space {
 
         this.calculateMovement(time);
 
-        if (
-            this.state === LevelState.Running &&
-            this.playerHasReachedFinish()
-        ) {
+        const holeWidth = TILE_SIZE / 2;
+        const playerHasReachedFinish: boolean =
+            this.player.y < TILE_DRAW_HEIGHT * 0.1 &&
+            this.width / 2 - holeWidth / 2 <= this.player.x &&
+            this.player.x + this.player.width <= this.width / 2 + holeWidth / 2;
+
+        if (this.state === LevelState.Running && playerHasReachedFinish) {
             this.state = LevelState.Finished;
             playTune(SFX_RUNNING);
             return;
@@ -267,15 +270,6 @@ export class Level implements Area, Space {
         }
     }
 
-    private playerHasReachedFinish(): boolean {
-        const holeWidth = TILE_SIZE / 2;
-        return (
-            this.player.y < TILE_DRAW_HEIGHT * 0.1 &&
-            this.width / 2 - holeWidth / 2 <= this.player.x &&
-            this.player.x + this.player.width <= this.width / 2 + holeWidth / 2
-        );
-    }
-
     draw(time: TimeStep): void {
         const visibleArea = this.camera.getVisibleArea();
         const objectsToDraw: GameObject[] = [...this.animals];
@@ -318,8 +312,31 @@ export class Level implements Area, Space {
         cx.save();
         cx.translate(0, this.levelDrawArea.y);
 
+        // Draw objects on the level
         this.camera.apply(cx, () => {
-            this.drawObjects(time, visibleArea, objectsToDraw);
+            // Sort the objects so that objects in front get drawn after
+            // objects behind them.
+            objectsToDraw.sort(
+                (a, b) => a.y + a.height / 2 - (b.y + b.height / 2),
+            );
+
+            for (let i = 0; i < objectsToDraw.length; i++) {
+                const o = objectsToDraw[i];
+
+                if (o.y + o.height * 0.5 < visibleArea.y) {
+                    // Skip objects that are over the horizon.
+                    continue;
+                }
+
+                if (o instanceof Bush && isBehind(this.player, o)) {
+                    cx.save();
+                    cx.globalAlpha = 0.3;
+                    o.draw(time);
+                    cx.restore();
+                } else {
+                    o.draw(time);
+                }
+            }
         });
 
         cx.restore();
@@ -352,35 +369,8 @@ export class Level implements Area, Space {
 
         renderGradient(canvas, cx, 0.9);
     }
-
-    private drawObjects(
-        time: TimeStep,
-        visibleArea: Area,
-        objectsToDraw: GameObject[],
-    ): void {
-        // Sort the objects so that objects in front get drawn after
-        // objects behind them.
-        objectsToDraw.sort((a, b) => a.y + a.height / 2 - (b.y + b.height / 2));
-
-        for (let i = 0; i < objectsToDraw.length; i++) {
-            const o = objectsToDraw[i];
-
-            if (o.y + o.height * 0.5 < visibleArea.y) {
-                // Skip objects that are over the horizon.
-                continue;
-            }
-
-            if (o instanceof Bush && isBehind(this.player, o)) {
-                cx.save();
-                cx.globalAlpha = 0.3;
-                o.draw(time);
-                cx.restore();
-            } else {
-                o.draw(time);
-            }
-        }
-    }
 }
+
 const isBehind = (o: GameObject, obstacle: GameObject): boolean =>
     o.y + o.height / 2 < obstacle.y + obstacle.height / 2 &&
     obstacle.y - 4 * TILE_DRAW_HEIGHT < o.y &&
