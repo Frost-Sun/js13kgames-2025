@@ -227,7 +227,7 @@ const draw = (time: TimeStep): void => {
 
             if (highscore > 0) {
                 renderText(
-                    `Highscore ${highscore}`,
+                    `HIGHSCORE ${highscore}`,
                     TextSize.Small,
                     1,
                     2,
