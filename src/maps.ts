@@ -35,13 +35,13 @@ import {
 export const createMap = (number: number): Array2D<Tile> => {
     const grid = new Array2D<Tile>(11, 50);
 
-    addRoad(grid, number);
+    addRoad(grid);
     addPlants(grid, number);
 
     return grid;
 };
 
-export const addRoad = (grid: Array2D<Tile>, number: number): Array2D<Tile> => {
+export const addRoad = (grid: Array2D<Tile>): Array2D<Tile> => {
     const turningYIndices: number[] = [4, 12, 18, 29, 34, 41, 47];
 
     // Note: Paving the road starts from the top of the map!
@@ -53,7 +53,7 @@ export const addRoad = (grid: Array2D<Tile>, number: number): Array2D<Tile> => {
 
         if (turningYIndices.includes(iy)) {
             previousIxPath = ixPath;
-            ixPath = getRoadNextXIndex(grid, number, ixPath);
+            ixPath = 1 + randomInt(grid.xCount - 1);
 
             // Add horizontal road
             const ixMin = Math.min(previousIxPath, ixPath);
@@ -75,33 +75,6 @@ export const addRoad = (grid: Array2D<Tile>, number: number): Array2D<Tile> => {
     }
 
     return grid;
-};
-
-const getRoadNextXIndex = (
-    grid: Array2D<Tile>,
-    number: number,
-    ixPath: number,
-): number => {
-    let windingAmount: number;
-
-    // More winding road the further the game progresses.
-    if (number < 2) {
-        windingAmount = 0;
-    } else if (number < 3) {
-        windingAmount = 1;
-    } else if (number < 4) {
-        windingAmount = 3;
-    } else {
-        windingAmount = 5;
-    }
-
-    const minI = Math.min(Math.max(0, ixPath - windingAmount), ixPath);
-    const maxI = Math.max(
-        ixPath,
-        Math.min(ixPath + windingAmount, grid.xCount - 1),
-    );
-
-    return minI + randomInt(maxI - minI);
 };
 
 const addPlants = (grid: Array2D<Tile>, number: number): Array2D<Tile> => {
