@@ -253,13 +253,21 @@ export class CatAi {
             return ZERO_VECTOR;
         }
 
+        const lastObservation = this.lastObservation;
         if (
             this.fenceState === FenceState.HeardSomething &&
             GOTO_FENCE_DURATION < time.t - this.heardSomethingTime &&
-            this.lastObservation &&
-            this.lastObservation.accuracy > FENCE_NOTICE_THRESHOLD
+            lastObservation &&
+            lastObservation.accuracy > FENCE_NOTICE_THRESHOLD
         ) {
-            this.lastCertainObservation = this.lastObservation;
+            this.lastCertainObservation = {
+                ...lastObservation,
+                position: {
+                    x: lastObservation.position.x,
+                    // Anticipate that the mouse is going forward
+                    y: lastObservation.position.y - TILE_DRAW_HEIGHT * 6,
+                },
+            };
             this.fenceState = FenceState.Noticed;
             this.noticedTime = time.t;
             return ZERO_VECTOR;
