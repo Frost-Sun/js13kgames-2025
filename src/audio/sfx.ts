@@ -30,12 +30,7 @@ import {
     fightSong,
 } from "./sfxData.ts";
 
-import {
-    createTune,
-    FadeIn,
-    FadeOutIn,
-    type SongData,
-} from "../core/audio/music.js";
+import { createTune, FadeOutIn, type SongData } from "../core/audio/music.js";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -47,7 +42,6 @@ import CPlayer from "../core/audio/musicplayer.js";
 export const SFX_START = "start";
 export const SFX_RUNNING = "gamestarted";
 export const SFX_CHASE = "chase";
-export const SFX_HIT = "hit";
 export const SFX_KB = "keyboard";
 export const SFX_GAMEOVER = "gameover";
 export const SFX_MOUSE_WALK_NORMAL = "mousewalknormal";
@@ -62,9 +56,8 @@ type Tune = {
 
 const startTune = createTune();
 const gameTune = createTune();
-const gameoverFx = createTune();
 
-export const initMusicPlayer = (
+const initMusicPlayer = (
     audioTrack: { src: string; loop: boolean },
     tune: Tune,
     isLooped: boolean,
@@ -111,7 +104,7 @@ export const playTune = async (tune: string, vol: number = 1) => {
         }
         case SFX_GAMEOVER: {
             zzfx(1, ...mouseSfx);
-            FadeIn(gameTune);
+            FadeOutIn(startTune, gameTune);
             break;
         }
         case SFX_START: {
@@ -133,30 +126,4 @@ export const playTune = async (tune: string, vol: number = 1) => {
             break;
         }
     }
-};
-
-export const stopTune = (tune: string) => {
-    const tunesToStop = [];
-
-    if (tune === SFX_RUNNING) {
-        tunesToStop.push(gameTune);
-    } else if (tune === SFX_START) {
-        tunesToStop.push(startTune);
-    } else {
-        tunesToStop.push(startTune, gameTune, gameoverFx);
-    }
-
-    tunesToStop.forEach((audioEl) => {
-        if (audioEl._fadeInterval) {
-            clearInterval(audioEl._fadeInterval);
-            audioEl._fadeInterval = undefined;
-        }
-        if (audioEl._fadeOutInTimeout) {
-            clearTimeout(audioEl._fadeOutInTimeout);
-            audioEl._fadeOutInTimeout = undefined;
-        }
-
-        audioEl.pause();
-        audioEl.currentTime = 0;
-    });
 };
