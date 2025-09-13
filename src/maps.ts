@@ -46,15 +46,22 @@ export const addRoad = (grid: Array2D<Tile>, number: number): Array2D<Tile> => {
 
     // Note: Paving the road starts from the top of the map!
     let ixPath = 3 + randomInt(5);
+    let previousIxPath: number = ixPath;
 
     for (let iy = 0; iy < grid.yCount; iy++) {
         const y = iy * TILE_DRAW_HEIGHT;
 
         if (turningYIndices.includes(iy)) {
-            const previousIxPath = ixPath;
+            previousIxPath = ixPath;
             ixPath = getRoadNextXIndex(grid, number, ixPath);
 
             // Add horizontal road
+            const ixMin = Math.min(previousIxPath, ixPath);
+            const ixMax = Math.max(previousIxPath, ixPath);
+
+            fillHorizontal(grid, iy, ixMin, ixMax, TileType.Slate);
+        } else if (turningYIndices.includes(iy - 1)) {
+            // Add another horizontal road so that it's not too thin.
             const ixMin = Math.min(previousIxPath, ixPath);
             const ixMax = Math.max(previousIxPath, ixPath);
 
