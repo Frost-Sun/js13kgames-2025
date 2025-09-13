@@ -258,18 +258,15 @@ const draw = (time: TimeStep): void => {
                 1,
                 3,
             );
-            if (highscore > 0) {
-                if (level.number === highscore) {
-                    renderText("New highscore!", TextSize.Normal, 1, 5);
-                } else {
-                    renderText(
-                        `(Highscore is ${highscore})`,
-                        TextSize.Small,
-                        1,
-                        5,
-                    );
-                }
-            }
+            if (highscore > 0)
+                renderText(
+                    level.number === highscore
+                        ? "New highscore!"
+                        : `Highscore ${highscore}`,
+                    TextSize.Small,
+                    1,
+                    5,
+                );
             renderWaitForProgressInput("try again");
             break;
         }
