@@ -33,7 +33,7 @@ import {
 } from "./tiles";
 
 export const createMap = (number: number): Array2D<Tile> => {
-    const grid = new Array2D<Tile>(10, 50);
+    const grid = new Array2D<Tile>(11, 50);
 
     addRoad(grid, number);
     addPlants(grid, number);
@@ -44,7 +44,8 @@ export const createMap = (number: number): Array2D<Tile> => {
 export const addRoad = (grid: Array2D<Tile>, number: number): Array2D<Tile> => {
     const turningYIndices: number[] = [4, 12, 18, 29, 34, 41, 47];
 
-    let ixPath = 5;
+    // Note: Paving the road starts from the top of the map!
+    let ixPath = 3 + randomInt(5);
 
     for (let iy = 0; iy < grid.yCount; iy++) {
         const y = iy * TILE_DRAW_HEIGHT;
@@ -134,11 +135,7 @@ const isInFrontOfMouseHole = (
     ix: number,
     iy: number,
 ): boolean => {
-    return (
-        (ix === Math.floor(grid.xCount / 2) - 1 ||
-            ix === Math.floor(grid.xCount / 2)) &&
-        (iy === 0 || iy === 1)
-    );
+    return ix === Math.floor(grid.xCount / 2) && iy < 6;
 };
 
 const fillHorizontal = (
