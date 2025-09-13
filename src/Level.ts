@@ -186,8 +186,35 @@ export class Level implements Area, Space {
             return;
         }
 
-        this.checkCollisionsWithCat();
-        this.checkCollisionsWithPlants(time);
+        if (this.cat) {
+            // Check collision with cat
+            const playerCenter = getCenter(this.player);
+            const catCenter = getCenter(this.cat);
+
+            if (
+                distance(playerCenter, catCenter) <
+                (this.player.width + this.cat.width) * 0.3
+            ) {
+                this.state = LevelState.Lose;
+            }
+        }
+
+        // Check collisions with plants
+        const playerTileIndex = getTileIndexOfObject(this.player);
+        const playerCenter: Vector = getCenter(this.player);
+
+        for (const o of this.tileMap.getNearbyObjects(playerTileIndex)) {
+            if (o instanceof Flower) {
+                const flowerCenter: Vector = getCenter(o);
+
+                if (
+                    distance(playerCenter, flowerCenter) <
+                    (this.player.width + o.width) * 0.4
+                ) {
+                    o.hit(time);
+                }
+            }
+        }
 
         updateThunder(time.t);
     }
@@ -247,37 +274,6 @@ export class Level implements Area, Space {
             this.width / 2 - holeWidth / 2 <= this.player.x &&
             this.player.x + this.player.width <= this.width / 2 + holeWidth / 2
         );
-    }
-
-    private checkCollisionsWithCat(): void {
-        if (!this.cat) return;
-        const playerCenter = getCenter(this.player);
-        const catCenter = getCenter(this.cat);
-
-        if (
-            distance(playerCenter, catCenter) <
-            (this.player.width + this.cat.width) * 0.3
-        ) {
-            this.state = LevelState.Lose;
-        }
-    }
-
-    private checkCollisionsWithPlants(time: TimeStep): void {
-        const playerTileIndex = getTileIndexOfObject(this.player);
-        const playerCenter: Vector = getCenter(this.player);
-
-        for (const o of this.tileMap.getNearbyObjects(playerTileIndex)) {
-            if (o instanceof Flower) {
-                const flowerCenter: Vector = getCenter(o);
-
-                if (
-                    distance(playerCenter, flowerCenter) <
-                    (this.player.width + o.width) * 0.4
-                ) {
-                    o.hit(time);
-                }
-            }
-        }
     }
 
     draw(time: TimeStep): void {
