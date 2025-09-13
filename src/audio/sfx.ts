@@ -111,7 +111,7 @@ export const playTune = async (tune: string, vol: number = 1) => {
         }
         case SFX_GAMEOVER: {
             zzfx(1, ...mouseSfx);
-            FadeIn(gameTune);
+            FadeOutIn(startTune, gameTune);
             break;
         }
         case SFX_START: {
