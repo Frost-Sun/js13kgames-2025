@@ -91,6 +91,7 @@ function setHighscore(score: number) {
 }
 
 let highscore = getHighscore();
+let previousHighscore = highscore;
 
 const gameLoop = (t: number): void => {
     requestAnimationFrame(gameLoop);
@@ -150,6 +151,7 @@ const update = (time: TimeStep): void => {
                 const previousNumber = level.number;
                 // Update highscore if needed
                 if (previousNumber + 1 > highscore) {
+                    previousHighscore = highscore;
                     highscore = previousNumber + 1;
                     setHighscore(highscore);
                 }
@@ -260,7 +262,7 @@ const draw = (time: TimeStep): void => {
             );
             if (highscore > 0)
                 renderText(
-                    level.number === highscore
+                    highscore > previousHighscore && level.number === highscore
                         ? "New highscore!"
                         : `Highscore ${highscore}`,
                     TextSize.Small,
