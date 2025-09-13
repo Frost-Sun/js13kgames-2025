@@ -79,6 +79,7 @@ export const addRoad = (grid: Array2D<Tile>): Array2D<Tile> => {
 
 const addPlants = (grid: Array2D<Tile>, number: number): Array2D<Tile> => {
     const plantPropability = Math.max(0.1, 0.8 - number * 0.05);
+    const bushPropability = Math.max(0.1, 0.35 - number * 0.05);
 
     for (let iy = 0; iy < grid.yCount; iy++) {
         const y = iy * TILE_DRAW_HEIGHT;
@@ -92,7 +93,7 @@ const addPlants = (grid: Array2D<Tile>, number: number): Array2D<Tile> => {
             const x = ix * TILE_SIZE;
             let tileType =
                 random() < plantPropability
-                    ? random() < 0.1
+                    ? random() < bushPropability
                         ? TileType.Bush
                         : TileType.Flower
                     : TileType.Grass;
