@@ -81,6 +81,17 @@ const time: TimeStep = {
 
 let level: Level;
 
+// Highscore management
+const HIGHSCORE_KEY = "FS-Midnight_Paws";
+function getHighscore(): number {
+    return Number(localStorage.getItem(HIGHSCORE_KEY) || 0);
+}
+function setHighscore(score: number) {
+    localStorage.setItem(HIGHSCORE_KEY, String(score));
+}
+
+let highscore = getHighscore();
+
 const gameLoop = (t: number): void => {
     requestAnimationFrame(gameLoop);
 
@@ -137,6 +148,11 @@ const update = (time: TimeStep): void => {
                 setState(GameState.GameOver);
             } else if (level.state === LevelState.Finished) {
                 const previousNumber = level.number;
+                // Update highscore if needed
+                if (previousNumber + 1 > highscore) {
+                    highscore = previousNumber + 1;
+                    setHighscore(highscore);
+                }
                 level = new Level(previousNumber + 1);
             }
             break;
@@ -203,14 +219,20 @@ const draw = (time: TimeStep): void => {
             cx.fillText("hear:" + hearAccuracyDebug.toFixed(2), 10, 65);
             cx.restore();
 
-            renderText(
-                level.number > 0 ? "BACKYARD " + level.number : "ALLEY",
-                TextSize.Small,
-                1,
-                2,
-                false,
-                25,
-            );
+            const levelLabel =
+                level.number > 0 ? "BACKYARD " + level.number : "ALLEY";
+            renderText(levelLabel, TextSize.Small, 1, 2, false, 25);
+
+            if (highscore > 0) {
+                renderText(
+                    `Highscore ${highscore}`,
+                    TextSize.Small,
+                    1,
+                    2,
+                    false,
+                    -25,
+                );
+            }
 
             break;
         }
@@ -236,6 +258,18 @@ const draw = (time: TimeStep): void => {
                 1,
                 3,
             );
+            if (highscore > 0) {
+                if (level.number === highscore) {
+                    renderText("New highscore!", TextSize.Normal, 1, 5);
+                } else {
+                    renderText(
+                        `(Highscore is ${highscore})`,
+                        TextSize.Small,
+                        1,
+                        5,
+                    );
+                }
+            }
             renderWaitForProgressInput("try again");
             break;
         }
@@ -243,7 +277,6 @@ const draw = (time: TimeStep): void => {
         default:
             break;
     }
-
     cx.restore();
 };
 
