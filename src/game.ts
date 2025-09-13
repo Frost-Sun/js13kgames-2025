@@ -29,12 +29,12 @@ import {
     SFX_RUNNING,
     SFX_START,
 } from "./audio/sfx";
-import {
-    hearAccuracyDebug,
-    CERTAIN_OBSERVATION_THERSHOLD,
-    sightAccuracyDebug,
-    VAGUE_OBSERVATION_THRESHOLD,
-} from "./CatAi";
+// import {
+//     hearAccuracyDebug,
+//     CERTAIN_OBSERVATION_THERSHOLD,
+//     sightAccuracyDebug,
+//     VAGUE_OBSERVATION_THRESHOLD,
+// } from "./CatAi";
 import {
     initializeControls,
     renderWaitForProgressInput,
@@ -202,24 +202,24 @@ const draw = (time: TimeStep): void => {
         case GameState.Running: {
             level.draw(time);
 
-            // Debug drawing of the accuracy of the cat noticing the mouse.
-            cx.save();
-            cx.font = "32px Courier New";
-            cx.fillStyle =
-                sightAccuracyDebug > CERTAIN_OBSERVATION_THERSHOLD
-                    ? "red"
-                    : sightAccuracyDebug > VAGUE_OBSERVATION_THRESHOLD
-                      ? "orange"
-                      : "white";
-            cx.fillText("see: " + sightAccuracyDebug.toFixed(2), 10, 30);
-            cx.fillStyle =
-                hearAccuracyDebug > CERTAIN_OBSERVATION_THERSHOLD
-                    ? "red"
-                    : hearAccuracyDebug > VAGUE_OBSERVATION_THRESHOLD
-                      ? "orange"
-                      : "white";
-            cx.fillText("hear:" + hearAccuracyDebug.toFixed(2), 10, 65);
-            cx.restore();
+            // // Debug drawing of the accuracy of the cat noticing the mouse.
+            // cx.save();
+            // cx.font = "32px Courier New";
+            // cx.fillStyle =
+            //     sightAccuracyDebug > CERTAIN_OBSERVATION_THERSHOLD
+            //         ? "red"
+            //         : sightAccuracyDebug > VAGUE_OBSERVATION_THRESHOLD
+            //           ? "orange"
+            //           : "white";
+            // cx.fillText("see: " + sightAccuracyDebug.toFixed(2), 10, 30);
+            // cx.fillStyle =
+            //     hearAccuracyDebug > CERTAIN_OBSERVATION_THERSHOLD
+            //         ? "red"
+            //         : hearAccuracyDebug > VAGUE_OBSERVATION_THRESHOLD
+            //           ? "orange"
+            //           : "white";
+            // cx.fillText("hear:" + hearAccuracyDebug.toFixed(2), 10, 65);
+            // cx.restore();
 
             const levelLabel =
                 level.number > 0 ? "BACKYARD " + level.number : "ALLEY";

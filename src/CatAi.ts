@@ -44,18 +44,18 @@ import { TILE_DRAW_HEIGHT, TILE_SIZE } from "./tiles";
 import { playTune, SFX_CHASE, SFX_RUNNING } from "./audio/sfx";
 import type { GameObject } from "./GameObject";
 
-export let sightAccuracyDebug: number = 0;
-export let hearAccuracyDebug: number = 0;
+// export let sightAccuracyDebug: number = 0;
+// export let hearAccuracyDebug: number = 0;
 
 // Make sure the cat does not appear on the screen at start as the horizon
 // takes care of drawing it when on the fence.
 const INITIAL_CAT_POS: Vector = { x: -1000, y: -1000 };
 
-const GOTO_FENCE_DURATION = 1000;
-const NOTICE_DURATION = 2000;
+const GOTO_FENCE_DURATION = 800;
+const NOTICE_DURATION = 1500;
 
-const FENCE_HEARD_THRESHOLD = 0.07;
-const FENCE_NOTICE_THRESHOLD = 0.2;
+const FENCE_HEARD_THRESHOLD = 0.04;
+const FENCE_NOTICE_THRESHOLD = 0.14;
 
 const JUMP_DURATION: number = 2300; // ms
 const STILL_AFTER_JUMP_DURATION = 1000;
@@ -75,7 +75,7 @@ const LOOK_AROUND_INTERVAL = 1500;
 
 // Speeds relative to the actual speed in BlackCat.ts.
 const SPEED_IDLE = 0.4;
-const SPEED_VAGUE_OBSERVATION = 0.6;
+const SPEED_VAGUE_OBSERVATION = 0.8;
 const SPEED_CHASE = 1.0;
 
 function getSightAccuracy(d: number) {
@@ -204,7 +204,7 @@ export class CatAi {
         const seen = this.lookForMouse(time, hostCenter);
         let heard: Observation | null = null;
 
-        sightAccuracyDebug = seen?.accuracy ?? 0;
+        // sightAccuracyDebug = seen?.accuracy ?? 0;
 
         if (seen && seen.accuracy > CERTAIN_OBSERVATION_THERSHOLD) {
             this.lastCertainObservation = seen;
@@ -222,7 +222,7 @@ export class CatAi {
                       };
 
             heard = this.space.listen(time, listenerPosition);
-            hearAccuracyDebug = heard?.accuracy ?? 0;
+            // hearAccuracyDebug = heard?.accuracy ?? 0;
 
             if (heard) {
                 this.lastHearObservation = heard;
@@ -265,7 +265,7 @@ export class CatAi {
                 position: {
                     x: lastObservation.position.x,
                     // Anticipate that the mouse is going forward
-                    y: lastObservation.position.y - TILE_DRAW_HEIGHT * 6,
+                    y: lastObservation.position.y - TILE_DRAW_HEIGHT * 8,
                 },
             };
             this.fenceState = FenceState.Noticed;

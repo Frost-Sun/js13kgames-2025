@@ -68,7 +68,7 @@ export const speedByTile: Readonly<Record<TileType, number>> = {
     [TileType.Grass]: 1,
     [TileType.Flower]: 0.9,
     [TileType.Bush]: 0.7,
-    [TileType.Slate]: 1.2,
+    [TileType.Slate]: 1.1,
 };
 
 const asciiPatternCache: Record<string, CanvasPattern | null> = {};
