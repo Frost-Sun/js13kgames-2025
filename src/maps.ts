@@ -105,31 +105,33 @@ export const createIntroMap = (): Array2D<Tile> => {
     const introWidth = 10;
     const introHeight = 18;
     const grid = new Array2D<Tile>(introWidth, introHeight);
-    const centerCol = Math.floor(introWidth / 2) + 1;
+    const roadStart = Math.floor(introHeight / 2) - 1;
+    const roadEnd = roadStart + 8;
     for (let iy = 0; iy < introHeight; iy++) {
-        for (let ix = 0; ix < introWidth; ix++) {
-            const x = ix * TILE_SIZE;
-            const y = iy * TILE_DRAW_HEIGHT;
-            let type = TileType.Grass;
-            // Place bushes and flowers at fixed positions, not in the center column
-            if (
-                (iy === 2 && ix === 2) ||
-                (iy === 2 && ix === introWidth - 3) ||
-                (iy === 4 && ix === 1) ||
-                (iy === 4 && ix === introWidth - 2)
-            ) {
-                type = TileType.Bush;
-            } else if (
-                (iy === 3 && ix === 1) ||
-                (iy === 3 && ix === introWidth - 2) ||
-                (iy === 1 && ix === 3) ||
-                (iy === 1 && ix === introWidth - 4)
-            ) {
-                type = TileType.Flower;
+        for (let iy = 0; iy < introHeight; iy++) {
+            for (let ix = 0; ix < introWidth; ix++) {
+                const x = ix * TILE_SIZE;
+                const y = iy * TILE_DRAW_HEIGHT;
+                let type = TileType.Grass;
+                // Place bushes and flowers at fixed positions, not in the road area
+                if (
+                    (iy === 2 && ix === 2) ||
+                    (iy === 2 && ix === introWidth - 3) ||
+                    (iy === 4 && ix === 1) ||
+                    (iy === 4 && ix === introWidth - 2)
+                ) {
+                    type = TileType.Bush;
+                } else if (
+                    (iy === 3 && ix === 1) ||
+                    (iy === 3 && ix === introWidth - 2) ||
+                    (iy === 1 && ix === 3) ||
+                    (iy === 1 && ix === introWidth - 4)
+                ) {
+                    type = TileType.Flower;
+                }
+                if (iy >= roadStart && iy < roadEnd) type = TileType.Slate;
+                grid.setValue(ix, iy, createTile(type, x, y));
             }
-            // Never place anything in the center column
-            if (ix === centerCol) type = TileType.Slate;
-            grid.setValue(ix, iy, createTile(type, x, y));
         }
     }
     return grid;

@@ -10,7 +10,7 @@ First, install dependencies with
 
 To run the game in the browser for development:
 
-    $ npm run dev
+    $ npm start
 
 Building the zip package:
 
