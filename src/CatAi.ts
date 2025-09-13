@@ -54,7 +54,7 @@ const INITIAL_CAT_POS: Vector = { x: -1000, y: -1000 };
 const GOTO_FENCE_DURATION = 800;
 const NOTICE_DURATION = 1500;
 
-const FENCE_HEARD_THRESHOLD = 0.06;
+const FENCE_HEARD_THRESHOLD = 0.04;
 const FENCE_NOTICE_THRESHOLD = 0.14;
 
 const JUMP_DURATION: number = 2300; // ms
