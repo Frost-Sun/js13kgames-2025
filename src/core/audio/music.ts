@@ -50,12 +50,14 @@ export const initTune = (
         songplayer.init(tune);
         // Generate music...
         let done = false;
-        setInterval(function () {
+        const interval = setInterval(function () {
             if (done) {
+                clearInterval(interval);
                 return;
             }
             done = songplayer.generate() >= 1;
             if (done) {
+                clearInterval(interval);
                 // Put the generated song in an Audio element.
                 const wave = songplayer.createWave();
                 audioTrack.src = URL.createObjectURL(
@@ -64,7 +66,7 @@ export const initTune = (
                 audioTrack.loop = isLooped;
                 resolve();
             }
-        }, 0);
+        }, 16);
     });
 };
 
@@ -85,125 +87,98 @@ export const stopTune = (tune: Tune): void => {
 const roundToFractionDigits = (x: number, fractionDigits: number): number =>
     parseFloat(x.toFixed(fractionDigits));
 
-export const FadeOut = (tune: Tune, vol = 0): void => {
-    if (tune._fadeInterval) {
-        clearInterval(tune._fadeInterval);
-        tune._fadeInterval = undefined;
-    }
-    let currentVolume = tune.volume;
-    if (currentVolume > vol) {
-        tune._fadeInterval = setInterval(function () {
-            currentVolume = roundToFractionDigits(
-                Math.max(vol, currentVolume - 0.1),
-                1,
+// --- Fade Manager ---
+
+interface FadeTask {
+    tune: Tune;
+    from: number;
+    to: number;
+    step: number;
+    onDone?: () => void;
+}
+
+const fadeTasks: FadeTask[] = [];
+let fadeTimer: number | undefined;
+
+function startFadeManager() {
+    if (fadeTimer !== undefined) return;
+    fadeTimer = setInterval(() => {
+        for (let i = fadeTasks.length - 1; i >= 0; i--) {
+            const task = fadeTasks[i];
+            const dir = Math.sign(task.to - task.from);
+            let v = roundToFractionDigits(
+                task.tune.volume + dir * task.step,
+                2,
             );
-            tune.volume = currentVolume;
-            if (currentVolume <= vol) {
-                if (vol === 0) tune.pause();
-                clearInterval(tune._fadeInterval);
-                tune._fadeInterval = undefined;
+            if ((dir > 0 && v > task.to) || (dir < 0 && v < task.to))
+                v = task.to;
+            task.tune.volume = v;
+            let done = false;
+            if (dir > 0 ? v >= task.to : v <= task.to) {
+                if (task.to === 0) task.tune.pause();
+                done = true;
             }
-        }, 100);
-    } else if (vol === 0 && !tune.paused) {
-        tune.pause();
-        tune.volume = 0;
-    }
+            if (done) {
+                if (task.onDone) setTimeout(task.onDone, 500);
+                fadeTasks.splice(i, 1);
+            }
+        }
+        if (fadeTasks.length === 0 && fadeTimer !== undefined) {
+            clearInterval(fadeTimer);
+            fadeTimer = undefined;
+        }
+    }, 100);
+}
+
+function addFadeTask(task: FadeTask) {
+    // Set initial volume if needed
+    if (typeof task.from === "number") task.tune.volume = task.from;
+    fadeTasks.push(task);
+    startFadeManager();
+}
+
+export const FadeOut = (tune: Tune, vol = 0): void => {
+    addFadeTask({
+        tune,
+        from: tune.volume,
+        to: vol,
+        step: 0.1,
+    });
 };
 
 export const FadeIn = (tune: Tune, vol: number = 1): void => {
-    if (tune._fadeInterval) {
-        clearInterval(tune._fadeInterval);
-        tune._fadeInterval = undefined;
-    }
-
     let playPromise = Promise.resolve();
     if (tune.paused) {
-        // Key change: Start with a small audible volume on iOS
         tune.volume = isIOS ? 0.1 : 0;
-
-        // Add playsinline for iOS (just to be safe)
         tune.setAttribute("playsinline", "playsinline");
         playPromise = tune.play();
     }
-
     playPromise
         .then(() => {
-            // Start from current volume
-            let currentVolume = tune.volume;
-
-            if (currentVolume < vol) {
-                if (tune._fadeInterval) clearInterval(tune._fadeInterval);
-
-                tune._fadeInterval = setInterval(function () {
-                    currentVolume = roundToFractionDigits(
-                        Math.min(vol, currentVolume + 0.1),
-                        1,
-                    );
-                    tune.volume = currentVolume;
-
-                    if (currentVolume >= vol) {
-                        tune.volume = vol;
-                        clearInterval(tune._fadeInterval);
-                        tune._fadeInterval = undefined;
-                    }
-                }, 100);
-            } else {
-                tune.volume = vol;
-            }
+            addFadeTask({
+                tune,
+                from: tune.volume,
+                to: vol,
+                step: 0.1,
+            });
         })
         .catch((e) => {
             console.warn("FadeIn play() failed:", e);
-            // Try one more time with higher volume on any failure
             if (tune.paused) {
                 tune.volume = 1;
                 tune.play().catch((err) =>
                     console.error("Second play attempt failed:", err),
                 );
             }
-
-            if (tune._fadeInterval) {
-                clearInterval(tune._fadeInterval);
-                tune._fadeInterval = undefined;
-            }
         });
 };
 
 export const FadeOutIn = (tune1: Tune, tune2: Tune, vol: number = 1): void => {
-    if (tune1._fadeInterval) clearInterval(tune1._fadeInterval);
-    if (tune1._fadeOutInTimeout) clearTimeout(tune1._fadeOutInTimeout);
-    if (tune2._fadeInterval) clearInterval(tune2._fadeInterval);
-    if (tune2._fadeOutInTimeout) clearTimeout(tune2._fadeOutInTimeout);
-    tune1._fadeInterval = undefined;
-    tune1._fadeOutInTimeout = undefined;
-    tune2._fadeInterval = undefined;
-    tune2._fadeOutInTimeout = undefined;
-
-    let currentVolume = tune1.volume;
-    if (currentVolume > 0) {
-        tune1._fadeInterval = setInterval(function () {
-            currentVolume = roundToFractionDigits(
-                Math.max(0, currentVolume - 0.1),
-                1,
-            );
-            tune1.volume = currentVolume;
-
-            if (currentVolume <= 0.1) {
-                tune1.pause();
-                clearInterval(tune1._fadeInterval);
-                tune1._fadeInterval = undefined;
-
-                tune1._fadeOutInTimeout = setTimeout(() => {
-                    FadeIn(tune2, vol);
-                    tune1._fadeOutInTimeout = undefined;
-                }, 500);
-            }
-        }, 100);
-    } else {
-        tune1.pause();
-        tune1.volume = 0;
-        tune1._fadeOutInTimeout = setTimeout(() => {
-            FadeIn(tune2, vol);
-            tune1._fadeOutInTimeout = undefined;
-        }, 500);
-    }
+    addFadeTask({
+        tune: tune1,
+        from: tune1.volume,
+        to: 0,
+        step: 0.1,
+        onDone: () => FadeIn(tune2, vol),
+    });
 };
