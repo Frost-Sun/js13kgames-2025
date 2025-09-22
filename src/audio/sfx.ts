@@ -68,12 +68,14 @@ const initMusicPlayer = (
         songplayer.init(tune);
         // Generate music...
         let done = false;
-        setInterval(function () {
+        const interval = setInterval(function () {
             if (done) {
+                clearInterval(interval);
                 return;
             }
             done = songplayer.generate() >= 1;
             if (done) {
+                clearInterval(interval);
                 // Put the generated song in an Audio element.
                 const wave = songplayer.createWave();
                 audioTrack.src = URL.createObjectURL(
@@ -83,7 +85,7 @@ const initMusicPlayer = (
 
                 resolve();
             }
-        }, 0);
+        }, 16);
     });
 };
 
