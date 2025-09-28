@@ -23,13 +23,13 @@ export class Bush implements GameObject {
         cx.save();
 
         // Draw longer shadow at bush world position, before transforms
-        cx.fillStyle = "rgb(90, 174, 90)";
+        cx.fillStyle = "rgb(70, 154, 70)";
         cx.beginPath();
         cx.ellipse(
             this.x + this.width / 2,
             this.y + this.height * 0.5,
             this.width * 0.42,
-            this.height * 0.38, // even longer shadow
+            this.height * 0.38,
             0,
             0,
             Math.PI * 2,

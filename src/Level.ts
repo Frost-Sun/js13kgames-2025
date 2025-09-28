@@ -291,6 +291,20 @@ export class Level implements Area, Space {
         });
         cx.restore();
 
+        cx.save();
+        const horizonY = HORIZON_HEIGHT_OF_CANVAS * canvas.height;
+        const fadeGradient = cx.createLinearGradient(
+            0,
+            canvas.height,
+            0,
+            horizonY,
+        );
+        fadeGradient.addColorStop(0, "rgba(0,0,0,0)");
+        fadeGradient.addColorStop(1, "rgba(0,0,0,0.15)");
+        cx.fillStyle = fadeGradient;
+        cx.fillRect(0, horizonY, canvas.width, canvas.height - horizonY);
+        cx.restore();
+
         // The horizon is drawn after the tiles so that the tiles are sharply
         // "cut" at the horizon.
         const backgroundScrollAmount =
