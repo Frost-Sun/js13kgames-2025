@@ -48,7 +48,7 @@ export type BlackCatFacing =
 import type { TimeStep } from "./core/time/TimeStep";
 import { cx } from "./graphics";
 
-const CAT_ASPECT_RATIO = 3 / 4;
+export const CAT_ASPECT_RATIO = 3 / 4;
 
 // Draws a cat eye at (x, y) with open/closed state
 export function renderCatEye(
