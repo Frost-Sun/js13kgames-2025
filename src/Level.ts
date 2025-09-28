@@ -190,15 +190,19 @@ export class Level implements Area, Space {
         }
 
         if (this.cat) {
-            // Check collision with cat
-            const playerCenter = getCenter(this.player);
-            const catCenter = getCenter(this.cat);
-
-            if (
-                distance(playerCenter, catCenter) <
-                (this.player.width + this.cat.width) * 0.3
-            ) {
-                this.state = LevelState.Lose;
+            // Only check collision if cat is visible and not during jump arc or shadow-only phase
+            const ai = this.cat.ai;
+            const catIsVisible =
+                ai.jumpTarget === null && ai.jumpFinishTime !== 0;
+            if (catIsVisible && this.cat.x > -9999 && this.cat.y > -9999) {
+                const playerCenter = getCenter(this.player);
+                const catCenter = getCenter(this.cat);
+                if (
+                    distance(playerCenter, catCenter) <
+                    (this.player.width + this.cat.width) * 0.3
+                ) {
+                    this.state = LevelState.Lose;
+                }
             }
         }
 
@@ -285,6 +289,20 @@ export class Level implements Area, Space {
 
             this.tileMap.draw(visibleArea, objectsToDraw);
         });
+        cx.restore();
+
+        cx.save();
+        const horizonY = HORIZON_HEIGHT_OF_CANVAS * canvas.height;
+        const fadeGradient = cx.createLinearGradient(
+            0,
+            canvas.height,
+            0,
+            horizonY,
+        );
+        fadeGradient.addColorStop(0, "rgba(0,0,0,0)");
+        fadeGradient.addColorStop(1, "rgba(0,0,0,0.15)");
+        cx.fillStyle = fadeGradient;
+        cx.fillRect(0, horizonY, canvas.width, canvas.height - horizonY);
         cx.restore();
 
         // The horizon is drawn after the tiles so that the tiles are sharply

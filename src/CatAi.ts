@@ -57,7 +57,7 @@ const NOTICE_DURATION = 1500;
 const FENCE_HEARD_THRESHOLD = 0.04;
 const FENCE_NOTICE_THRESHOLD = 0.14;
 
-const JUMP_DURATION: number = 2300; // ms
+export const JUMP_DURATION: number = 1500; // ms
 const STILL_AFTER_JUMP_DURATION = 1000;
 
 const HEARING_PERIOD = 450;
@@ -153,15 +153,15 @@ export enum FenceState {
 export class CatAi {
     isAlert: boolean = false;
     fenceState: FenceState = FenceState.Nothing;
+    jumpTarget: Vector | null = null;
+    jumpFinishTime: number = 0;
 
     private lastMusic: string | null = SFX_RUNNING;
 
     private heardSomethingTime: number = 0;
     private noticedTime: number = 0;
 
-    private jumpTarget: Vector | null = null;
     jumpStartTime: number = 0;
-    private jumpFinishTime: number = 0;
     private hasJumped: boolean = false;
 
     private lastHearingTime: number = 0;
@@ -277,6 +277,13 @@ export class CatAi {
             this.fenceState === FenceState.Noticed &&
             NOTICE_DURATION < time.t - this.noticedTime
         ) {
+            // Set jumpTarget as soon as Noticed state is reached, so shadow appears sooner
+            if (!this.jumpTarget) {
+                this.jumpTarget = {
+                    x: this.mouse.x + randomMinMax(-0.5, 0.5) * TILE_SIZE,
+                    y: this.mouse.y - 5 * TILE_DRAW_HEIGHT,
+                };
+            }
             // Position the cat such that it appears coming from the fence
             this.host.x = this.mouse.x - this.host.width * 0.5;
             this.host.y =
@@ -293,18 +300,21 @@ export class CatAi {
             return null;
         }
 
+        // Set jumpTarget only when jump starts
         if (!this.jumpStartTime) {
-            // Ready to jump
             this.jumpStartTime = time.t;
             this.jumpTarget = {
                 x: this.mouse.x + randomMinMax(-0.5, 0.5) * TILE_SIZE,
                 y: this.mouse.y - 5 * TILE_DRAW_HEIGHT,
             };
-
             this.useMusic(SFX_CHASE);
         }
 
+        // Only draw shadow and move cat while actively jumping
         if (this.jumpTarget && !this.jumpFinishTime) {
+            // Hide cat during jump arc
+            this.host.x = -10000;
+            this.host.y = -10000;
             // Jump!
             const done = jumpMovement(
                 time,
@@ -314,8 +324,10 @@ export class CatAi {
                 this.jumpTarget,
             );
 
+            // Shadow should be drawn at jumpTarget as soon as jumpTarget is set
+
             if (done) {
-                this.jumpTarget = null;
+                // Do not place cat at landing position yet, keep hidden for 1 second
                 this.jumpFinishTime = time.t;
             }
 
@@ -323,8 +335,48 @@ export class CatAi {
             return ZERO_VECTOR;
         }
 
-        if (time.t - this.jumpFinishTime < STILL_AFTER_JUMP_DURATION) {
+        // After jump is finished, animate cat dropping from the sky for 0.12s, then show at landing position
+        const dropDuration = 120;
+        if (
+            this.jumpFinishTime &&
+            time.t - this.jumpFinishTime < dropDuration
+        ) {
+            // Animate cat dropping from above with ease-out
+            const t = (time.t - this.jumpFinishTime) / dropDuration;
+            const ease = 1 - Math.pow(1 - t, 2);
+            if (this.jumpTarget) {
+                // Start higher above the target, drop down
+                const startY = this.jumpTarget.y - 120;
+                const endY = this.jumpTarget.y - this.host.height / 2;
+                const y = startY + (endY - startY) * ease;
+                this.host.x = this.jumpTarget.x - this.host.width / 2;
+                this.host.y = y;
+            }
+            return ZERO_VECTOR;
+        }
+        if (
+            this.jumpFinishTime &&
+            time.t - this.jumpFinishTime >= dropDuration &&
+            this.jumpTarget
+        ) {
+            // Show cat at landing position after drop, aligned with shadow
+            const width = this.host.width;
+            const h = width / (3 / 4); // CAT_ASPECT_RATIO
+            this.host.x = this.jumpTarget.x;
+            this.host.y = this.jumpTarget.y + h * 0.1;
+            this.jumpTarget = null;
             this.hasJumped = true;
+            return ZERO_VECTOR;
+        }
+
+        // After jump is finished, do not draw shadow or use jumpTarget
+        // Only run this after the cat has actually landed and appeared
+        if (
+            this.hasJumped &&
+            this.jumpFinishTime &&
+            time.t - this.jumpFinishTime >= 1000 &&
+            time.t - this.jumpFinishTime < 1000 + STILL_AFTER_JUMP_DURATION
+        ) {
             return ZERO_VECTOR;
         }
 

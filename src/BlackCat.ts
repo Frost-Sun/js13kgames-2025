@@ -24,8 +24,13 @@
 
 import type { Animal } from "./Animal";
 import type { TimeStep } from "./core/time/TimeStep";
-import { type BlackCatFacing, renderBlackCat } from "././BlackCatAnimation";
-import { CatAi } from "./CatAi";
+import {
+    type BlackCatFacing,
+    CAT_ASPECT_RATIO,
+    renderBlackCat,
+} from "././BlackCatAnimation";
+import { cx } from "./graphics";
+import { CatAi, JUMP_DURATION } from "./CatAi";
 import {
     length,
     multiply,
@@ -95,17 +100,65 @@ export class BlackCat implements Animal {
 
         const eyesOpen: boolean = this.ai.isAlert;
 
-        renderBlackCat(
-            this.x,
-            this.y,
-            this.width,
-            facing,
-            eyesOpen,
-            this.dir,
-            this.step,
-            this.lastSpeed,
-            time,
-        );
+        // Draw shadow at jump target only while cat is in the air (jump arc or drop animation)
+        const jumpTarget = this.ai.jumpTarget;
+        let shadowScale = 1;
+        if (jumpTarget) {
+            // Animate shadow scale during jump arc
+            if (!this.ai.jumpFinishTime) {
+                const elapsed = time.t - this.ai.jumpStartTime;
+                shadowScale = Math.min(1, Math.max(0, elapsed / JUMP_DURATION));
+            } else if (
+                this.ai.jumpFinishTime &&
+                time.t - this.ai.jumpFinishTime < 120
+            ) {
+                // Keep shadow at full size during drop
+                shadowScale = 1;
+            }
+        }
+        const inAir =
+            (jumpTarget && !this.ai.jumpFinishTime) ||
+            (this.ai.jumpFinishTime && time.t - this.ai.jumpFinishTime < 120);
+        if (jumpTarget && inAir) {
+            cx.save();
+            const width = this.width;
+            const h = width / CAT_ASPECT_RATIO;
+            cx.fillStyle = "rgba(0,0,0,0.15)";
+            cx.beginPath();
+            cx.ellipse(
+                jumpTarget.x + width / 2,
+                jumpTarget.y + h * 0.1,
+                width * 0.45 * shadowScale,
+                h * 0.24 * shadowScale,
+                0,
+                0,
+                Math.PI * 2,
+            );
+            cx.fill();
+            cx.strokeStyle = "rgba(255,0,0,0.5)";
+            cx.lineWidth = 1;
+            cx.stroke();
+            cx.restore();
+        }
+
+        // Show cat during drop animation (post-jump delay) so it visually falls from the sky
+        const ai = this.ai;
+        const dropDuration = 300;
+        const isDropping =
+            ai.jumpFinishTime && time.t - ai.jumpFinishTime < dropDuration;
+        if (!(ai.jumpTarget && ai.jumpFinishTime === 0) || isDropping) {
+            renderBlackCat(
+                this.x,
+                this.y,
+                this.width,
+                facing,
+                eyesOpen,
+                this.dir,
+                this.step,
+                this.lastSpeed,
+                time,
+            );
+        }
 
         // Debug draw the direction the cat is facing.
         // const pos: Vector = {
