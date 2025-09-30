@@ -96,7 +96,17 @@ export const drawStartScreen = (time: TimeStep): void => {
 
     renderText("presents", TextSize.Tiny, 0.5, 5.25, false);
 
-    renderText("MIDNIGHT PAWS", TextSize.Xl, 1, 1.8);
+    renderText(
+        "MIDNIGHT PAWS",
+        TextSize.Xl,
+        1,
+        1.8,
+        true,
+        -2,
+        "MIDNIGHT PAWS",
+        ["white", "gray"],
+    );
+    renderText("DG", TextSize.Xl, 1, 1.8, true, 14, "DG", ["red", "orange"]);
 
     renderWaitForProgressInput("start");
 
