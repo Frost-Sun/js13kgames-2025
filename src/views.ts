@@ -143,12 +143,8 @@ export const drawStartBackdrop = (time: TimeStep): void => {
 
 // Difficulty selection screen
 export const drawDifficultySelect = (yShift = 0): void => {
-    // Draw the difficulty selection UI without clearing the canvas so
-    // a background scene (level + cat) can remain visible. yShift allows
-    // moving the UI up/down (negative moves it higher).
-    // Render static difficulty text over the animated backdrop.
     renderText("Select difficulty", TextSize.Large, 1, 2 + yShift);
-    renderText("Press E — EASY", TextSize.Normal, 1, 4 + yShift);
-    renderText("Press N — NORMAL", TextSize.Normal, 1, 6 + yShift);
+    renderText("E — EASY  ", TextSize.Normal, 1, 4 + yShift);
+    renderText("N — NORMAL", TextSize.Normal, 1, 6 + yShift);
     drawThunder();
 };
