@@ -25,7 +25,7 @@
 import type { Animal } from "./Animal";
 import { getCenter } from "./core/math/Area";
 import { clamp } from "./core/math/number";
-import { random, randomDirection, randomMinMax } from "./core/math/random";
+import { random, randomInt, randomMinMax } from "./core/math/random";
 import {
     add,
     distance,
@@ -78,6 +78,21 @@ const LOOK_AROUND_INTERVAL = 1500;
 const SPEED_IDLE = 0.4;
 const SPEED_VAGUE_OBSERVATION = 0.8;
 const SPEED_CHASE = 1.0;
+
+const DIRECTIONS: readonly Vector[] = [
+    { x: 0, y: -1 },
+    { x: 0.5, y: -0.5 },
+    { x: 1, y: 0 },
+    { x: 0.5, y: 0.5 },
+    { x: 0, y: 1 },
+    { x: -0.5, y: -0.5 },
+    { x: -1, y: 0 },
+    { x: -0.5, y: -0.5 },
+];
+
+function getRandomDirection(): Vector {
+    return DIRECTIONS[randomInt(DIRECTIONS.length)];
+}
 
 function getSightAccuracy(d: number) {
     return clamp(1 - d / SIGHT_ACCURACY_LOWERING_DISTANCE, 0.3, 1);
@@ -463,7 +478,7 @@ export class CatAi {
                 this.lastTurnTime = time.t;
 
                 // Move a little to turn to another direction
-                return randomDirection();
+                return getRandomDirection();
             }
 
             return ZERO_VECTOR;
