@@ -40,6 +40,7 @@ import {
 import type { TimeStep } from "./core/time/TimeStep";
 import type { Mouse } from "./Mouse";
 import type { Observation, Space } from "./Space";
+import { Difficulty } from "./settings";
 import { TILE_DRAW_HEIGHT, TILE_SIZE } from "./tiles";
 import { playTune, SFX_CHASE, SFX_RUNNING } from "./audio/sfx";
 import type { GameObject } from "./GameObject";
@@ -175,15 +176,19 @@ export class CatAi {
 
     private target: Vector | null = null;
 
+    private speedMultiplier: number = 1;
+
     constructor(
         private host: Animal,
         private space: Space,
         private mouse: Mouse,
+        private difficulty: Difficulty = Difficulty.Normal,
     ) {
         // Place cat offscreen before first jump
         this.host.x = INITIAL_CAT_POS.x;
         this.host.y = INITIAL_CAT_POS.y;
         this.host.direction = { x: 0, y: 1 };
+        this.speedMultiplier = this.difficulty === Difficulty.Easy ? 0.7 : 1.0;
     }
 
     getMovement(time: TimeStep): Vector {
@@ -389,7 +394,11 @@ export class CatAi {
             this.useMusic(SFX_RUNNING);
         }
 
-        const movement = this.goTo(this.target, hostCenter, SPEED_IDLE);
+        const movement = this.goTo(
+            this.target,
+            hostCenter,
+            SPEED_IDLE * this.speedMultiplier,
+        );
 
         if (!movement) {
             this.target = null;
@@ -417,7 +426,11 @@ export class CatAi {
                           this.lastVagueObservation.position,
                       );
 
-            return this.goTo(target, hostCenter, SPEED_VAGUE_OBSERVATION);
+            return this.goTo(
+                target,
+                hostCenter,
+                SPEED_VAGUE_OBSERVATION * this.speedMultiplier,
+            );
         }
 
         this.isAlert = false;
@@ -430,7 +443,7 @@ export class CatAi {
             const movement = this.goTo(
                 this.lastCertainObservation.position,
                 hostCenter,
-                SPEED_CHASE,
+                SPEED_CHASE * this.speedMultiplier,
             );
 
             if (movement == null) {

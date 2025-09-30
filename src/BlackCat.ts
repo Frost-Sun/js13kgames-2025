@@ -31,6 +31,7 @@ import {
 } from "././BlackCatAnimation";
 import { cx } from "./graphics";
 import { CatAi, JUMP_DURATION } from "./CatAi";
+import { getDifficulty } from "./settings";
 import {
     length,
     multiply,
@@ -61,7 +62,7 @@ export class BlackCat implements Animal {
     constructor(x: number, y: number, space: Space, mouse: Mouse) {
         this.x = x;
         this.y = y;
-        this.ai = new CatAi(this, space, mouse);
+        this.ai = new CatAi(this, space, mouse, getDifficulty());
     }
 
     getMovement(time: TimeStep): Vector {
