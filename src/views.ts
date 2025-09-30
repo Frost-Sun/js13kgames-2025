@@ -29,10 +29,12 @@ import {
     drawRain,
     drawThunder,
     updateThunder,
+    cx,
 } from "./graphics";
 import { renderText, TextSize } from "./text";
 import { renderBlackCat } from "./BlackCatAnimation";
 import { renderGradient } from "./core/graphics/gradient";
+// renderGradient not used here on difficulty screen
 import type { TimeStep } from "./core/time/TimeStep";
 
 const startScreenAnim = { t: 0, thunderTimer: 0, nextThunder: 0 };
@@ -66,11 +68,12 @@ export const drawReadyView = (): void => {
     drawThunder();
 };
 
-export const drawStartScreen = (
-    cx: CanvasRenderingContext2D,
-    time: TimeStep,
-): void => {
+export const drawStartScreen = (time: TimeStep): void => {
     clearCanvas("rgb(20, 20, 20)");
+
+    // Draw the same subtle radial gradient used for the backdrop so the
+    // full Start screen keeps the intended lighting.
+    renderGradient(canvas, cx, 0.9);
 
     // Animate cat bobbing up and down
     const bob = Math.sin(startScreenAnim.t * 0.003) * canvas.height * 0.02;
@@ -93,12 +96,55 @@ export const drawStartScreen = (
 
     renderText("presents", TextSize.Tiny, 0.5, 5.25, false);
 
-    renderText("MIDNIGHT PAWS", TextSize.Xl, 1, 1.8);
+    renderText(
+        "MIDNIGHT PAWS",
+        TextSize.Xl,
+        1,
+        1.8,
+        true,
+        -2,
+        "MIDNIGHT PAWS",
+        ["white", "gray"],
+    );
+    renderText("DG", TextSize.Xl, 1, 1.8, true, 14, "DG", ["red", "orange"]);
 
     renderWaitForProgressInput("start");
 
     drawRain(time.t, canvas.width, canvas.height, 0.2);
     drawThunder();
+};
 
-    renderGradient(canvas, cx);
+// Draw only the start-screen backdrop: cat bobbing, rain and thunder.
+export const drawStartBackdrop = (time: TimeStep): void => {
+    clearCanvas("rgb(20, 20, 20)");
+
+    // Draw a subtle radial gradient over the ground to add depth behind
+    // the cat. Use a reduced opacity so rain/thunder and the cat remain
+    // clearly visible.
+    renderGradient(canvas, cx, 0.9);
+
+    const bob = Math.sin(startScreenAnim.t * 0.003) * canvas.height * 0.02;
+    renderBlackCat(
+        canvas.width / 2 - canvas.width * 0.18,
+        canvas.height / 2 + canvas.width * 0.17 + bob,
+        canvas.width * 0.36,
+        "down",
+        true,
+        1,
+        0,
+        0,
+        { t: startScreenAnim.t, dt: 0 },
+    );
+
+    // Keep the environmental effects
+    drawRain(time.t, canvas.width, canvas.height, 0.2);
+    drawThunder();
+};
+
+// Difficulty selection screen
+export const drawDifficultySelect = (yShift = 0): void => {
+    renderText("Select difficulty", TextSize.Large, 1, 2 + yShift);
+    renderText("E — EASY  ", TextSize.Normal, 1, 4 + yShift);
+    renderText("N — NORMAL", TextSize.Normal, 1, 6 + yShift);
+    drawThunder();
 };
