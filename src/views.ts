@@ -106,7 +106,7 @@ export const drawStartScreen = (time: TimeStep): void => {
         "MIDNIGHT PAWS",
         ["white", "gray"],
     );
-    renderText("DG", TextSize.Xl, 1, 1.8, true, 14, "DG", ["red", "orange"]);
+    renderText("DC", TextSize.Xl, 1, 1.8, true, 14, "DC", ["red", "orange"]);
 
     renderWaitForProgressInput("start");
 
@@ -144,7 +144,7 @@ export const drawStartBackdrop = (time: TimeStep): void => {
 // Difficulty selection screen
 export const drawDifficultySelect = (yShift = 0): void => {
     renderText("Select difficulty", TextSize.Large, 1, 2 + yShift);
-    renderText("E — EASY  ", TextSize.Normal, 1, 4 + yShift);
-    renderText("N — NORMAL", TextSize.Normal, 1, 6 + yShift);
+    renderText("E — EASY  ", TextSize.Normal, 1, 5 + yShift);
+    renderText("N — NORMAL", TextSize.Normal, 1, 7 + yShift);
     drawThunder();
 };
