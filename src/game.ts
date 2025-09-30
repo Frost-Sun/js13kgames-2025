@@ -40,7 +40,11 @@ import {
     renderWaitForProgressInput,
     updateControls,
 } from "./controls";
-import { waitForEnter } from "./core/controls/keyboard";
+import {
+    waitForEnter,
+    addEscapeListener,
+    addKeyListener,
+} from "./core/controls/keyboard";
 import type { TimeStep } from "./core/time/TimeStep";
 import {
     canvas,
@@ -73,6 +77,9 @@ export enum GameState {
 }
 
 let gameState: GameState = GameState.Load;
+
+let removeDifficultyListener: (() => void) | null = null;
+let removeEscapeListener: (() => void) | null = null;
 
 const TIME_STEP = 1000 / 60;
 const MAX_FRAME = TIME_STEP * 5;
@@ -130,38 +137,59 @@ const setState = (newState: GameState): void => {
             waitForEnter(SFX_RUNNING).then(() =>
                 setState(GameState.DifficultySelect),
             );
+            // Make sure ESC is not active on the Start screen
+            if (removeEscapeListener) {
+                removeEscapeListener();
+                removeEscapeListener = null;
+            }
             break;
         }
         case GameState.DifficultySelect: {
-            // Listen for E/N keys to pick EASY / NORMAL
-            // The Start screen graphics (cat bobbing, background) will be
-            // used as the backdrop for difficulty selection. Do not create
-            // the actual Level yet.
-            const listener = (event: KeyboardEvent): void => {
-                const k = event.code || event.key;
-                if (
-                    k === "KeyE" ||
-                    (event.key && event.key.toLowerCase() === "e")
-                ) {
-                    setDifficulty(Difficulty.Easy);
-                    // Reload highscores for the selected difficulty
-                    highscore = getHighscore();
-                    previousHighscore = highscore;
-                    window.removeEventListener("keydown", listener);
-                    setState(GameState.Running);
-                } else if (
-                    k === "KeyN" ||
-                    (event.key && event.key.toLowerCase() === "n")
-                ) {
-                    setDifficulty(Difficulty.Normal);
-                    // Reload highscores for the selected difficulty
-                    highscore = getHighscore();
-                    previousHighscore = highscore;
-                    window.removeEventListener("keydown", listener);
-                    setState(GameState.Running);
-                }
-            };
-            window.addEventListener("keydown", listener);
+            if (!removeEscapeListener) {
+                removeEscapeListener = addEscapeListener(() => {
+                    if (gameState === GameState.StartScreen) return;
+                    if (removeDifficultyListener) {
+                        removeDifficultyListener();
+                        removeDifficultyListener = null;
+                    }
+                    setState(GameState.StartScreen);
+                });
+            }
+
+            removeDifficultyListener = addKeyListener(
+                ["KeyE", "e", "KeyN", "n"],
+                (event: KeyboardEvent) => {
+                    const k = event.code || event.key;
+
+                    if (
+                        k === "KeyE" ||
+                        (event.key && event.key.toLowerCase() === "e")
+                    ) {
+                        setDifficulty(Difficulty.Easy);
+                        // Reload highscores for the selected difficulty
+                        highscore = getHighscore();
+                        previousHighscore = highscore;
+                        if (removeDifficultyListener) {
+                            removeDifficultyListener();
+                            removeDifficultyListener = null;
+                        }
+                        setState(GameState.Running);
+                    } else if (
+                        k === "KeyN" ||
+                        (event.key && event.key.toLowerCase() === "n")
+                    ) {
+                        setDifficulty(Difficulty.Normal);
+                        // Reload highscores for the selected difficulty
+                        highscore = getHighscore();
+                        previousHighscore = highscore;
+                        if (removeDifficultyListener) {
+                            removeDifficultyListener();
+                            removeDifficultyListener = null;
+                        }
+                        setState(GameState.Running);
+                    }
+                },
+            );
             break;
         }
         case GameState.Running: {
@@ -353,6 +381,10 @@ export const init = async (): Promise<void> => {
     requestAnimationFrame(gameLoop);
 
     await initializeAudio();
+
+    // Escape listener is registered later (after the Start screen) in
+    // setState when entering DifficultySelect so ESC is inactive during
+    // the Ready state.
 
     setState(GameState.Ready);
 };
