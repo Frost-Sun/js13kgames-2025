@@ -68,9 +68,14 @@ const SIGHT_ACCURACY_LOWERING_DISTANCE = 6.5 * TILE_SIZE;
 const CAT_FOV = (160 * Math.PI) / 180;
 
 export const CERTAIN_OBSERVATION_THERSHOLD = 0.42;
-export const VAGUE_OBSERVATION_THRESHOLD = 0.22;
 
-const VAGUE_OBSERVATION_IGNORE_TIME = 2000;
+export const FIELD_HEAR_SOMETHING_THRESHOLD = 0.22;
+const FIELD_ACCURATE_HEARING_THRESHOLD = 0.15;
+
+const VAGUE_OBSERVATION_IGNORE_TIME = 2300;
+
+const STOP_TO_LISTEN_TIME = 1000;
+
 const SEARCH_TIME = 5000;
 const LOOK_AROUND_INTERVAL = 1500;
 
@@ -184,7 +189,9 @@ export class CatAi {
     private lastObservation: Observation | null = null;
     private lastHearObservation: Observation | null = null;
     private lastCertainObservation: Observation | null = null;
-    private lastVagueObservation: Observation | null = null;
+
+    private stopToListenStartTime: number = 0;
+    private lastAccurateHearObservation: Observation | null = null;
 
     private lookAroundStartTime: number = 0;
     private lastTurnTime: number = 0;
@@ -215,6 +222,7 @@ export class CatAi {
             this.jump(time, hostCenter) ??
             this.chase(time, hostCenter) ??
             this.followVagueObservation(time, hostCenter) ??
+            this.stopToListen(time) ??
             this.lookAround(time) ??
             this.idle(hostCenter)
         );
@@ -252,10 +260,6 @@ export class CatAi {
         const obs = better(seen, heard);
 
         this.lastObservation = obs;
-
-        if (obs && obs.accuracy > VAGUE_OBSERVATION_THRESHOLD) {
-            this.lastVagueObservation = obs;
-        }
     }
 
     private stayOnTheFence(time: TimeStep): Vector | null {
@@ -428,17 +432,22 @@ export class CatAi {
         hostCenter: Vector,
     ): Vector | null {
         if (
-            this.lastVagueObservation &&
-            time.t - this.lastVagueObservation.t < VAGUE_OBSERVATION_IGNORE_TIME
+            !this.stopToListenStartTime &&
+            this.lastAccurateHearObservation &&
+            time.t - this.lastAccurateHearObservation.t <
+                VAGUE_OBSERVATION_IGNORE_TIME
         ) {
             this.isAlert = true;
-            const d = distance(hostCenter, this.lastVagueObservation.position);
+            const d = distance(
+                hostCenter,
+                this.lastAccurateHearObservation.position,
+            );
             const target =
                 d < TILE_SIZE
-                    ? this.lastVagueObservation.position
+                    ? this.lastAccurateHearObservation.position
                     : getPointBetween(
                           hostCenter,
-                          this.lastVagueObservation.position,
+                          this.lastAccurateHearObservation.position,
                       );
 
             return this.goTo(
@@ -467,6 +476,38 @@ export class CatAi {
             }
 
             return movement;
+        }
+
+        return null;
+    }
+
+    private stopToListen(time: TimeStep): Vector | null {
+        // Stop for listening
+        if (
+            !this.stopToListenStartTime &&
+            this.lastHearObservation &&
+            time.t - this.lastHearObservation.t < 1000 &&
+            FIELD_HEAR_SOMETHING_THRESHOLD < this.lastHearObservation.accuracy
+        ) {
+            this.stopToListenStartTime = time.t;
+        }
+
+        // Listen closely while standing still
+        if (time.t - this.stopToListenStartTime < STOP_TO_LISTEN_TIME) {
+            if (
+                this.lastHearObservation &&
+                FIELD_ACCURATE_HEARING_THRESHOLD <
+                    this.lastHearObservation.accuracy
+            ) {
+                this.lastAccurateHearObservation = this.lastHearObservation;
+            }
+
+            return ZERO_VECTOR;
+        }
+
+        // Done listening
+        if (this.stopToListenStartTime) {
+            this.stopToListenStartTime = 0;
         }
 
         return null;
