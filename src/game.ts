@@ -134,10 +134,7 @@ const setState = (newState: GameState): void => {
         }
         case GameState.StartScreen: {
             triggerThunder();
-            waitForEnter(SFX_RUNNING).then(() =>
-                setState(GameState.DifficultySelect),
-            );
-            // Make sure ESC is not active on the Start screen
+            waitForEnter().then(() => setState(GameState.DifficultySelect));
             if (removeEscapeListener) {
                 removeEscapeListener();
                 removeEscapeListener = null;
@@ -152,6 +149,7 @@ const setState = (newState: GameState): void => {
                         removeDifficultyListener();
                         removeDifficultyListener = null;
                     }
+                    playTune(SFX_START);
                     setState(GameState.StartScreen);
                 });
             }
@@ -196,6 +194,7 @@ const setState = (newState: GameState): void => {
             triggerThunder();
             resetGameStartTime();
             level = new Level(0);
+            playTune(SFX_RUNNING);
             break;
         }
         case GameState.GameOver: {

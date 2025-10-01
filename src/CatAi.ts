@@ -42,7 +42,13 @@ import type { Mouse } from "./Mouse";
 import type { Observation, Space } from "./Space";
 import { Difficulty } from "./settings";
 import { TILE_DRAW_HEIGHT, TILE_SIZE } from "./tiles";
-import { playTune, SFX_CHASE, SFX_RUNNING } from "./audio/sfx";
+import {
+    playTune,
+    SFX_CHASE,
+    SFX_RUNNING,
+    SFX_BOUNCE,
+    SFX_MEOW,
+} from "./audio/sfx";
 import type { GameObject } from "./GameObject";
 
 // export let sightAccuracyDebug: number = 0;
@@ -77,6 +83,8 @@ const VAGUE_OBSERVATION_IGNORE_TIME = 2300;
 const STOP_TO_LISTEN_TIME = 1000;
 
 const SEARCH_TIME = 5000;
+const CHASE_RETURN_DELAY = 700; // ms - how quickly music should revert after chase ends
+// Meow plays immediately on new certain sightings.
 const LOOK_AROUND_INTERVAL = 1500;
 
 // Speeds relative to the actual speed in BlackCat.ts.
@@ -193,6 +201,12 @@ export class CatAi {
     private stopToListenStartTime: number = 0;
     private lastAccurateHearObservation: Observation | null = null;
 
+    // Tracks whether we've already played a meow for the current chase cycle.
+    private meowPlayed: boolean = false;
+
+    // Timestamp when last chase ended; used to revert music after a delay.
+    private chaseEndTime: number = 0;
+
     private lookAroundStartTime: number = 0;
     private lastTurnTime: number = 0;
 
@@ -235,7 +249,18 @@ export class CatAi {
         // sightAccuracyDebug = seen?.accuracy ?? 0;
 
         if (seen && seen.accuracy > CERTAIN_OBSERVATION_THERSHOLD) {
+            // Only trigger a meow when we transition from no certain
+            // observation to having one. This prevents repeated meows while
+            // already chasing the same sighting. Also mark chaseActive so
+            // music follows the chase lifecycle.
+            const hadCertainBefore = !!this.lastCertainObservation;
             this.lastCertainObservation = seen;
+            if (!hadCertainBefore) {
+                if (!this.meowPlayed) {
+                    playTune(SFX_MEOW);
+                    this.meowPlayed = true;
+                }
+            }
         }
 
         if (HEARING_PERIOD < time.t - this.lastHearingTime) {
@@ -294,6 +319,10 @@ export class CatAi {
             };
             this.fenceState = FenceState.Noticed;
             this.noticedTime = time.t;
+            playTune(SFX_MEOW);
+            // Mark that we've already played the meow for this upcoming chase
+            this.meowPlayed = true;
+
             return ZERO_VECTOR;
         }
 
@@ -312,6 +341,8 @@ export class CatAi {
             this.host.x = this.mouse.x - this.host.width * 0.5;
             this.host.y =
                 this.mouse.y - 20 * TILE_DRAW_HEIGHT - this.host.height * 0.5;
+            // Play bounce SFX as the cat jumps from the fence
+            playTune(SFX_BOUNCE);
             this.fenceState = FenceState.Jumped;
             return ZERO_VECTOR;
         }
@@ -331,7 +362,6 @@ export class CatAi {
                 x: this.mouse.x + randomMinMax(-0.5, 0.5) * TILE_SIZE,
                 y: this.mouse.y - 5 * TILE_DRAW_HEIGHT,
             };
-            this.useMusic(SFX_CHASE);
         }
 
         // Only draw shadow and move cat while actively jumping
@@ -404,6 +434,20 @@ export class CatAi {
             return ZERO_VECTOR;
         }
 
+        // If we've passed the post-jump still period, clear the jump state
+        // so the AI can return to normal behavior (including music changes)
+        if (
+            this.hasJumped &&
+            this.jumpFinishTime &&
+            time.t - this.jumpFinishTime >= 1000 + STILL_AFTER_JUMP_DURATION
+        ) {
+            this.hasJumped = false;
+            this.jumpStartTime = 0;
+            this.jumpFinishTime = 0;
+            // Start look-around so chase() can decide to switch music later
+            this.lookAroundStartTime = time.t;
+        }
+
         return null;
     }
 
@@ -473,9 +517,27 @@ export class CatAi {
             if (movement == null) {
                 this.lastCertainObservation = null;
                 this.lookAroundStartTime = time.t;
+                // Record when chase ended so we can revert music after a delay
+                this.chaseEndTime = time.t;
             }
 
             return movement;
+        }
+
+        // If chase music is playing, revert it after CHASE_RETURN_DELAY from
+        // when chase ended, provided we're not mid-jump.
+        if (this.lastMusic === SFX_CHASE && this.chaseEndTime !== 0) {
+            const jumpActive =
+                this.jumpStartTime !== 0 ||
+                this.jumpFinishTime !== 0 ||
+                this.hasJumped;
+            if (
+                !jumpActive &&
+                time.t - this.chaseEndTime >= CHASE_RETURN_DELAY
+            ) {
+                this.useMusic(SFX_RUNNING);
+                this.chaseEndTime = 0;
+            }
         }
 
         return null;
@@ -514,7 +576,11 @@ export class CatAi {
     }
 
     private lookAround(time: TimeStep): Vector | null {
-        if (time.t - this.lookAroundStartTime < SEARCH_TIME) {
+        // If lookAroundStartTime is zero, there's no active look-around.
+        if (!this.lookAroundStartTime) return null;
+
+        const elapsed = time.t - this.lookAroundStartTime;
+        if (elapsed < SEARCH_TIME) {
             if (LOOK_AROUND_INTERVAL < time.t - this.lastTurnTime) {
                 this.lastTurnTime = time.t;
 
@@ -525,6 +591,14 @@ export class CatAi {
             return ZERO_VECTOR;
         }
 
+        // Look-around finished — allow next chase to meow.
+        this.meowPlayed = false;
+        this.lookAroundStartTime = 0;
+        // Ensure chase music is reverted when look-around completes.
+        if (this.chaseEndTime !== 0) {
+            this.chaseEndTime = 0;
+            this.useMusic(SFX_RUNNING);
+        }
         return null;
     }
 

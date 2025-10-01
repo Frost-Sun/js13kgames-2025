@@ -5,6 +5,7 @@ export const bounceSfx = [1, , 82, .01, .08, .2, , 2.6, , , , , , .1, , , , .61,
 export const kbSfx = [2, , 12, , , 0.008, , 1.2, 23, -7, , , 0.05, 0.4, , , 0.15, 0.82, 0.03, 0.28,];
 export const mouseSfx = [, .2, 1e3, .02, , .01, 2, , 18, , 475, .02, .01];
 export const mouseWalkNormalSfx = [1.4, , 185, , , , 3, 1.6, -7, , , , , , , , .19, .1, , .38, 985]
+export const catMeowSfx = [1,,498,,.2,.15,2,1.04,17,32.9,,.02,,,,,.01,.69,.17,.03,-728];
 
 const i0 = { // Instrument 0
   i: [

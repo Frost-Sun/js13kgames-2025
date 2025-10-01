@@ -142,7 +142,7 @@ export const FadeOut = (tune: Tune, vol = 0): void => {
         tune,
         from: tune.volume,
         to: vol,
-        step: 0.1,
+        step: 0.2,
     });
 };
 
@@ -159,7 +159,7 @@ export const FadeIn = (tune: Tune, vol: number = 1): void => {
                 tune,
                 from: tune.volume,
                 to: vol,
-                step: 0.1,
+                step: 0.2,
             });
         })
         .catch((e) => {
@@ -178,7 +178,7 @@ export const FadeOutIn = (tune1: Tune, tune2: Tune, vol: number = 1): void => {
         tune: tune1,
         from: tune1.volume,
         to: 0,
-        step: 0.1,
+        step: 0.2,
         onDone: () => FadeIn(tune2, vol),
     });
 };
