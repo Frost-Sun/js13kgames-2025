@@ -134,11 +134,7 @@ const setState = (newState: GameState): void => {
         }
         case GameState.StartScreen: {
             triggerThunder();
-            // Do not switch to game-mode music yet when moving to DifficultySelect.
-            // Previously we passed SFX_RUNNING here which caused the music to
-            // change to the game track; keep music as-is and only change state.
             waitForEnter().then(() => setState(GameState.DifficultySelect));
-            // Make sure ESC is not active on the Start screen
             if (removeEscapeListener) {
                 removeEscapeListener();
                 removeEscapeListener = null;
@@ -153,7 +149,6 @@ const setState = (newState: GameState): void => {
                         removeDifficultyListener();
                         removeDifficultyListener = null;
                     }
-                    // Reset music back to the start tune with fade
                     playTune(SFX_START);
                     setState(GameState.StartScreen);
                 });
@@ -199,7 +194,6 @@ const setState = (newState: GameState): void => {
             triggerThunder();
             resetGameStartTime();
             level = new Level(0);
-            // Start game-mode music when the first level begins.
             playTune(SFX_RUNNING);
             break;
         }
