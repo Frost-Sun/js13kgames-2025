@@ -28,6 +28,8 @@ import {
     mouseSfx,
     mouseWalkNormalSfx,
     fightSong,
+    bounceSfx,
+    catMeowSfx,
 } from "./sfxData.ts";
 
 import { createTune, FadeOutIn, type SongData } from "../core/audio/music.js";
@@ -42,6 +44,8 @@ import CPlayer from "../core/audio/musicplayer.js";
 export const SFX_START = "start";
 export const SFX_RUNNING = "gamestarted";
 export const SFX_CHASE = "chase";
+export const SFX_MEOW = "meow";
+export const SFX_BOUNCE = "bounce";
 export const SFX_KB = "keyboard";
 export const SFX_GAMEOVER = "gameover";
 export const SFX_MOUSE_WALK_NORMAL = "mousewalknormal";
@@ -117,6 +121,14 @@ export const playTune = async (tune: string, vol: number = 1) => {
         case SFX_CHASE: {
             gameTune.currentTime = 0;
             FadeOutIn(startTune, gameTune);
+            break;
+        }
+        case SFX_MEOW: {
+            zzfx(0.1, ...catMeowSfx);
+            break;
+        }
+        case SFX_BOUNCE: {
+            zzfx(0.9, ...bounceSfx);
             break;
         }
         case SFX_KB: {
