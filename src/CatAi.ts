@@ -210,7 +210,7 @@ export class CatAi {
     private lookAroundStartTime: number = 0;
     private lastTurnTime: number = 0;
 
-    private target: Vector | null = null;
+    private idleTarget: Vector | null = null;
 
     private speedMultiplier: number = 1;
 
@@ -452,19 +452,19 @@ export class CatAi {
     }
 
     private idle(hostCenter: Vector): Vector {
-        if (this.target == null) {
-            this.target = getRandomPosition(this.space);
+        if (this.idleTarget == null) {
+            this.idleTarget = getRandomPosition(this.space);
             this.useMusic(SFX_RUNNING);
         }
 
         const movement = this.goTo(
-            this.target,
+            this.idleTarget,
             hostCenter,
             SPEED_IDLE * this.speedMultiplier,
         );
 
         if (!movement) {
-            this.target = null;
+            this.idleTarget = null;
             return ZERO_VECTOR;
         }
 
@@ -481,6 +481,11 @@ export class CatAi {
             time.t - this.lastAccurateHearObservation.t <
                 VAGUE_OBSERVATION_IGNORE_TIME
         ) {
+            if (this.idleTarget) {
+                // Dont always go back to the same direction after following the mouse.
+                this.idleTarget = null;
+            }
+
             this.isAlert = true;
             const d = distance(
                 hostCenter,
