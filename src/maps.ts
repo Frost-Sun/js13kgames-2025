@@ -31,6 +31,7 @@ import {
     TileType,
     type Tile,
 } from "./tiles";
+import { Fence } from "./Fence";
 
 export const createMap = (number: number): Array2D<Tile> => {
     const grid = new Array2D<Tile>(11, 50 + number * 5);
@@ -108,6 +109,38 @@ export const createMap = (number: number): Array2D<Tile> => {
 
             const tile = createTile(tileType, x, y);
             grid.setValue(ix, iy, tile);
+        }
+
+        // Occasionally add a horizontal fence segment across several tiles.
+        // Fences block movement; make sure they don't cover the mouse hole area.
+        if (iy > 6 && random() < 0.08) {
+            const fenceTileCount = 2 + randomInt(3); // 2..4 tiles wide
+            const maxStart = Math.max(0, grid.xCount - fenceTileCount - 1);
+            let startIx = 0;
+            // Try to avoid placing fence at center mouse-hole column
+            for (let attempts = 0; attempts < 6; attempts++) {
+                startIx = randomInt(maxStart + 1);
+                const center = Math.floor(grid.xCount / 2);
+                if (
+                    startIx <= center - 2 ||
+                    startIx + fenceTileCount >= center + 2
+                )
+                    break;
+            }
+
+            const fx = startIx * TILE_SIZE;
+            const fw = fenceTileCount * TILE_SIZE;
+            const fence = new Fence(fx, y, fw);
+            for (let k = 0; k < fenceTileCount; k++) {
+                const ix = startIx + k;
+                const t = grid.getValue(ix, iy);
+                if (t) {
+                    // append fence to objects array (Tile.objects is readonly, so replace)
+                    const objs = t.objects.slice();
+                    objs.push(fence);
+                    grid.setValue(ix, iy, { type: t.type, objects: objs });
+                }
+            }
         }
     }
 
