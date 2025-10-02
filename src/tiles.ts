@@ -66,8 +66,8 @@ export const stepVolumeByTile: Readonly<Record<TileType, number>> = {
 
 export const speedByTile: Readonly<Record<TileType, number>> = {
     [TileType.Grass]: 1,
-    [TileType.Flower]: 0.9,
-    [TileType.Bush]: 0.7,
+    [TileType.Flower]: 0.7,
+    [TileType.Bush]: 0.4,
     [TileType.Slate]: 1.1,
 };
 
