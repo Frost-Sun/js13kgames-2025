@@ -361,17 +361,32 @@ export class Level implements Area, Space {
 
         // Show instruction in intro level
         if (this.number === 0) {
+            renderText("It's almost midnight.", TextSize.Small);
             renderText(
-                "It is almost midnight. Find the mouse holes to the next backyards.",
-                TextSize.Small,
-            );
-            renderText(
-                "Be quiet, hide in bushes or the black cat catches you!",
+                "Find the mouse hole to the next backyard.",
                 TextSize.Small,
                 1,
                 2,
             );
-            renderText("Use arrow keys or WASD to move.", TextSize.Small, 1, 6);
+            renderText(
+                "Stay quiet — don't wake the cat.",
+                TextSize.Small,
+                1,
+                4,
+            );
+            renderText(
+                "If you're spotted, hide in bushes or run!",
+                TextSize.Small,
+                1,
+                6,
+            );
+            renderText(
+                "Or the black cat will catch you!",
+                TextSize.Small,
+                1,
+                8,
+            );
+            renderText("Move with Arrow keys or WASD.", TextSize.Small, 1, 12);
         }
 
         drawRain(time.t, canvas.width, canvas.height);
