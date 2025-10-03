@@ -308,22 +308,22 @@ const draw = (time: TimeStep): void => {
 
             if (highscore > 0) {
                 renderText(
-                    `HIGHSCORE ${highscore}`,
+                    `HIGH SCORE ${highscore}`,
                     TextSize.Small,
                     1,
                     2,
                     false,
                     -25,
                 );
-                // Show currently selected difficulty value under the highscore
+                // Show currently selected difficulty value under the high score
                 renderText(
                     String(getDifficulty()),
                     TextSize.Small,
                     1,
-                    4, // one step lower than the highscore
+                    4, // one step lower than the high score
                     false,
                     -25,
-                    `HIGHSCORE ${highscore}`,
+                    `HIGH SCORE ${highscore}`,
                 );
             }
 
@@ -354,13 +354,13 @@ const draw = (time: TimeStep): void => {
             if (highscore > 0)
                 renderText(
                     highscore > previousHighscore && level.number === highscore
-                        ? "New highscore!"
-                        : `Highscore ${highscore}`,
+                        ? "New high score!"
+                        : `High score ${highscore}`,
                     TextSize.Small,
                     1,
                     5,
                 );
-            renderWaitForProgressInput("try again");
+            renderWaitForProgressInput("continue");
             break;
         }
 

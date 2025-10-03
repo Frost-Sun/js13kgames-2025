@@ -39,6 +39,7 @@ import { drawHorizon } from "./horizon";
 import { getTileIndexOfObject, TileMap } from "./TileMap";
 import type { GameObject } from "./GameObject";
 import { Flower } from "./Flower";
+import { Fence } from "./Fence";
 import { distance, multiply, type Vector } from "./core/math/Vector";
 import { BlackCat } from "./BlackCat";
 import { SOUND_FADE_DISTANCE, type Observation, type Space } from "./Space";
@@ -239,22 +240,194 @@ export class Level implements Area, Space {
                 movement = multiply(movement, multiplier);
             }
 
-            if (movement.x < 0 && this.x <= o.x + movement.x) {
-                o.x += movement.x;
-            } else if (
-                movement.x > 0 &&
-                o.x + movement.x + o.width < this.x + this.width
-            ) {
-                o.x += movement.x;
-            }
+            // Default movement application (for non-mouse animals)
+            if (!(o instanceof Mouse)) {
+                if (movement.x < 0 && this.x <= o.x + movement.x) {
+                    o.x += movement.x;
+                } else if (
+                    movement.x > 0 &&
+                    o.x + movement.x + o.width < this.x + this.width
+                ) {
+                    o.x += movement.x;
+                }
 
-            if (movement.y < 0 && this.y <= o.y + movement.y) {
-                o.y += movement.y;
-            } else if (
-                movement.y > 0 &&
-                o.y + movement.y + o.height < this.y + this.height
-            ) {
-                o.y += movement.y;
+                if (movement.y < 0 && this.y <= o.y + movement.y) {
+                    o.y += movement.y;
+                } else if (
+                    movement.y > 0 &&
+                    o.y + movement.y + o.height < this.y + this.height
+                ) {
+                    o.y += movement.y;
+                }
+            } else {
+                // For the player mouse: perform swept collision against fences
+                const dx = movement.x;
+                const dy = movement.y;
+                let allowedDx = dx;
+                let allowedDy = dy;
+
+                const proposedLeft = Math.min(o.x, o.x + dx);
+                const proposedRight = Math.max(
+                    o.x + o.width,
+                    o.x + dx + o.width,
+                );
+                const proposedTop = Math.min(o.y, o.y + dy);
+                const proposedBottom = Math.max(
+                    o.y + o.height,
+                    o.y + dy + o.height,
+                );
+
+                // Small epsilon to avoid slipping through due to floating point
+                // or tiny gaps when moving exactly along the fence edge.
+                const COLLISION_EPS = 0.5;
+
+                // Convert proposed bbox to tile indices (widen by 1 tile to be safe)
+                const totalXTiles = Math.floor(this.width / TILE_SIZE);
+                const totalYTiles = Math.floor(this.height / TILE_DRAW_HEIGHT);
+                const tileLeft = Math.max(
+                    0,
+                    Math.floor(proposedLeft / TILE_SIZE) - 1,
+                );
+                const tileRight = Math.min(
+                    totalXTiles - 1,
+                    Math.floor(proposedRight / TILE_SIZE) + 1,
+                );
+                const tileTop = Math.max(
+                    0,
+                    Math.floor(proposedTop / TILE_DRAW_HEIGHT) - 1,
+                );
+                const tileBottom = Math.min(
+                    totalYTiles - 1,
+                    Math.floor(proposedBottom / TILE_DRAW_HEIGHT) + 1,
+                );
+
+                // Collect fences from covered tiles (for horizontal check)
+                const fencesH: Fence[] = [];
+                for (let iy = tileTop; iy <= tileBottom; iy++) {
+                    for (let ix = tileLeft; ix <= tileRight; ix++) {
+                        const tile = this.tileMap.getTile({ ix, iy });
+                        if (!tile) continue;
+                        for (const obj of tile.objects) {
+                            if (obj instanceof Fence) fencesH.push(obj);
+                        }
+                    }
+                }
+
+                // Horizontal blocking using fencesH
+                for (const f of fencesH) {
+                    if (
+                        !(
+                            proposedBottom <= f.y + COLLISION_EPS ||
+                            proposedTop >= f.y + f.height - COLLISION_EPS
+                        )
+                    ) {
+                        if (dx > 0) {
+                            const gap = f.x - (o.x + o.width);
+                            if (gap >= -COLLISION_EPS) {
+                                allowedDx = Math.min(
+                                    allowedDx,
+                                    Math.max(0, gap),
+                                );
+                            }
+                        } else if (dx < 0) {
+                            const gapLeft = o.x - (f.x + f.width);
+                            if (gapLeft >= -COLLISION_EPS) {
+                                allowedDx = Math.max(
+                                    allowedDx,
+                                    Math.min(0, -gapLeft),
+                                );
+                            }
+                        }
+                    }
+                }
+
+                // Clamp horizontal to level bounds and apply immediately
+                if (dx > 0) {
+                    const maxRight = this.x + this.width - (o.x + o.width);
+                    allowedDx = Math.min(allowedDx, maxRight);
+                } else {
+                    const maxLeft = this.x - o.x;
+                    allowedDx = Math.max(allowedDx, maxLeft);
+                }
+
+                if (Math.abs(allowedDx) > 1e-6) o.x += allowedDx;
+
+                // Recompute horizontal extents after applied dx to check vertical collisions
+                const newLeft = o.x;
+                const newRight = o.x + o.width;
+                const vProposedTop = Math.min(o.y, o.y + dy);
+                const vProposedBottom = Math.max(
+                    o.y + o.height,
+                    o.y + dy + o.height,
+                );
+
+                // Determine tile range for vertical checks (widen by 1)
+                const vTileLeft = Math.max(
+                    0,
+                    Math.floor(newLeft / TILE_SIZE) - 1,
+                );
+                const vTileRight = Math.min(
+                    Math.floor(this.width / TILE_SIZE) - 1,
+                    Math.floor(newRight / TILE_SIZE) + 1,
+                );
+                const vTileTop = Math.max(
+                    0,
+                    Math.floor(vProposedTop / TILE_DRAW_HEIGHT) - 1,
+                );
+                const vTileBottom = Math.min(
+                    Math.floor(this.height / TILE_DRAW_HEIGHT) - 1,
+                    Math.floor(vProposedBottom / TILE_DRAW_HEIGHT) + 1,
+                );
+
+                const fencesV: Fence[] = [];
+                for (let iy = vTileTop; iy <= vTileBottom; iy++) {
+                    for (let ix = vTileLeft; ix <= vTileRight; ix++) {
+                        const tile = this.tileMap.getTile({ ix, iy });
+                        if (!tile) continue;
+                        for (const obj of tile.objects) {
+                            if (obj instanceof Fence) fencesV.push(obj);
+                        }
+                    }
+                }
+
+                // Vertical blocking using fencesV
+                for (const f of fencesV) {
+                    if (
+                        !(
+                            newRight <= f.x + COLLISION_EPS ||
+                            newLeft >= f.x + f.width - COLLISION_EPS
+                        )
+                    ) {
+                        if (dy > 0) {
+                            const gap = f.y - (o.y + o.height);
+                            if (gap >= -COLLISION_EPS) {
+                                allowedDy = Math.min(
+                                    allowedDy,
+                                    Math.max(0, gap),
+                                );
+                            }
+                        } else if (dy < 0) {
+                            const gapUp = o.y - (f.y + f.height);
+                            if (gapUp >= -COLLISION_EPS) {
+                                allowedDy = Math.max(
+                                    allowedDy,
+                                    Math.min(0, -gapUp),
+                                );
+                            }
+                        }
+                    }
+                }
+
+                // Clamp vertical to level bounds and apply
+                if (dy > 0) {
+                    const maxDown = this.y + this.height - (o.y + o.height);
+                    allowedDy = Math.min(allowedDy, maxDown);
+                } else {
+                    const maxUp = this.y - o.y;
+                    allowedDy = Math.max(allowedDy, maxUp);
+                }
+
+                if (Math.abs(allowedDy) > 1e-6) o.y += allowedDy;
             }
 
             const step = (tune: string): void => {
@@ -361,17 +534,32 @@ export class Level implements Area, Space {
 
         // Show instruction in intro level
         if (this.number === 0) {
+            renderText("It's almost midnight.", TextSize.Small);
             renderText(
-                "It is almost midnight. Find the mouse holes to the next backyards.",
-                TextSize.Small,
-            );
-            renderText(
-                "Be quiet, hide in bushes or the black cat catches you!",
+                "Find the mouse hole to the next backyard.",
                 TextSize.Small,
                 1,
                 2,
             );
-            renderText("Use arrow keys or WASD to move.", TextSize.Small, 1, 6);
+            renderText(
+                "Stay quiet — don't wake the cat.",
+                TextSize.Small,
+                1,
+                4,
+            );
+            renderText(
+                "If you're spotted, hide in bushes or run!",
+                TextSize.Small,
+                1,
+                6,
+            );
+            renderText(
+                "Or the black cat will catch you!",
+                TextSize.Small,
+                1,
+                8,
+            );
+            renderText("Move with Arrow keys or WASD.", TextSize.Small, 1, 12);
         }
 
         drawRain(time.t, canvas.width, canvas.height);
