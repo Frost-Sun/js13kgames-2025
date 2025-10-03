@@ -32,12 +32,23 @@ import {
     type Tile,
 } from "./tiles";
 import { Fence } from "./Fence";
+import { getDifficulty, Difficulty } from "./settings";
 
 export const createMap = (number: number): Array2D<Tile> => {
     const grid = new Array2D<Tile>(11, 50 + number * 5);
 
     const plantPropability = Math.max(0.1, 0.8 - number * 0.05);
     const bushPropability = Math.max(0.1, 0.35 - number * 0.05);
+
+    const BASE_FENCE_CHANCE = 0.12;
+    // Scale with difficulty (number or global setting)
+    const settingsDifficulty = getDifficulty();
+    const settingsNumber = settingsDifficulty === Difficulty.Normal ? 1 : 0;
+    const effectiveDifficulty = Math.max(number, settingsNumber);
+    const fenceChance = Math.min(
+        0.5,
+        BASE_FENCE_CHANCE + effectiveDifficulty * 0.05,
+    );
 
     const turningYIndices: number[] = [4, 12, 18, 29, 34, 41, 47];
 
@@ -113,7 +124,8 @@ export const createMap = (number: number): Array2D<Tile> => {
 
         // Occasionally add a horizontal fence segment across several tiles.
         // Fences block movement; make sure they don't cover the mouse hole area.
-        if (iy > 6 && random() < 0.08) {
+        // Don't place fences on road tiles (Slate) or directly on plant tiles.
+        if (iy > 6 && random() < fenceChance) {
             const fenceTileCount = 2 + randomInt(3); // 2..4 tiles wide
             const maxStart = Math.max(0, grid.xCount - fenceTileCount - 1);
             let startIx = 0;
@@ -128,23 +140,186 @@ export const createMap = (number: number): Array2D<Tile> => {
                     break;
             }
 
-            const fx = startIx * TILE_SIZE;
-            const fw = fenceTileCount * TILE_SIZE;
-            const fence = new Fence(fx, y, fw);
+            // Validate the span: skip if any covered tile is Slate (don't put fences on roads)
+            let spanOk = true;
             for (let k = 0; k < fenceTileCount; k++) {
                 const ix = startIx + k;
                 const t = grid.getValue(ix, iy);
-                if (t) {
-                    // append fence to objects array (Tile.objects is readonly, so replace)
-                    const objs = t.objects.slice();
-                    objs.push(fence);
-                    grid.setValue(ix, iy, { type: t.type, objects: objs });
+                if (!t) {
+                    spanOk = false;
+                    break;
+                }
+                if (t.type === TileType.Slate) {
+                    spanOk = false;
+                    break;
+                }
+            }
+
+            if (spanOk) {
+                const fx = startIx * TILE_SIZE;
+                const fw = fenceTileCount * TILE_SIZE;
+                const fence = new Fence(fx, y, fw);
+                for (let k = 0; k < fenceTileCount; k++) {
+                    const ix = startIx + k;
+                    const t = grid.getValue(ix, iy);
+                    if (t) {
+                        // append fence to objects array (Tile.objects is readonly, so replace)
+                        const objs = t.objects.slice();
+                        objs.push(fence);
+                        grid.setValue(ix, iy, { type: t.type, objects: objs });
+                    }
+                }
+            }
+        }
+    }
+
+    // Post-process: nudge plant objects away from road tiles when necessary
+    const V_MARGIN = Math.max(1, Math.floor(TILE_DRAW_HEIGHT * 0.6));
+    const H_MARGIN = Math.max(1, Math.floor(TILE_SIZE * 0.15));
+    for (let iy = 0; iy < grid.yCount; iy++) {
+        for (let ix = 0; ix < grid.xCount; ix++) {
+            const t = grid.getValue(ix, iy);
+            if (!t) continue;
+
+            // If there's a fence object on this tile, remove plant visuals
+            // but preserve fence objects so collision stays intact.
+            const hasFence = t.objects.some((o) => o instanceof Fence);
+            if (
+                hasFence &&
+                (t.type === TileType.Flower || t.type === TileType.Bush)
+            ) {
+                // Keep fence objects but remove plant visuals: set tile to Grass
+                const fenceObjs = t.objects.filter((o) => o instanceof Fence);
+                grid.setValue(ix, iy, {
+                    type: TileType.Grass,
+                    objects: fenceObjs,
+                });
+                continue;
+            }
+
+            // If neighboring tiles are Slate, nudge/inset plant objects vertically and slightly horizontally
+            const above = iy - 1 >= 0 ? grid.getValue(ix, iy - 1) : null;
+            const below =
+                iy + 1 < grid.yCount ? grid.getValue(ix, iy + 1) : null;
+            const left = ix - 1 >= 0 ? grid.getValue(ix - 1, iy) : null;
+            const right =
+                ix + 1 < grid.xCount ? grid.getValue(ix + 1, iy) : null;
+
+            if (t.type === TileType.Flower) {
+                const objs = t.objects.slice();
+                for (const o of objs as any[]) {
+                    if (typeof o.y !== "number" || typeof o.height !== "number")
+                        continue;
+                    const tileTop = iy * TILE_DRAW_HEIGHT;
+                    const tileLeft = ix * TILE_SIZE;
+                    const tileRight = tileLeft + TILE_SIZE;
+
+                    // if Slate is below, move flower up so shadow/petals don't overlap road
+                    if (below && below.type === TileType.Slate) {
+                        o.y = Math.min(
+                            o.y,
+                            tileTop + TILE_DRAW_HEIGHT - V_MARGIN - o.height,
+                        );
+                    }
+                    // if Slate is above, move flower down so it doesn't overlap
+                    if (above && above.type === TileType.Slate) {
+                        o.y = Math.max(o.y, tileTop + V_MARGIN);
+                    }
+
+                    // Small horizontal nudges if adjacent horizontally to Slate
+                    if (left && left.type === TileType.Slate) {
+                        if (
+                            typeof o.x === "number" &&
+                            typeof o.width === "number"
+                        ) {
+                            o.x = Math.max(o.x, tileLeft + H_MARGIN);
+                        }
+                    }
+                    if (right && right.type === TileType.Slate) {
+                        if (
+                            typeof o.x === "number" &&
+                            typeof o.width === "number"
+                        ) {
+                            o.x = Math.min(o.x, tileRight - H_MARGIN - o.width);
+                        }
+                    }
+
+                    // clamp inside tile
+                    if (
+                        typeof o.x === "number" &&
+                        typeof o.width === "number"
+                    ) {
+                        o.x = Math.max(
+                            tileLeft + 0.1,
+                            Math.min(o.x, tileRight - o.width - 0.1),
+                        );
+                    }
+                    o.y = Math.max(
+                        tileTop + 0.1,
+                        Math.min(
+                            o.y,
+                            tileTop + TILE_DRAW_HEIGHT - o.height - 0.1,
+                        ),
+                    );
+                }
+                grid.setValue(ix, iy, { type: t.type, objects: objs });
+            } else if (t.type === TileType.Bush) {
+                const objs = t.objects.slice();
+                if (objs.length > 0) {
+                    const b: any = objs[0];
+                    if (
+                        b &&
+                        typeof b.y === "number" &&
+                        typeof b.height === "number"
+                    ) {
+                        const tileTop = iy * TILE_DRAW_HEIGHT;
+                        if (below && below.type === TileType.Slate) {
+                            // shrink height so shadow doesn't cross into road below
+                            b.height = Math.max(
+                                0.1,
+                                TILE_DRAW_HEIGHT - V_MARGIN,
+                            );
+                            b.y = tileTop + (TILE_DRAW_HEIGHT - b.height);
+                        }
+                        if (above && above.type === TileType.Slate) {
+                            b.y = tileTop + V_MARGIN;
+                            b.height = Math.max(
+                                0.1,
+                                TILE_DRAW_HEIGHT - V_MARGIN,
+                            );
+                        }
+                        grid.setValue(ix, iy, { type: t.type, objects: objs });
+                    }
                 }
             }
         }
     }
 
     return grid;
+};
+
+// After map creation, ensure plants don't overlap fences visually.
+// This function can be used by higher-level code if needed.
+export const postProcessPlantsAgainstFences = (grid: Array2D<Tile>): void => {
+    for (let iy = 0; iy < grid.yCount; iy++) {
+        for (let ix = 0; ix < grid.xCount; ix++) {
+            const t = grid.getValue(ix, iy);
+            if (!t) continue;
+            // If there's a fence object on this tile, remove plants from this tile
+            // so they don't render over the fence. Prefer to keep fence visuals.
+            const hasFence = t.objects.some((o) => o instanceof Fence);
+            if (
+                hasFence &&
+                (t.type === TileType.Flower || t.type === TileType.Bush)
+            ) {
+                const fenceObjs = t.objects.filter((o) => o instanceof Fence);
+                grid.setValue(ix, iy, {
+                    type: TileType.Grass,
+                    objects: fenceObjs,
+                });
+            }
+        }
+    }
 };
 
 const isInFrontOfMouseHole = (
