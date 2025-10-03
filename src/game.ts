@@ -31,9 +31,11 @@ import {
 } from "./audio/sfx";
 // import {
 //     hearAccuracyDebug,
-//     CERTAIN_OBSERVATION_THERSHOLD,
+//     NORMAL_SIGHT_THRESHOLD,
 //     sightAccuracyDebug,
-//     VAGUE_OBSERVATION_THRESHOLD,
+//     HEAR_THRESHOLD,
+//     ACCURATE_HEAR_THRESHOLD,
+//     ACCURATE_SIGHT_THRESHOLD,
 // } from "./CatAi";
 import {
     initializeControls,
@@ -283,20 +285,21 @@ const draw = (time: TimeStep): void => {
         case GameState.Running: {
             level.draw(time);
 
-            // // Debug drawing of the accuracy of the cat noticing the mouse.
+            // Debug drawing of the accuracy of the cat noticing the mouse.
             // cx.save();
+            // cx.translate(0, 80);
             // cx.font = "32px Courier New";
             // cx.fillStyle =
-            //     sightAccuracyDebug > CERTAIN_OBSERVATION_THERSHOLD
+            //     sightAccuracyDebug > NORMAL_SIGHT_THRESHOLD
             //         ? "red"
-            //         : sightAccuracyDebug > VAGUE_OBSERVATION_THRESHOLD
+            //         : sightAccuracyDebug > ACCURATE_SIGHT_THRESHOLD
             //           ? "orange"
             //           : "white";
             // cx.fillText("see: " + sightAccuracyDebug.toFixed(2), 10, 30);
             // cx.fillStyle =
-            //     hearAccuracyDebug > CERTAIN_OBSERVATION_THERSHOLD
+            //     hearAccuracyDebug > HEAR_THRESHOLD
             //         ? "red"
-            //         : hearAccuracyDebug > VAGUE_OBSERVATION_THRESHOLD
+            //         : hearAccuracyDebug > ACCURATE_HEAR_THRESHOLD
             //           ? "orange"
             //           : "white";
             // cx.fillText("hear:" + hearAccuracyDebug.toFixed(2), 10, 65);

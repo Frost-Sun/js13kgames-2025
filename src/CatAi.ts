@@ -51,8 +51,8 @@ import {
 } from "./audio/sfx";
 import type { GameObject } from "./GameObject";
 
-// export let sightAccuracyDebug: number = 0;
-// export let hearAccuracyDebug: number = 0;
+export let sightAccuracyDebug: number = 0;
+export let hearAccuracyDebug: number = 0;
 
 // Make sure the cat does not appear on the screen at start as the horizon
 // takes care of drawing it when on the fence.
@@ -73,18 +73,19 @@ const SIGHT_ACCURACY_LOWERING_DISTANCE = 6.5 * TILE_SIZE;
 // Cat's field of view in radians (e.g., 160 degrees)
 const CAT_FOV = (160 * Math.PI) / 180;
 
-export const CERTAIN_OBSERVATION_THERSHOLD = 0.42;
+export const NORMAL_SIGHT_THRESHOLD = 0.35;
+export const ACCURATE_SIGHT_THRESHOLD = 0.12;
 
-export const FIELD_HEAR_SOMETHING_THRESHOLD = 0.22;
-const FIELD_ACCURATE_HEARING_THRESHOLD = 0.15;
+export const HEAR_THRESHOLD = 0.22;
+export const ACCURATE_HEAR_THRESHOLD = 0.15;
 
-const VAGUE_OBSERVATION_IGNORE_TIME = 2300;
+const HEAR_OBSERVATION_IGNORE_TIME = 2300;
 
-const STOP_TO_LISTEN_TIME = 1000;
+const STOP_TO_LISTEN_TIME = 1500;
 
 const SEARCH_TIME = 5000;
 const CHASE_RETURN_DELAY = 700; // ms - how quickly music should revert after chase ends
-// Meow plays immediately on new certain sightings.
+// Meow plays immediately on new sightings.
 const LOOK_AROUND_INTERVAL = 1500;
 
 // Speeds relative to the actual speed in BlackCat.ts.
@@ -195,8 +196,9 @@ export class CatAi {
 
     private lastHearingTime: number = 0;
     private lastObservation: Observation | null = null;
+    private lastSightObservation: Observation | null = null;
+    private sightThreshold = NORMAL_SIGHT_THRESHOLD;
     private lastHearObservation: Observation | null = null;
-    private lastCertainObservation: Observation | null = null;
 
     private stopToListenStartTime: number = 0;
     private lastAccurateHearObservation: Observation | null = null;
@@ -235,7 +237,7 @@ export class CatAi {
             this.stayOnTheFence(time) ??
             this.jump(time, hostCenter) ??
             this.chase(time, hostCenter) ??
-            this.followVagueObservation(time, hostCenter) ??
+            this.followHearObservation(time, hostCenter) ??
             this.stopToListen(time) ??
             this.lookAround(time) ??
             this.idle(hostCenter)
@@ -246,16 +248,16 @@ export class CatAi {
         const seen = this.lookForMouse(time, hostCenter);
         let heard: Observation | null = null;
 
-        // sightAccuracyDebug = seen?.accuracy ?? 0;
+        sightAccuracyDebug = seen?.accuracy ?? 0;
 
-        if (seen && seen.accuracy > CERTAIN_OBSERVATION_THERSHOLD) {
-            // Only trigger a meow when we transition from no certain
+        if (seen && seen.accuracy > this.sightThreshold) {
+            // Only trigger a meow when we transition from no sight
             // observation to having one. This prevents repeated meows while
             // already chasing the same sighting. Also mark chaseActive so
             // music follows the chase lifecycle.
-            const hadCertainBefore = !!this.lastCertainObservation;
-            this.lastCertainObservation = seen;
-            if (!hadCertainBefore) {
+            const hadSightBefore = !!this.lastSightObservation;
+            this.lastSightObservation = seen;
+            if (!hadSightBefore) {
                 if (!this.meowPlayed) {
                     playTune(SFX_MEOW);
                     this.meowPlayed = true;
@@ -275,7 +277,7 @@ export class CatAi {
                       };
 
             heard = this.space.listen(time, listenerPosition);
-            // hearAccuracyDebug = heard?.accuracy ?? 0;
+            hearAccuracyDebug = heard?.accuracy ?? 0;
 
             if (heard) {
                 this.lastHearObservation = heard;
@@ -309,7 +311,7 @@ export class CatAi {
             lastObservation &&
             lastObservation.accuracy > FENCE_NOTICE_THRESHOLD
         ) {
-            this.lastCertainObservation = {
+            this.lastSightObservation = {
                 ...lastObservation,
                 position: {
                     x: lastObservation.position.x,
@@ -471,7 +473,7 @@ export class CatAi {
         return movement;
     }
 
-    private followVagueObservation(
+    private followHearObservation(
         time: TimeStep,
         hostCenter: Vector,
     ): Vector | null {
@@ -479,7 +481,7 @@ export class CatAi {
             !this.stopToListenStartTime &&
             this.lastAccurateHearObservation &&
             time.t - this.lastAccurateHearObservation.t <
-                VAGUE_OBSERVATION_IGNORE_TIME
+                HEAR_OBSERVATION_IGNORE_TIME
         ) {
             if (this.idleTarget) {
                 // Dont always go back to the same direction after following the mouse.
@@ -511,16 +513,23 @@ export class CatAi {
     }
 
     private chase(time: TimeStep, hostCenter: Vector): Vector | null {
-        if (this.lastCertainObservation) {
+        if (this.lastSightObservation) {
             this.useMusic(SFX_CHASE);
+
+            // Look more accurately when chasing
+            if (this.sightThreshold > ACCURATE_SIGHT_THRESHOLD) {
+                this.sightThreshold = ACCURATE_SIGHT_THRESHOLD;
+            }
+
             const movement = this.goTo(
-                this.lastCertainObservation.position,
+                this.lastSightObservation.position,
                 hostCenter,
                 SPEED_CHASE * this.speedMultiplier,
             );
 
             if (movement == null) {
-                this.lastCertainObservation = null;
+                this.lastSightObservation = null;
+                this.sightThreshold = NORMAL_SIGHT_THRESHOLD;
                 this.lookAroundStartTime = time.t;
                 // Record when chase ended so we can revert music after a delay
                 this.chaseEndTime = time.t;
@@ -554,7 +563,7 @@ export class CatAi {
             !this.stopToListenStartTime &&
             this.lastHearObservation &&
             time.t - this.lastHearObservation.t < 1000 &&
-            FIELD_HEAR_SOMETHING_THRESHOLD < this.lastHearObservation.accuracy
+            HEAR_THRESHOLD < this.lastHearObservation.accuracy
         ) {
             this.stopToListenStartTime = time.t;
         }
@@ -563,8 +572,7 @@ export class CatAi {
         if (time.t - this.stopToListenStartTime < STOP_TO_LISTEN_TIME) {
             if (
                 this.lastHearObservation &&
-                FIELD_ACCURATE_HEARING_THRESHOLD <
-                    this.lastHearObservation.accuracy
+                ACCURATE_HEAR_THRESHOLD < this.lastHearObservation.accuracy
             ) {
                 this.lastAccurateHearObservation = this.lastHearObservation;
             }
