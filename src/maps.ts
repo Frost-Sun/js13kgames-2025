@@ -33,6 +33,8 @@ import {
 } from "./tiles";
 import { Fence } from "./Fence";
 import { getDifficulty, Difficulty } from "./settings";
+import { Flower } from "./Flower";
+import { Bush } from "./Bush";
 
 export const createMap = (number: number): Array2D<Tile> => {
     const grid = new Array2D<Tile>(11, 50 + number * 5);
@@ -207,9 +209,8 @@ export const createMap = (number: number): Array2D<Tile> => {
 
             if (t.type === TileType.Flower) {
                 const objs = t.objects.slice();
-                for (const o of objs as any[]) {
-                    if (typeof o.y !== "number" || typeof o.height !== "number")
-                        continue;
+                for (const o of objs) {
+                    if (!(o instanceof Flower)) continue;
                     const tileTop = iy * TILE_DRAW_HEIGHT;
                     const tileLeft = ix * TILE_SIZE;
                     const tileRight = tileLeft + TILE_SIZE;
@@ -228,32 +229,17 @@ export const createMap = (number: number): Array2D<Tile> => {
 
                     // Small horizontal nudges if adjacent horizontally to Slate
                     if (left && left.type === TileType.Slate) {
-                        if (
-                            typeof o.x === "number" &&
-                            typeof o.width === "number"
-                        ) {
-                            o.x = Math.max(o.x, tileLeft + H_MARGIN);
-                        }
+                        o.x = Math.max(o.x, tileLeft + H_MARGIN);
                     }
                     if (right && right.type === TileType.Slate) {
-                        if (
-                            typeof o.x === "number" &&
-                            typeof o.width === "number"
-                        ) {
-                            o.x = Math.min(o.x, tileRight - H_MARGIN - o.width);
-                        }
+                        o.x = Math.min(o.x, tileRight - H_MARGIN - o.width);
                     }
 
                     // clamp inside tile
-                    if (
-                        typeof o.x === "number" &&
-                        typeof o.width === "number"
-                    ) {
-                        o.x = Math.max(
-                            tileLeft + 0.1,
-                            Math.min(o.x, tileRight - o.width - 0.1),
-                        );
-                    }
+                    o.x = Math.max(
+                        tileLeft + 0.1,
+                        Math.min(o.x, tileRight - o.width - 0.1),
+                    );
                     o.y = Math.max(
                         tileTop + 0.1,
                         Math.min(
@@ -266,12 +252,8 @@ export const createMap = (number: number): Array2D<Tile> => {
             } else if (t.type === TileType.Bush) {
                 const objs = t.objects.slice();
                 if (objs.length > 0) {
-                    const b: any = objs[0];
-                    if (
-                        b &&
-                        typeof b.y === "number" &&
-                        typeof b.height === "number"
-                    ) {
+                    const b = objs[0];
+                    if (b instanceof Bush) {
                         const tileTop = iy * TILE_DRAW_HEIGHT;
                         if (below && below.type === TileType.Slate) {
                             // shrink height so shadow doesn't cross into road below
