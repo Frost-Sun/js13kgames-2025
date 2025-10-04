@@ -29,6 +29,7 @@ import { isIOS } from "../platform/deviceDetection";
 export interface Tune extends HTMLAudioElement {
     _fadeInterval?: number;
     _fadeOutInTimeout?: number;
+    _pendingFadeId?: number;
 }
 
 export type SongData = {
@@ -133,6 +134,11 @@ function startFadeManager() {
 function addFadeTask(task: FadeTask) {
     // Set initial volume if needed
     if (typeof task.from === "number") task.tune.volume = task.from;
+    // Remove any existing tasks for the same tune so multiple tasks don't
+    // conflict (prevents overlapping fades that may later call onDone).
+    for (let i = fadeTasks.length - 1; i >= 0; i--) {
+        if (fadeTasks[i].tune === task.tune) fadeTasks.splice(i, 1);
+    }
     fadeTasks.push(task);
     startFadeManager();
 }
@@ -173,12 +179,51 @@ export const FadeIn = (tune: Tune, vol: number = 1): void => {
         });
 };
 
+let _fadeRequestCounter = 0;
+
 export const FadeOutIn = (tune1: Tune, tune2: Tune, vol: number = 1): void => {
+    // Bump a shared request id for this transition and attach it to both
+    // tunes. This allows us to ignore any previously scheduled onDone
+    // callbacks that belonged to earlier transitions.
+    const reqId = ++_fadeRequestCounter;
+    tune1._pendingFadeId = reqId;
+    tune2._pendingFadeId = reqId;
+
+    // Clear any previously scheduled onDone timeouts for both tunes.
+    if (tune1._fadeOutInTimeout) {
+        clearTimeout(tune1._fadeOutInTimeout);
+        tune1._fadeOutInTimeout = undefined;
+    }
+    if (tune2._fadeOutInTimeout) {
+        clearTimeout(tune2._fadeOutInTimeout);
+        tune2._fadeOutInTimeout = undefined;
+    }
+
+    // Also remove any existing fade tasks that would affect either tune so
+    // they don't complete and trigger onDone callbacks later.
+    for (let i = fadeTasks.length - 1; i >= 0; i--) {
+        if (fadeTasks[i].tune === tune1 || fadeTasks[i].tune === tune2) {
+            fadeTasks.splice(i, 1);
+        }
+    }
+
     addFadeTask({
         tune: tune1,
         from: tune1.volume,
         to: 0,
         step: 0.2,
-        onDone: () => FadeIn(tune2, vol),
+        onDone: () => {
+            // Wait the original 500ms before starting fade in, but ensure
+            // the pending id still matches so a newer FadeOutIn hasn't
+            // superseded this one.
+            const timeout = setTimeout(() => {
+                tune2._fadeOutInTimeout = undefined;
+                if (tune2._pendingFadeId === reqId) {
+                    FadeIn(tune2, vol);
+                }
+            }, 500);
+            // Store timeout id so it can be cleared if another transition occurs.
+            tune2._fadeOutInTimeout = timeout as unknown as number;
+        },
     });
 };
