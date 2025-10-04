@@ -557,7 +557,6 @@ export class CatAi {
         if (this.lastMusic === SFX_CHASE && this.chaseEndTime !== 0) {
             if (time.t - this.chaseEndTime >= CHASE_RETURN_DELAY) {
                 this.useMusic(SFX_RUNNING);
-                this.chaseEndTime = 0;
             }
         }
 
@@ -617,7 +616,11 @@ export class CatAi {
         // Ensure chase music is reverted when look-around completes.
         if (this.chaseEndTime !== 0) {
             this.chaseEndTime = 0;
-            this.useMusic(SFX_RUNNING);
+            // Force the running tune to play even if `lastMusic` is out of
+            // sync for some reason. This directly triggers the play and
+            // updates the local state to avoid chase music sticking.
+            playTune(SFX_RUNNING);
+            this.lastMusic = SFX_RUNNING;
         }
         return null;
     }
