@@ -61,13 +61,16 @@ const INITIAL_CAT_POS: Vector = { x: -1000, y: -1000 };
 const GOTO_FENCE_DURATION = 800;
 const NOTICE_DURATION = 1500;
 
-const FENCE_HEARD_THRESHOLD = 0.04;
-const FENCE_NOTICE_THRESHOLD = 0.14;
+const FENCE_HEARD_THRESHOLD = 0.06;
+const FENCE_NOTICE_THRESHOLD = 0.16;
 
 export const JUMP_DURATION: number = 1500; // ms
 const STILL_AFTER_JUMP_DURATION = 1000;
 
-const HEARING_PERIOD = 450;
+const HEARING_PERIOD = 200;
+const HEAR_OBSERVATION_BUFFER_TIME = 1500;
+const HEAR_BUFFER_MAX_SIZE = 4;
+
 const SIGHT_ACCURACY_LOWERING_DISTANCE = 6.5 * TILE_SIZE;
 
 // Cat's field of view in radians (e.g., 160 degrees)
@@ -76,10 +79,10 @@ const CAT_FOV = (160 * Math.PI) / 180;
 export const NORMAL_SIGHT_THRESHOLD = 0.35;
 export const ACCURATE_SIGHT_THRESHOLD = 0.12;
 
-export const HEAR_THRESHOLD = 0.22;
-export const ACCURATE_HEAR_THRESHOLD = 0.15;
+export const HEAR_THRESHOLD = 0.18;
+export const ACCURATE_HEAR_THRESHOLD = 0.1;
 
-const HEAR_OBSERVATION_IGNORE_TIME = 2300;
+const HEAR_OBSERVATION_IGNORE_TIME = 3500;
 
 const STOP_TO_LISTEN_TIME = 1500;
 
@@ -109,7 +112,7 @@ function getRandomDirection(): Vector {
 }
 
 function getSightAccuracy(d: number) {
-    return clamp(1 - d / SIGHT_ACCURACY_LOWERING_DISTANCE, 0.3, 1);
+    return clamp(1 - d / SIGHT_ACCURACY_LOWERING_DISTANCE, 0.35, 1);
 }
 
 function getMoveFactor(m: Mouse) {
@@ -136,6 +139,56 @@ function better(
     if (!a) return b;
     if (!b) return a;
     return a.accuracy > b.accuracy ? a : b;
+}
+
+function updateObservationBuffer(
+    buffer: Observation[],
+    time: TimeStep,
+    newObservation: Observation | null,
+): void {
+    // Remove oldest observations
+    while (true) {
+        const oldest = buffer.at(0);
+        if (
+            buffer.length > HEAR_BUFFER_MAX_SIZE ||
+            (oldest && HEAR_OBSERVATION_BUFFER_TIME < time.t - oldest.t)
+        ) {
+            buffer.shift();
+        } else {
+            break;
+        }
+    }
+
+    // Add new observation
+    const previousObservation = buffer.at(-1);
+    if (newObservation && newObservation.t !== previousObservation?.t) {
+        buffer.push(newObservation);
+    }
+}
+
+function reduceObservations(
+    observations: readonly Observation[],
+): Observation | null {
+    const latestObservation = observations.at(-1);
+
+    if (!latestObservation) {
+        return null;
+    }
+
+    let sum = 0;
+
+    for (let i = 0; i < observations.length; i++) {
+        const o = observations[i];
+        sum += o.accuracy;
+    }
+
+    const averageAccuracy = sum / HEAR_BUFFER_MAX_SIZE;
+
+    return {
+        t: latestObservation.t,
+        position: latestObservation.position,
+        accuracy: averageAccuracy,
+    };
 }
 
 function jumpMovement(
@@ -200,6 +253,7 @@ export class CatAi {
     private lastSightObservation: Observation | null = null;
     private sightThreshold = NORMAL_SIGHT_THRESHOLD;
     private lastHearObservation: Observation | null = null;
+    private hearBuffer: Observation[] = [];
 
     private stopToListenStartTime: number = 0;
     private lastAccurateHearObservation: Observation | null = null;
@@ -286,11 +340,11 @@ export class CatAi {
                       };
 
             heard = this.space.listen(time, listenerPosition);
-            hearAccuracyDebug = heard?.accuracy ?? 0;
 
-            if (heard) {
-                this.lastHearObservation = heard;
-            }
+            updateObservationBuffer(this.hearBuffer, time, heard);
+            this.lastHearObservation = reduceObservations(this.hearBuffer);
+
+            hearAccuracyDebug = this.lastHearObservation?.accuracy ?? 0;
         }
 
         const obs = better(seen, heard);
@@ -568,7 +622,6 @@ export class CatAi {
         if (
             !this.stopToListenStartTime &&
             this.lastHearObservation &&
-            time.t - this.lastHearObservation.t < 1000 &&
             HEAR_THRESHOLD < this.lastHearObservation.accuracy
         ) {
             this.stopToListenStartTime = time.t;
