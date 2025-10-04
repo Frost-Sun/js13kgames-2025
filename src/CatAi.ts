@@ -51,8 +51,8 @@ import {
 } from "./audio/sfx";
 import type { GameObject } from "./GameObject";
 
-// export let sightAccuracyDebug: number = 0;
-// export let hearAccuracyDebug: number = 0;
+export let sightAccuracyDebug: number = 0;
+export let hearAccuracyDebug: number = 0;
 
 // Make sure the cat does not appear on the screen at start as the horizon
 // takes care of drawing it when on the fence.
@@ -73,13 +73,19 @@ const SIGHT_ACCURACY_LOWERING_DISTANCE = 6.5 * TILE_SIZE;
 // Cat's field of view in radians (e.g., 160 degrees)
 const CAT_FOV = (160 * Math.PI) / 180;
 
-export const CERTAIN_OBSERVATION_THERSHOLD = 0.42;
-export const VAGUE_OBSERVATION_THRESHOLD = 0.22;
+export const NORMAL_SIGHT_THRESHOLD = 0.35;
+export const ACCURATE_SIGHT_THRESHOLD = 0.12;
 
-const VAGUE_OBSERVATION_IGNORE_TIME = 2000;
+export const HEAR_THRESHOLD = 0.22;
+export const ACCURATE_HEAR_THRESHOLD = 0.15;
+
+const HEAR_OBSERVATION_IGNORE_TIME = 2300;
+
+const STOP_TO_LISTEN_TIME = 1500;
+
 const SEARCH_TIME = 5000;
 const CHASE_RETURN_DELAY = 700; // ms - how quickly music should revert after chase ends
-// Meow plays immediately on new certain sightings.
+// Meow plays immediately on new sightings.
 const LOOK_AROUND_INTERVAL = 1500;
 
 // Speeds relative to the actual speed in BlackCat.ts.
@@ -186,13 +192,17 @@ export class CatAi {
     private noticedTime: number = 0;
 
     jumpStartTime: number = 0;
+    private hasLanded: boolean = false;
     private hasJumped: boolean = false;
 
     private lastHearingTime: number = 0;
     private lastObservation: Observation | null = null;
+    private lastSightObservation: Observation | null = null;
+    private sightThreshold = NORMAL_SIGHT_THRESHOLD;
     private lastHearObservation: Observation | null = null;
-    private lastCertainObservation: Observation | null = null;
-    private lastVagueObservation: Observation | null = null;
+
+    private stopToListenStartTime: number = 0;
+    private lastAccurateHearObservation: Observation | null = null;
 
     // Tracks whether we've already played a meow for the current chase cycle.
     private meowPlayed: boolean = false;
@@ -203,9 +213,17 @@ export class CatAi {
     private lookAroundStartTime: number = 0;
     private lastTurnTime: number = 0;
 
-    private target: Vector | null = null;
+    private idleTarget: Vector | null = null;
 
     private speedMultiplier: number = 1;
+
+    get isOnLevel(): boolean {
+        return (
+            this.host.x !== INITIAL_CAT_POS.x &&
+            this.host.y !== INITIAL_CAT_POS.y &&
+            this.hasLanded
+        );
+    }
 
     constructor(
         private host: Animal,
@@ -217,7 +235,7 @@ export class CatAi {
         this.host.x = INITIAL_CAT_POS.x;
         this.host.y = INITIAL_CAT_POS.y;
         this.host.direction = { x: 0, y: 1 };
-        this.speedMultiplier = this.difficulty === Difficulty.Easy ? 0.7 : 1.0;
+        this.speedMultiplier = this.difficulty === Difficulty.Easy ? 0.6 : 1.0;
     }
 
     getMovement(time: TimeStep): Vector {
@@ -228,7 +246,8 @@ export class CatAi {
             this.stayOnTheFence(time) ??
             this.jump(time, hostCenter) ??
             this.chase(time, hostCenter) ??
-            this.followVagueObservation(time, hostCenter) ??
+            this.followHearObservation(time, hostCenter) ??
+            this.stopToListen(time) ??
             this.lookAround(time) ??
             this.idle(hostCenter)
         );
@@ -238,16 +257,16 @@ export class CatAi {
         const seen = this.lookForMouse(time, hostCenter);
         let heard: Observation | null = null;
 
-        // sightAccuracyDebug = seen?.accuracy ?? 0;
+        sightAccuracyDebug = seen?.accuracy ?? 0;
 
-        if (seen && seen.accuracy > CERTAIN_OBSERVATION_THERSHOLD) {
-            // Only trigger a meow when we transition from no certain
+        if (seen && seen.accuracy > this.sightThreshold) {
+            // Only trigger a meow when we transition from no sight
             // observation to having one. This prevents repeated meows while
             // already chasing the same sighting. Also mark chaseActive so
             // music follows the chase lifecycle.
-            const hadCertainBefore = !!this.lastCertainObservation;
-            this.lastCertainObservation = seen;
-            if (!hadCertainBefore) {
+            const hadSightBefore = !!this.lastSightObservation;
+            this.lastSightObservation = seen;
+            if (!hadSightBefore) {
                 if (!this.meowPlayed) {
                     playTune(SFX_MEOW);
                     this.meowPlayed = true;
@@ -267,7 +286,7 @@ export class CatAi {
                       };
 
             heard = this.space.listen(time, listenerPosition);
-            // hearAccuracyDebug = heard?.accuracy ?? 0;
+            hearAccuracyDebug = heard?.accuracy ?? 0;
 
             if (heard) {
                 this.lastHearObservation = heard;
@@ -277,10 +296,6 @@ export class CatAi {
         const obs = better(seen, heard);
 
         this.lastObservation = obs;
-
-        if (obs && obs.accuracy > VAGUE_OBSERVATION_THRESHOLD) {
-            this.lastVagueObservation = obs;
-        }
     }
 
     private stayOnTheFence(time: TimeStep): Vector | null {
@@ -305,7 +320,7 @@ export class CatAi {
             lastObservation &&
             lastObservation.accuracy > FENCE_NOTICE_THRESHOLD
         ) {
-            this.lastCertainObservation = {
+            this.lastSightObservation = {
                 ...lastObservation,
                 position: {
                     x: lastObservation.position.x,
@@ -415,17 +430,21 @@ export class CatAi {
             this.host.x = this.jumpTarget.x;
             this.host.y = this.jumpTarget.y + h * 0.1;
             this.jumpTarget = null;
-            this.hasJumped = true;
+            this.hasLanded = true;
             return ZERO_VECTOR;
         }
 
-        // After jump is finished, do not draw shadow or use jumpTarget
-        // Only run this after the cat has actually landed and appeared
+        // Stay still for a little while after the jump.
         if (
-            this.hasJumped &&
-            this.jumpFinishTime &&
-            time.t - this.jumpFinishTime >= 1000 &&
-            time.t - this.jumpFinishTime < 1000 + STILL_AFTER_JUMP_DURATION
+            this.hasLanded &&
+            time.t - this.jumpFinishTime >= dropDuration &&
+            time.t - this.jumpFinishTime <
+                dropDuration + STILL_AFTER_JUMP_DURATION &&
+            // Do not pause if the mouse is seen
+            !(
+                this.lastSightObservation &&
+                time.t - this.lastSightObservation?.t < 500
+            )
         ) {
             return ZERO_VECTOR;
         }
@@ -433,11 +452,12 @@ export class CatAi {
         // If we've passed the post-jump still period, clear the jump state
         // so the AI can return to normal behavior (including music changes)
         if (
-            this.hasJumped &&
+            this.hasLanded &&
             this.jumpFinishTime &&
-            time.t - this.jumpFinishTime >= 1000 + STILL_AFTER_JUMP_DURATION
+            time.t - this.jumpFinishTime >=
+                dropDuration + STILL_AFTER_JUMP_DURATION
         ) {
-            this.hasJumped = false;
+            this.hasJumped = true;
             this.jumpStartTime = 0;
             this.jumpFinishTime = 0;
             // Start look-around so chase() can decide to switch music later
@@ -448,41 +468,51 @@ export class CatAi {
     }
 
     private idle(hostCenter: Vector): Vector {
-        if (this.target == null) {
-            this.target = getRandomPosition(this.space);
+        if (this.idleTarget == null) {
+            this.idleTarget = getRandomPosition(this.space);
             this.useMusic(SFX_RUNNING);
         }
 
         const movement = this.goTo(
-            this.target,
+            this.idleTarget,
             hostCenter,
             SPEED_IDLE * this.speedMultiplier,
         );
 
         if (!movement) {
-            this.target = null;
+            this.idleTarget = null;
             return ZERO_VECTOR;
         }
 
         return movement;
     }
 
-    private followVagueObservation(
+    private followHearObservation(
         time: TimeStep,
         hostCenter: Vector,
     ): Vector | null {
         if (
-            this.lastVagueObservation &&
-            time.t - this.lastVagueObservation.t < VAGUE_OBSERVATION_IGNORE_TIME
+            !this.stopToListenStartTime &&
+            this.lastAccurateHearObservation &&
+            time.t - this.lastAccurateHearObservation.t <
+                HEAR_OBSERVATION_IGNORE_TIME
         ) {
+            if (this.idleTarget) {
+                // Dont always go back to the same direction after following the mouse.
+                this.idleTarget = null;
+            }
+
             this.isAlert = true;
-            const d = distance(hostCenter, this.lastVagueObservation.position);
+            const d = distance(
+                hostCenter,
+                this.lastAccurateHearObservation.position,
+            );
             const target =
                 d < TILE_SIZE
-                    ? this.lastVagueObservation.position
+                    ? this.lastAccurateHearObservation.position
                     : getPointBetween(
                           hostCenter,
-                          this.lastVagueObservation.position,
+                          this.lastAccurateHearObservation.position,
                       );
 
             return this.goTo(
@@ -497,16 +527,23 @@ export class CatAi {
     }
 
     private chase(time: TimeStep, hostCenter: Vector): Vector | null {
-        if (this.lastCertainObservation) {
+        if (this.lastSightObservation) {
             this.useMusic(SFX_CHASE);
+
+            // Look more accurately when chasing
+            if (this.sightThreshold > ACCURATE_SIGHT_THRESHOLD) {
+                this.sightThreshold = ACCURATE_SIGHT_THRESHOLD;
+            }
+
             const movement = this.goTo(
-                this.lastCertainObservation.position,
+                this.lastSightObservation.position,
                 hostCenter,
                 SPEED_CHASE * this.speedMultiplier,
             );
 
             if (movement == null) {
-                this.lastCertainObservation = null;
+                this.lastSightObservation = null;
+                this.sightThreshold = NORMAL_SIGHT_THRESHOLD;
                 this.lookAroundStartTime = time.t;
                 // Record when chase ended so we can revert music after a delay
                 this.chaseEndTime = time.t;
@@ -516,19 +553,43 @@ export class CatAi {
         }
 
         // If chase music is playing, revert it after CHASE_RETURN_DELAY from
-        // when chase ended, provided we're not mid-jump.
+        // when chase ended.
         if (this.lastMusic === SFX_CHASE && this.chaseEndTime !== 0) {
-            const jumpActive =
-                this.jumpStartTime !== 0 ||
-                this.jumpFinishTime !== 0 ||
-                this.hasJumped;
-            if (
-                !jumpActive &&
-                time.t - this.chaseEndTime >= CHASE_RETURN_DELAY
-            ) {
+            if (time.t - this.chaseEndTime >= CHASE_RETURN_DELAY) {
                 this.useMusic(SFX_RUNNING);
                 this.chaseEndTime = 0;
             }
+        }
+
+        return null;
+    }
+
+    private stopToListen(time: TimeStep): Vector | null {
+        // Stop for listening
+        if (
+            !this.stopToListenStartTime &&
+            this.lastHearObservation &&
+            time.t - this.lastHearObservation.t < 1000 &&
+            HEAR_THRESHOLD < this.lastHearObservation.accuracy
+        ) {
+            this.stopToListenStartTime = time.t;
+        }
+
+        // Listen closely while standing still
+        if (time.t - this.stopToListenStartTime < STOP_TO_LISTEN_TIME) {
+            if (
+                this.lastHearObservation &&
+                ACCURATE_HEAR_THRESHOLD < this.lastHearObservation.accuracy
+            ) {
+                this.lastAccurateHearObservation = this.lastHearObservation;
+            }
+
+            return ZERO_VECTOR;
+        }
+
+        // Done listening
+        if (this.stopToListenStartTime) {
+            this.stopToListenStartTime = 0;
         }
 
         return null;
