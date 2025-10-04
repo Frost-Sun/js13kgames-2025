@@ -119,6 +119,39 @@ export const addKeyListener = (
     return () => window.removeEventListener("keydown", wrapper);
 };
 
+// Helper that listens for difficulty selection keys (E/H) and calls
+// the provided callbacks. Returns a remover function.
+export const addDifficultyListener = (
+    onEasy: () => void,
+    onHard: () => void,
+): (() => void) => {
+    const wrapper = (event: KeyboardEvent): void => {
+        const code = event.code || "";
+        const key = (event.key || "").toLowerCase();
+
+        if (code === "KeyE" || key === "e") {
+            onEasy();
+            return;
+        }
+
+        if (code === "KeyH" || key === "h") {
+            onHard();
+            return;
+        }
+    };
+
+    window.addEventListener("keydown", wrapper);
+
+    return () => window.removeEventListener("keydown", wrapper);
+};
+
+// Small helper to invoke a remover function if present and return null
+// so callers can write: removeDifficultyListener = clearRemover(removeDifficultyListener);
+export const clearRemover = (remover: (() => void) | null): null => {
+    if (remover) remover();
+    return null;
+};
+
 export const waitForEnter = (soundToPlay?: string): Promise<void> => {
     return new Promise((resolve) => {
         const listener = (event: KeyboardEvent): void => {

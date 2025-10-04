@@ -144,7 +144,7 @@ export const drawStartBackdrop = (time: TimeStep): void => {
 // Difficulty selection screen
 export const drawDifficultySelect = (yShift = 0): void => {
     renderText("Select difficulty", TextSize.Large, 1, 2 + yShift);
-    renderText("E — EASY  ", TextSize.Normal, 1, 5 + yShift);
-    renderText("N — NORMAL", TextSize.Normal, 1, 7 + yShift);
+    renderText("  E — EASY  ", TextSize.Normal, 1, 5 + yShift);
+    renderText("H — HARD", TextSize.Normal, 1, 7 + yShift);
     drawThunder();
 };
