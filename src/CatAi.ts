@@ -229,7 +229,7 @@ export class CatAi {
         private host: Animal,
         private space: Space,
         private mouse: Mouse,
-        private difficulty: Difficulty = Difficulty.Normal,
+        private difficulty: Difficulty = Difficulty.Hard,
     ) {
         // Place cat offscreen before first jump
         this.host.x = INITIAL_CAT_POS.x;

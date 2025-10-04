@@ -1,13 +1,12 @@
 export enum Difficulty {
     Easy = "Easy",
-    Normal = "Normal",
+    Hard = "Hard",
 }
 
-let currentDifficulty: Difficulty = Difficulty.Normal;
+let currentDifficulty: Difficulty = Difficulty.Hard;
 
 export const setDifficulty = (d: Difficulty): void => {
     currentDifficulty = d;
-    console.log("Difficulty set to:", d);
 };
 
 export const getDifficulty = (): Difficulty => currentDifficulty;

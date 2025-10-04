@@ -45,7 +45,8 @@ import {
 import {
     waitForEnter,
     addEscapeListener,
-    addKeyListener,
+    addDifficultyListener,
+    clearRemover,
 } from "./core/controls/keyboard";
 import type { TimeStep } from "./core/time/TimeStep";
 import {
@@ -137,57 +138,40 @@ const setState = (newState: GameState): void => {
         case GameState.StartScreen: {
             triggerThunder();
             waitForEnter().then(() => setState(GameState.DifficultySelect));
-            if (removeEscapeListener) {
-                removeEscapeListener();
-                removeEscapeListener = null;
-            }
+            removeEscapeListener = clearRemover(removeEscapeListener);
             break;
         }
         case GameState.DifficultySelect: {
             if (!removeEscapeListener) {
                 removeEscapeListener = addEscapeListener(() => {
                     if (gameState === GameState.StartScreen) return;
-                    if (removeDifficultyListener) {
-                        removeDifficultyListener();
-                        removeDifficultyListener = null;
-                    }
+                    removeDifficultyListener = clearRemover(
+                        removeDifficultyListener,
+                    );
                     playTune(SFX_START);
                     setState(GameState.StartScreen);
                 });
             }
-
-            removeDifficultyListener = addKeyListener(
-                ["KeyE", "e", "KeyN", "n"],
-                (event: KeyboardEvent) => {
-                    const k = event.code || event.key;
-
-                    if (
-                        k === "KeyE" ||
-                        (event.key && event.key.toLowerCase() === "e")
-                    ) {
-                        setDifficulty(Difficulty.Easy);
-                        // Reload highscores for the selected difficulty
-                        highscore = getHighscore();
-                        previousHighscore = highscore;
-                        if (removeDifficultyListener) {
-                            removeDifficultyListener();
-                            removeDifficultyListener = null;
-                        }
-                        setState(GameState.Running);
-                    } else if (
-                        k === "KeyN" ||
-                        (event.key && event.key.toLowerCase() === "n")
-                    ) {
-                        setDifficulty(Difficulty.Normal);
-                        // Reload highscores for the selected difficulty
-                        highscore = getHighscore();
-                        previousHighscore = highscore;
-                        if (removeDifficultyListener) {
-                            removeDifficultyListener();
-                            removeDifficultyListener = null;
-                        }
-                        setState(GameState.Running);
-                    }
+            removeDifficultyListener = addDifficultyListener(
+                () => {
+                    setDifficulty(Difficulty.Easy);
+                    // Reload highscores for the selected difficulty
+                    highscore = getHighscore();
+                    previousHighscore = highscore;
+                    removeDifficultyListener = clearRemover(
+                        removeDifficultyListener,
+                    );
+                    setState(GameState.Running);
+                },
+                () => {
+                    setDifficulty(Difficulty.Hard);
+                    // Reload highscores for the selected difficulty
+                    highscore = getHighscore();
+                    previousHighscore = highscore;
+                    removeDifficultyListener = clearRemover(
+                        removeDifficultyListener,
+                    );
+                    setState(GameState.Running);
                 },
             );
             break;
@@ -239,8 +223,6 @@ const update = (time: TimeStep): void => {
             break;
         }
         case GameState.DifficultySelect: {
-            // Keep the start-screen backdrop animated (cat bobbing, thunder)
-            // while the difficulty UI is visible.
             updateStartScreen(time.dt);
             break;
         }

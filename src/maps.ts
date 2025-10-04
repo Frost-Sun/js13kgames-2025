@@ -45,7 +45,7 @@ export const createMap = (number: number): Array2D<Tile> => {
     const BASE_FENCE_CHANCE = 0.12;
     // Scale with difficulty (number or global setting)
     const settingsDifficulty = getDifficulty();
-    const settingsNumber = settingsDifficulty === Difficulty.Normal ? 1 : 0;
+    const settingsNumber = settingsDifficulty === Difficulty.Hard ? 1 : 0;
     const effectiveDifficulty = Math.max(number, settingsNumber);
     const fenceChance = Math.min(
         0.5,
