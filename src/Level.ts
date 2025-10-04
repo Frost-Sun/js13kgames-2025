@@ -190,20 +190,14 @@ export class Level implements Area, Space {
             return;
         }
 
-        if (this.cat) {
-            // Only check collision if cat is visible and not during jump arc or shadow-only phase
-            const ai = this.cat.ai;
-            const catIsVisible =
-                ai.jumpTarget === null && ai.jumpFinishTime !== 0;
-            if (catIsVisible && this.cat.x > -9999 && this.cat.y > -9999) {
-                const playerCenter = getCenter(this.player);
-                const catCenter = getCenter(this.cat);
-                if (
-                    distance(playerCenter, catCenter) <
-                    (this.player.width + this.cat.width) * 0.3
-                ) {
-                    this.state = LevelState.Lose;
-                }
+        if (this.cat?.ai.isOnLevel) {
+            const playerCenter = getCenter(this.player);
+            const catCenter = getCenter(this.cat);
+            if (
+                distance(playerCenter, catCenter) <
+                (this.player.width + this.cat.width) * 0.3
+            ) {
+                this.state = LevelState.Lose;
             }
         }
 

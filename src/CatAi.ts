@@ -192,6 +192,7 @@ export class CatAi {
     private noticedTime: number = 0;
 
     jumpStartTime: number = 0;
+    private hasLanded: boolean = false;
     private hasJumped: boolean = false;
 
     private lastHearingTime: number = 0;
@@ -215,6 +216,14 @@ export class CatAi {
     private idleTarget: Vector | null = null;
 
     private speedMultiplier: number = 1;
+
+    get isOnLevel(): boolean {
+        return (
+            this.host.x !== INITIAL_CAT_POS.x &&
+            this.host.y !== INITIAL_CAT_POS.y &&
+            this.hasLanded
+        );
+    }
 
     constructor(
         private host: Animal,
@@ -421,17 +430,18 @@ export class CatAi {
             this.host.x = this.jumpTarget.x;
             this.host.y = this.jumpTarget.y + h * 0.1;
             this.jumpTarget = null;
-            this.hasJumped = true;
+            this.hasLanded = true;
             return ZERO_VECTOR;
         }
 
         // After jump is finished, do not draw shadow or use jumpTarget
         // Only run this after the cat has actually landed and appeared
         if (
-            this.hasJumped &&
+            this.hasLanded &&
             this.jumpFinishTime &&
-            time.t - this.jumpFinishTime >= 1000 &&
-            time.t - this.jumpFinishTime < 1000 + STILL_AFTER_JUMP_DURATION
+            time.t - this.jumpFinishTime >= dropDuration &&
+            time.t - this.jumpFinishTime <
+                dropDuration + STILL_AFTER_JUMP_DURATION
         ) {
             return ZERO_VECTOR;
         }
@@ -439,11 +449,12 @@ export class CatAi {
         // If we've passed the post-jump still period, clear the jump state
         // so the AI can return to normal behavior (including music changes)
         if (
-            this.hasJumped &&
+            this.hasLanded &&
             this.jumpFinishTime &&
-            time.t - this.jumpFinishTime >= 1000 + STILL_AFTER_JUMP_DURATION
+            time.t - this.jumpFinishTime >=
+                dropDuration + STILL_AFTER_JUMP_DURATION
         ) {
-            this.hasJumped = false;
+            this.hasJumped = true;
             this.jumpStartTime = 0;
             this.jumpFinishTime = 0;
             // Start look-around so chase() can decide to switch music later
@@ -539,16 +550,9 @@ export class CatAi {
         }
 
         // If chase music is playing, revert it after CHASE_RETURN_DELAY from
-        // when chase ended, provided we're not mid-jump.
+        // when chase ended.
         if (this.lastMusic === SFX_CHASE && this.chaseEndTime !== 0) {
-            const jumpActive =
-                this.jumpStartTime !== 0 ||
-                this.jumpFinishTime !== 0 ||
-                this.hasJumped;
-            if (
-                !jumpActive &&
-                time.t - this.chaseEndTime >= CHASE_RETURN_DELAY
-            ) {
+            if (time.t - this.chaseEndTime >= CHASE_RETURN_DELAY) {
                 this.useMusic(SFX_RUNNING);
                 this.chaseEndTime = 0;
             }
