@@ -197,6 +197,10 @@ export class Level implements Area, Space {
                 distance(playerCenter, catCenter) <
                 (this.player.width + this.cat.width) * 0.3
             ) {
+                // Teleport the cat to the mouse's position so the capture visually completes immediately
+                const target = getCenter(this.player);
+                this.cat.x = target.x - this.cat.width / 2;
+                this.cat.y = target.y - this.cat.height * 0.2;
                 this.state = LevelState.Lose;
             }
         }
