@@ -434,14 +434,17 @@ export class CatAi {
             return ZERO_VECTOR;
         }
 
-        // After jump is finished, do not draw shadow or use jumpTarget
-        // Only run this after the cat has actually landed and appeared
+        // Stay still for a little while after the jump.
         if (
             this.hasLanded &&
-            this.jumpFinishTime &&
             time.t - this.jumpFinishTime >= dropDuration &&
             time.t - this.jumpFinishTime <
-                dropDuration + STILL_AFTER_JUMP_DURATION
+                dropDuration + STILL_AFTER_JUMP_DURATION &&
+            // Do not pause if the mouse is seen
+            !(
+                this.lastSightObservation &&
+                time.t - this.lastSightObservation?.t < 500
+            )
         ) {
             return ZERO_VECTOR;
         }
