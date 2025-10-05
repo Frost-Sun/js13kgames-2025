@@ -86,6 +86,90 @@ export function renderCatEye(
     }
 }
 
+function renderWhiskers(
+    mode: "side" | "down" | "up",
+    width: number,
+    h: number,
+) {
+    cx.strokeStyle = "#e6d6e6";
+    cx.lineWidth = Math.max(0.1, width * 0.012);
+    const wl = width * 0.18,
+        ws = width * 0.04;
+    if (mode === "side") {
+        const base = -h * 0.1;
+        [-1, 0, 1].forEach((row) => {
+            const wy = base + row * ws;
+            cx.beginPath();
+            cx.moveTo(width * 0.13, wy);
+            cx.bezierCurveTo(
+                width * 0.22,
+                wy + wl * 0.1,
+                width * 0.32,
+                wy + wl * 0.3,
+                width * 0.38,
+                wy + wl * 0.2,
+            );
+            cx.stroke();
+        });
+    } else if (mode === "down") {
+        const base = -h * 0.1;
+        [-1, 0, 1].forEach((row) => {
+            const wy = base + row * ws;
+            cx.beginPath();
+            cx.moveTo(-width * 0.13, wy);
+            cx.bezierCurveTo(
+                -width * 0.22,
+                wy + wl * 0.1,
+                -width * 0.32,
+                wy + wl * 0.3,
+                -width * 0.38,
+                wy + wl * 0.2,
+            );
+            cx.stroke();
+            cx.beginPath();
+            cx.moveTo(width * 0.13, wy);
+            cx.bezierCurveTo(
+                width * 0.22,
+                wy + wl * 0.1,
+                width * 0.32,
+                wy + wl * 0.3,
+                width * 0.38,
+                wy + wl * 0.2,
+            );
+            cx.stroke();
+        });
+    } else if (mode === "up") {
+        const base = -h * 0.22;
+        [-1, 0, 1].forEach((row) => {
+            const wy = base + row * ws;
+            // left
+            cx.beginPath();
+            cx.moveTo(-width * 0.1, wy);
+            cx.bezierCurveTo(
+                -width * 0.18,
+                wy - wl * 0.05,
+                -width * 0.28,
+                wy - wl * 0.12,
+                -width * 0.36,
+                wy - wl * 0.08,
+            );
+            cx.stroke();
+            // right
+            cx.beginPath();
+            cx.moveTo(width * 0.1, wy);
+            cx.bezierCurveTo(
+                width * 0.18,
+                wy - wl * 0.05,
+                width * 0.28,
+                wy - wl * 0.12,
+                width * 0.36,
+                wy - wl * 0.08,
+            );
+            cx.stroke();
+        });
+    }
+}
+
 // riseLevel: 0 = low, 1 = mid, 2 = high to jump next
 export function renderBlackCat(
     x: number,
@@ -169,10 +253,24 @@ export function renderBlackCat(
     cx.ellipse(0, h * 0.2, width * 0.35, h * 0.28, 0, 0, Math.PI * 2);
     cx.fillStyle = "#000";
     cx.fill();
-    // Head
+    // Whiskers behind head when looking up (draw before head so they appear behind)
+    if (facing.includes("up")) {
+        cx.save();
+        cx.globalAlpha = 1;
+        cx.shadowColor = "rgba(0,0,0,0)";
+        cx.shadowBlur = 0;
+        renderWhiskers("up", width, h);
+        cx.restore();
+    }
+    // Head (force opaque, no shadow in case canvas state outside set alpha/shadow)
+    cx.save();
+    cx.globalAlpha = 1;
+    cx.shadowColor = "rgba(0,0,0,0)";
+    cx.shadowBlur = 0;
     cx.beginPath();
     cx.ellipse(0, -h * 0.18, width * 0.28, h * 0.22, 0, 0, Math.PI * 2);
     cx.fill();
+    cx.restore();
     // Ears
     const earY = -h * 0.5,
         earW = width * 0.16,
@@ -208,24 +306,7 @@ export function renderBlackCat(
         cx.fill();
 
         // Whiskers (right only)
-        cx.strokeStyle = "#e6d6e6";
-        cx.lineWidth = Math.max(0.1, width * 0.012);
-        const wy = -h * 0.1,
-            wl = width * 0.18,
-            ws = width * 0.04;
-        [-1, 0, 1].forEach((row) => {
-            cx.beginPath();
-            cx.moveTo(width * 0.13, wy + row * ws);
-            cx.bezierCurveTo(
-                width * 0.22,
-                wy + row * ws + wl * 0.1,
-                width * 0.32,
-                wy + row * ws + wl * 0.3,
-                width * 0.38,
-                wy + row * ws + wl * 0.2,
-            );
-            cx.stroke();
-        });
+        renderWhiskers("side", width, h);
     } else {
         [
             [-width * 0.13, -1],
@@ -272,36 +353,8 @@ export function renderBlackCat(
         cx.ellipse(0, -h * 0.11, width * 0.018, h * 0.012, 0, 0, Math.PI * 2);
         cx.fillStyle = "#e68686";
         cx.fill();
-        // Whiskers
-        cx.strokeStyle = "#e6d6e6";
-        cx.lineWidth = Math.max(0.1, width * 0.012);
-        const wy = -h * 0.1,
-            wl = width * 0.18,
-            ws = width * 0.04;
-        [-1, 0, 1].forEach((row) => {
-            cx.beginPath();
-            cx.moveTo(-width * 0.13, wy + row * ws);
-            cx.bezierCurveTo(
-                -width * 0.22,
-                wy + row * ws + wl * 0.1,
-                -width * 0.32,
-                wy + row * ws + wl * 0.3,
-                -width * 0.38,
-                wy + row * ws + wl * 0.2,
-            );
-            cx.stroke();
-            cx.beginPath();
-            cx.moveTo(width * 0.13, wy + row * ws);
-            cx.bezierCurveTo(
-                width * 0.22,
-                wy + row * ws + wl * 0.1,
-                width * 0.32,
-                wy + row * ws + wl * 0.3,
-                width * 0.38,
-                wy + row * ws + wl * 0.2,
-            );
-            cx.stroke();
-        });
+        // Whiskers (both sides)
+        renderWhiskers("down", width, h);
     }
 
     cx.restore();
