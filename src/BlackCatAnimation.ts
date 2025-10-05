@@ -129,18 +129,36 @@ function renderWhiskers(
             const wy = base + row * ws;
             cx.beginPath();
             // start a bit further right to match profile nose/eye spacing
-            cx.moveTo(width * 0.16, wy);
-            const rightEndX = width * 0.36 + bias - shiftAdj;
-            // ensure right whisker isn't longer than a symmetric baseline
-            const maxRight = Math.abs(width * 0.36);
-            const clampedRightEndX = Math.min(rightEndX, maxRight);
+            const startX = width * 0.16;
+            // Use fixed whisker length (wl) for endpoint so both sides match
+            // after horizontal flipping; bias only nudges curvature, not length.
+            let endX = startX + wl - shiftAdj;
+            // allow a tiny bias influence on length but clamp to sane range
+            endX += Math.max(
+                -width * 0.02,
+                Math.min(width * 0.02, bias * 0.008 * width),
+            );
+            const maxRight = width * 0.5;
+            const minRight = startX + Math.max(wl * 0.5, width * 0.06);
+            endX = Math.max(minRight, Math.min(endX, maxRight));
+
+            // Control point nearer to the end but clamped inside [start, end]
+            const span = endX - startX;
+            const controlBias = Math.max(
+                -width * 0.03,
+                Math.min(width * 0.03, bias * 0.015 * width),
+            );
+            let cp2x = startX + span * 0.6 + controlBias;
+            const eps = Math.max(width * 0.003, 0.5);
+            cp2x = Math.max(startX + eps, Math.min(cp2x, endX - eps));
+            cx.moveTo(startX, wy);
             cx.bezierCurveTo(
                 width * 0.22,
-                wy + wl * 0.1,
-                width * 0.32 + bias * 0.6,
-                wy + wl * 0.3,
-                clampedRightEndX,
-                wy + wl * 0.2,
+                wy + wl * 0.08,
+                cp2x,
+                wy + wl * 0.26,
+                endX,
+                wy + wl * 0.18,
             );
             cx.stroke();
         });
@@ -395,9 +413,6 @@ export function renderBlackCat(
     // Whiskers behind head when looking up (draw before head so they appear behind)
     if (facing.includes("up")) {
         cx.save();
-        cx.globalAlpha = 1;
-        cx.shadowColor = "rgba(0,0,0,0)";
-        cx.shadowBlur = 0;
         renderWhiskers(
             "up",
             width,
@@ -407,19 +422,20 @@ export function renderBlackCat(
         );
         cx.restore();
     }
-    // Head (force opaque, no shadow in case canvas state outside set alpha/shadow)
+    // Head
     cx.save();
-    cx.globalAlpha = 1;
-    cx.shadowColor = "rgba(0,0,0,0)";
-    cx.shadowBlur = 0;
     cx.beginPath();
     cx.ellipse(0, -h * 0.18, width * 0.28, h * 0.22, 0, 0, Math.PI * 2);
     cx.fill();
     cx.restore();
     // Ears
-    const earY = -h * 0.5,
-        earW = width * 0.16,
-        earH = h * 0.18;
+    let earY = -h * 0.5;
+    const earW = width * 0.16;
+    const earH = h * 0.18;
+    // Lower ears slightly when facing down for a more natural pose
+    if (facing.includes("down")) {
+        earY += h * 0.02;
+    }
     // slightly amplify rotations for visibility
     earLeftRot *= 1.4;
     earRightRot *= 1.4;
@@ -432,9 +448,11 @@ export function renderBlackCat(
             catEyesOpen,
         );
         // Ears (two, with small rotations)
+        const innerEx = width * 0.03;
+        const outerEx = dir > 0 ? width * 0.13 : width * 0.09;
         [
-            [width * 0.03, earW * 0.7, earH * 0.7, 0.1, earLeftRot],
-            [width * 0.13, earW, earH, 0, earRightRot],
+            [innerEx, earW * 0.7, earH * 0.7, 0.1, earLeftRot],
+            [outerEx, earW, earH, 0, earRightRot],
         ].forEach(([ex, ew, eh, yoff, rot]) => {
             // draw ear relative to its tip so rotation looks natural
             cx.save();
