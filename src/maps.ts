@@ -32,6 +32,7 @@ import {
     type Tile,
 } from "./tiles";
 import { Fence } from "./Fence";
+import FencePlacer from "./fencePlacer";
 import { getDifficulty, Difficulty } from "./settings";
 import { Flower } from "./Flower";
 import { Bush } from "./Bush";
@@ -57,6 +58,9 @@ export const createMap = (number: number): Array2D<Tile> => {
     // Note: Paving the road starts from the top of the map!
     let ixPath = 3 + randomInt(5);
     let previousIxPath: number = ixPath;
+
+    // fence placement is handled by FencePlacer
+    const fencePlacer = new FencePlacer(grid.xCount);
 
     for (let iy = 0; iy < grid.yCount; iy++) {
         const y = iy * TILE_DRAW_HEIGHT;
@@ -124,56 +128,13 @@ export const createMap = (number: number): Array2D<Tile> => {
             grid.setValue(ix, iy, tile);
         }
 
-        // Occasionally add a horizontal fence segment across several tiles.
-        // Fences block movement; make sure they don't cover the mouse hole area.
-        // Don't place fences on road tiles (Slate) or directly on plant tiles.
-        if (iy > 6 && random() < fenceChance) {
-            const fenceTileCount = 2 + randomInt(3); // 2..4 tiles wide
-            const maxStart = Math.max(0, grid.xCount - fenceTileCount - 1);
-            let startIx = 0;
-            // Try to avoid placing fence at center mouse-hole column
-            for (let attempts = 0; attempts < 6; attempts++) {
-                startIx = randomInt(maxStart + 1);
-                const center = Math.floor(grid.xCount / 2);
-                if (
-                    startIx <= center - 2 ||
-                    startIx + fenceTileCount >= center + 2
-                )
-                    break;
-            }
-
-            // Validate the span: skip if any covered tile is Slate (don't put fences on roads)
-            let spanOk = true;
-            for (let k = 0; k < fenceTileCount; k++) {
-                const ix = startIx + k;
-                const t = grid.getValue(ix, iy);
-                if (!t) {
-                    spanOk = false;
-                    break;
-                }
-                if (t.type === TileType.Slate) {
-                    spanOk = false;
-                    break;
-                }
-            }
-
-            if (spanOk) {
-                const fx = startIx * TILE_SIZE;
-                const fw = fenceTileCount * TILE_SIZE;
-                const fence = new Fence(fx, y, fw);
-                for (let k = 0; k < fenceTileCount; k++) {
-                    const ix = startIx + k;
-                    const t = grid.getValue(ix, iy);
-                    if (t) {
-                        // append fence to objects array (Tile.objects is readonly, so replace)
-                        const objs = t.objects.slice();
-                        objs.push(fence);
-                        grid.setValue(ix, iy, { type: t.type, objects: objs });
-                    }
-                }
-            }
-        }
+        // Delegate fence placement to FencePlacer (handles spacing, adjacency and edge guarantees)
+        fencePlacer.tryPlaceFence(grid, iy, y, fenceChance);
     }
+
+    // If edge fences are under the required minimum, try to add additional fences
+    // let the fence placer ensure minimum edge fences (it will respect spacing)
+    fencePlacer.ensureEdgeFences(grid);
 
     // Post-process: nudge plant objects away from road tiles when necessary
     const V_MARGIN = Math.max(1, Math.floor(TILE_DRAW_HEIGHT * 0.6));
