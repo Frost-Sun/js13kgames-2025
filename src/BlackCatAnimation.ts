@@ -80,13 +80,18 @@ export function renderCatEye(
     );
     cx.fillStyle = "#181818";
     cx.fill();
-    // Eye highlight only if eye is open enough
+    // Eye highlight only if eye is open enough; scale highlight by openness so
+    // partially closed eyes don't show an oversized bright spot.
     if (eo > 0.5) {
+        const hlScale = eo; // 0.5..1 -> scale highlight accordingly
+        const hlOffsetX = width * 0.025 * hlScale;
+        const hlOffsetY = width * 0.012 * hlScale;
+        const hlRadius = width * 0.015 * hlScale;
         cx.beginPath();
         cx.arc(
-            x + pupilOffsetX - width * 0.025,
-            y + pupilOffsetY - width * 0.012,
-            width * 0.015,
+            x + pupilOffsetX - hlOffsetX,
+            y + pupilOffsetY - hlOffsetY,
+            hlRadius,
             0,
             Math.PI * 2,
         );
@@ -346,8 +351,8 @@ export function renderBlackCat(
         case "up-left":
             eyeShiftX = -width * 0.04;
             eyeShiftY = -h * 0.04;
-            // keep nose roughly centered between the two eyes
             noseShiftX = eyeShiftX;
+            noseShiftY = -h * 0.03;
             earLeftRot = -0.22;
             earRightRot = 0.08;
             break;
@@ -356,6 +361,8 @@ export function renderBlackCat(
             eyeShiftY = -h * 0.04;
             // keep nose roughly centered between the two eyes
             noseShiftX = eyeShiftX;
+            // match vertical nose offset of plain "up"
+            noseShiftY = -h * 0.03;
             earLeftRot = -0.08;
             earRightRot = 0.22;
             break;
@@ -364,6 +371,8 @@ export function renderBlackCat(
             eyeShiftY = h * 0.02;
             // keep nose centered between the two eyes
             noseShiftX = eyeShiftX;
+            // match vertical nose offset of plain "down"
+            noseShiftY = h * 0.02;
             earLeftRot = -0.08;
             earRightRot = 0.04;
             break;
@@ -372,6 +381,8 @@ export function renderBlackCat(
             eyeShiftY = h * 0.02;
             // keep nose centered between the two eyes
             noseShiftX = eyeShiftX;
+            // match vertical nose offset of plain "down"
+            noseShiftY = h * 0.02;
             earLeftRot = -0.04;
             earRightRot = 0.08;
             break;
