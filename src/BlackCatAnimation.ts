@@ -120,10 +120,11 @@ function renderWhiskers(
     const shiftX = horizontalShift || 0;
     // make the inward pull stronger for large shifts but cap it relative to width
     const shiftAdj = Math.min(Math.abs(shiftX) * 1.1, width * 0.06);
+    // shared vertical baseline so 'side' and 'down' whiskers align vertically
+    const verticalWhiskerBase = -h * 0.1;
     // shiftAdj will shorten endpoints when the face/eyes are shifted
     if (mode === "side") {
-        // align side whiskers with eye vertical position
-        const base = -h * 0.18;
+        const base = verticalWhiskerBase;
         [-1, 0, 1].forEach((row) => {
             const wy = base + row * ws;
             cx.beginPath();
