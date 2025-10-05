@@ -23,7 +23,7 @@
  */
 
 import { Camera } from "./core/gameplay/Camera";
-import { getCenter, type Area } from "./core/math/Area";
+import { getCenter, includesPoint, type Area } from "./core/math/Area";
 import type { TimeStep } from "./core/time/TimeStep";
 import {
     canvas,
@@ -517,9 +517,12 @@ export class Level implements Area, Space {
                     continue;
                 }
 
-                if (o instanceof Bush && isBehind(this.player, o)) {
+                if (
+                    o instanceof Bush &&
+                    includesPoint(o, getCenter(this.player))
+                ) {
                     cx.save();
-                    cx.globalAlpha = 0.3;
+                    cx.globalAlpha = this.tileMap.getVisibility(this.player);
                     o.draw(time);
                     cx.restore();
                 } else {
@@ -574,9 +577,3 @@ export class Level implements Area, Space {
         renderGradient(canvas, cx, 0.9);
     }
 }
-
-const isBehind = (o: GameObject, obstacle: GameObject): boolean =>
-    o.y + o.height / 2 < obstacle.y + obstacle.height / 2 &&
-    obstacle.y - 4 * TILE_DRAW_HEIGHT < o.y &&
-    obstacle.x <= o.x &&
-    o.x + o.width <= obstacle.x + obstacle.width;
