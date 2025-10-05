@@ -49,6 +49,10 @@ export class BlackCat implements Animal {
     x: number = 0;
     y: number = 0;
 
+    // Display position used for smooth rendering (interpolates towards x/y)
+    displayX: number = 0;
+    displayY: number = 0;
+
     width: number = 12;
     height: number = 6;
 
@@ -62,6 +66,8 @@ export class BlackCat implements Animal {
     constructor(x: number, y: number, space: Space, mouse: Mouse) {
         this.x = x;
         this.y = y;
+        this.displayX = x;
+        this.displayY = y;
         this.ai = new CatAi(this, space, mouse, getDifficulty());
     }
 
@@ -84,6 +90,16 @@ export class BlackCat implements Animal {
     }
 
     draw(time: TimeStep): void {
+        // Smooth display position toward the actual physics position so
+        //            rendering appears more fluent without changing game physics.
+        //            Use an exponential smoothing based on frame delta (time.dt in ms).
+        //            Time constant ~120ms gives a soft but responsive smoothing.
+        const timeDelta = time.dt ?? 16;
+        const smoothTau = 120;
+        const alpha = 1 - Math.exp(-timeDelta / smoothTau);
+        this.displayX += (this.x - this.displayX) * alpha;
+        this.displayY += (this.y - this.displayY) * alpha;
+
         const mv = this.direction;
         const ax = Math.abs(mv.x);
         const ay = Math.abs(mv.y);
@@ -166,8 +182,8 @@ export class BlackCat implements Animal {
             ai.jumpFinishTime && time.t - ai.jumpFinishTime < dropDuration;
         if (!(ai.jumpTarget && ai.jumpFinishTime === 0) || isDropping) {
             renderBlackCat(
-                this.x,
-                this.y,
+                this.displayX,
+                this.displayY,
                 this.width,
                 facing,
                 eyesOpen,
