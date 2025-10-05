@@ -521,10 +521,29 @@ export class Level implements Area, Space {
                     o instanceof Bush &&
                     includesPoint(o, getCenter(this.player))
                 ) {
-                    cx.save();
-                    cx.globalAlpha = this.tileMap.getVisibility(this.player);
-                    o.draw(time);
-                    cx.restore();
+                    // Make bush transparent to the player unless the cat is
+                    // actively chasing and the chase target is inside this bush.
+                    const catAi = this.cat?.ai;
+                    const chaseTarget = catAi?.chaseTarget;
+                    const catIsChasing = !!catAi && catAi.isChasing;
+
+                    const targetInsideBush =
+                        catIsChasing && chaseTarget
+                            ? includesPoint(o, chaseTarget)
+                            : false;
+
+                    if (targetInsideBush) {
+                        // If the cat is chasing into this bush, keep it opaque so
+                        // the chase visually makes sense.
+                        o.draw(time);
+                    } else {
+                        cx.save();
+                        cx.globalAlpha = this.tileMap.getVisibility(
+                            this.player,
+                        );
+                        o.draw(time);
+                        cx.restore();
+                    }
                 } else {
                     o.draw(time);
                 }
