@@ -37,6 +37,12 @@ import { TILE_SIZE } from "./tiles";
 
 const SPEED = 0.001 * TILE_SIZE;
 
+// Mouse smoothing configuration. Set to 0 to disable smoothing (no display lag).
+export let MOUSE_SMOOTHING_TAU = 60; // ms
+export function setMouseSmoothingTau(t: number) {
+    MOUSE_SMOOTHING_TAU = t;
+}
+
 export class Mouse implements Animal {
     x: number;
     y: number;
@@ -56,10 +62,15 @@ export class Mouse implements Animal {
     private lastSpeed: number = 0; // used to modulate animations
     private lastStep: number = -1; // last integer step for sound timing
     private lastFacing: MouseFacing = "side"; // keep last facing direction when stopped
+    // Display position used for smooth rendering (interpolates towards x/y)
+    displayX: number = 0;
+    displayY: number = 0;
 
     constructor(x: number, y: number) {
         this.x = x;
         this.y = y;
+        this.displayX = x;
+        this.displayY = y;
     }
 
     getMovement(time: TimeStep): Vector {
@@ -100,6 +111,21 @@ export class Mouse implements Animal {
     }
 
     draw(time: TimeStep): void {
+        // Smooth display position toward the actual physics position so
+        // rendering appears more fluent without changing game physics.
+        // Use an exponential smoothing based on frame delta (time.dt in ms).
+        // Set MOUSE_SMOOTHING_TAU = 0 to disable smoothing entirely.
+        const timeDelta = time.dt ?? 16;
+        const smoothTau = MOUSE_SMOOTHING_TAU;
+        if (smoothTau <= 0) {
+            this.displayX = this.x;
+            this.displayY = this.y;
+        } else {
+            const alpha = 1 - Math.exp(-timeDelta / smoothTau);
+            this.displayX += (this.x - this.displayX) * alpha;
+            this.displayY += (this.y - this.displayY) * alpha;
+        }
+
         // Decide pose based on current movement
         const mv = this.movement;
         const ax = Math.abs(mv.x);
@@ -134,8 +160,8 @@ export class Mouse implements Animal {
 
         renderMouse(
             cx,
-            this.x,
-            this.y,
+            this.displayX,
+            this.displayY,
             this.width,
             facing,
             animation,

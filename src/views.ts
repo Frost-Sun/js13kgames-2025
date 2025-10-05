@@ -32,12 +32,35 @@ import {
     cx,
 } from "./graphics";
 import { renderText, TextSize } from "./text";
-import { renderBlackCat } from "./BlackCatAnimation";
+import { renderBlackCat, type BlackCatFacing } from "./BlackCatAnimation";
 import { renderGradient } from "./core/graphics/gradient";
 // renderGradient not used here on difficulty screen
 import type { TimeStep } from "./core/time/TimeStep";
 
-const startScreenAnim = { t: 0, thunderTimer: 0, nextThunder: 0 };
+type LookState = {
+    bias: number;
+    target: number;
+    timer: number;
+    nextChange: number;
+};
+
+const startScreenAnim: {
+    t: number;
+    thunderTimer: number;
+    nextThunder: number;
+    look: LookState;
+} = {
+    t: 0,
+    thunderTimer: 0,
+    nextThunder: 0,
+    // look: animates where the cat is looking; bias -1..1 (-1 = left, 0 = center, 1 = right)
+    look: {
+        bias: 0,
+        target: 0,
+        timer: 0,
+        nextChange: 2000 + Math.random() * 4000,
+    },
+};
 const readyViewAnim = { t: 0 };
 const gameOverAnim = { t: 0 };
 
@@ -45,6 +68,24 @@ export const updateStartScreen = (dt: number) => {
     startScreenAnim.t += dt;
     startScreenAnim.thunderTimer += dt;
     updateThunder(dt);
+    // update look state: occasionally pick a new target (-1 left, 0 center, 1 right)
+    const look = startScreenAnim.look;
+    look.timer += dt;
+    if (look.timer >= look.nextChange) {
+        look.timer = 0;
+        look.nextChange = 2000 + Math.random() * 4000; // 2..6s until next change
+        const r = Math.random();
+        if (r < 0.6) {
+            look.target = 0; // mostly neutral
+        } else if (r < 0.8) {
+            look.target = -1;
+        } else {
+            look.target = 1;
+        }
+    }
+    // smooth towards target; dt is ms so use ~800ms smoothing
+    const alpha = Math.min(1, dt / 800);
+    look.bias += (look.target - look.bias) * alpha;
 };
 
 export const updateReadyView = (dt: number) => {
@@ -71,17 +112,20 @@ export const drawReadyView = (): void => {
 export const drawStartScreen = (time: TimeStep): void => {
     clearCanvas("rgb(20, 20, 20)");
 
-    // Draw the same subtle radial gradient used for the backdrop so the
-    // full Start screen keeps the intended lighting.
     renderGradient(canvas, cx, 0.9);
 
     // Animate cat bobbing up and down
     const bob = Math.sin(startScreenAnim.t * 0.003) * canvas.height * 0.02;
+    // determine facing from current look bias (-1..1)
+    const lookBias = startScreenAnim.look ? startScreenAnim.look.bias : 0;
+    let facingFromBias: BlackCatFacing = "down";
+    if (lookBias > 0.33) facingFromBias = "down-right";
+    else if (lookBias < -0.33) facingFromBias = "down-left";
     renderBlackCat(
         canvas.width / 2 - canvas.width * 0.18,
         canvas.height / 2 + canvas.width * 0.17 + bob,
         canvas.width * 0.36,
-        "down",
+        facingFromBias,
         true,
         1,
         0,
@@ -118,9 +162,6 @@ export const drawStartScreen = (time: TimeStep): void => {
 export const drawStartBackdrop = (time: TimeStep): void => {
     clearCanvas("rgb(20, 20, 20)");
 
-    // Draw a subtle radial gradient over the ground to add depth behind
-    // the cat. Use a reduced opacity so rain/thunder and the cat remain
-    // clearly visible.
     renderGradient(canvas, cx, 0.9);
 
     const bob = Math.sin(startScreenAnim.t * 0.003) * canvas.height * 0.02;
@@ -129,14 +170,13 @@ export const drawStartBackdrop = (time: TimeStep): void => {
         canvas.height / 2 + canvas.width * 0.17 + bob,
         canvas.width * 0.36,
         "down",
-        true,
+        false,
         1,
         0,
         0,
         { t: startScreenAnim.t, dt: 0 },
     );
 
-    // Keep the environmental effects
     drawRain(time.t, canvas.width, canvas.height, 0.2);
     drawThunder();
 };
