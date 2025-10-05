@@ -88,15 +88,32 @@ export class BlackCat implements Animal {
         const ax = Math.abs(mv.x);
         const ay = Math.abs(mv.y);
 
+        // Choose facing based on dominant movement axis. Only use diagonal
+        // facings when both components are comparable (ratio threshold).
         let facing: BlackCatFacing = "down";
-        if (ax > 0.01 && ay > 0.01) {
-            if (mv.y < 0) facing = mv.x > 0 ? "up-right" : "up-left";
-            else facing = mv.x > 0 ? "down-right" : "down-left";
-        } else if (ay > ax && ay > 0.01) {
-            facing = mv.y < 0 ? "up" : "down";
+        const small = 0.01;
+        if (ax < small && ay < small) {
+            // nearly stationary: keep default "down"
+            facing = "down";
         } else {
-            facing = "side";
-            this.dir = mv.x >= 0 ? 1 : -1;
+            const max = Math.max(ax, ay);
+            const min = Math.min(ax, ay);
+            const ratio = min / max;
+            const DIAG_RATIO = 0.6; // how similar x/y must be to consider diagonal
+
+            if (ratio > DIAG_RATIO) {
+                // comparable components -> diagonal facing
+                if (mv.y < 0) facing = mv.x > 0 ? "up-right" : "up-left";
+                else facing = mv.x > 0 ? "down-right" : "down-left";
+            } else {
+                // dominant axis -> pure up/down or side
+                if (ax > ay) {
+                    facing = "side";
+                    this.dir = mv.x >= 0 ? 1 : -1;
+                } else {
+                    facing = mv.y < 0 ? "up" : "down";
+                }
+            }
         }
 
         const eyesOpen: boolean = this.ai.isAlert;
