@@ -76,7 +76,7 @@ const SIGHT_ACCURACY_LOWERING_DISTANCE = 6.5 * TILE_SIZE;
 // Cat's field of view in radians (e.g., 160 degrees)
 const CAT_FOV = (160 * Math.PI) / 180;
 
-export const NORMAL_SIGHT_THRESHOLD = 0.35;
+export const NORMAL_SIGHT_THRESHOLD = 0.3;
 export const ACCURATE_SIGHT_THRESHOLD = 0.12;
 
 export const HEAR_THRESHOLD = 0.18;
@@ -112,7 +112,7 @@ function getRandomDirection(): Vector {
 }
 
 function getSightAccuracy(d: number) {
-    return clamp(1 - d / SIGHT_ACCURACY_LOWERING_DISTANCE, 0.35, 1);
+    return clamp(1.5 - d / SIGHT_ACCURACY_LOWERING_DISTANCE, 0.35, 1);
 }
 
 function getMoveFactor(m: Mouse) {
@@ -313,7 +313,7 @@ export class CatAi {
 
         sightAccuracyDebug = seen?.accuracy ?? 0;
 
-        if (seen && seen.accuracy > this.sightThreshold) {
+        if (seen && seen.accuracy >= this.sightThreshold) {
             // Only trigger a meow when we transition from no sight
             // observation to having one. This prevents repeated meows while
             // already chasing the same sighting. Also mark chaseActive so
