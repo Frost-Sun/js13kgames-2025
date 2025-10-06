@@ -279,6 +279,18 @@ export class CatAi {
         );
     }
 
+    // Public accessor so other systems can know if the cat is actively
+    // chasing a sighting and where that chase is directed.
+    public get isChasing(): boolean {
+        return !!this.lastSightObservation;
+    }
+
+    public get chaseTarget(): Vector | null {
+        return this.lastSightObservation
+            ? this.lastSightObservation.position
+            : null;
+    }
+
     constructor(
         private host: Animal,
         private space: Space,

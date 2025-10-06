@@ -23,7 +23,7 @@
  */
 
 import { Camera } from "./core/gameplay/Camera";
-import { getCenter, type Area } from "./core/math/Area";
+import { getCenter, includesPoint, type Area } from "./core/math/Area";
 import type { TimeStep } from "./core/time/TimeStep";
 import {
     canvas,
@@ -62,6 +62,10 @@ const HORIZON_HEIGHT_OF_CANVAS = 0.25;
 const NIGHT_FADE_DURATION = 240000; // 4 minutes in ms
 
 let GAME_START_TIME = performance.now();
+
+// Fixed alpha to use when the player is under a bush (keep it constant)
+// Increase this value to make the bush less transparent (1 = opaque).
+const BUSH_UNDER_ALPHA = 0.6;
 
 export function resetGameStartTime() {
     GAME_START_TIME = performance.now();
@@ -509,6 +513,18 @@ export class Level implements Area, Space {
                 (a, b) => a.y + a.height / 2 - (b.y + b.height / 2),
             );
 
+            // Determine if the player is currently under any bush so we can
+            // optionally make the mouse transparent instead of the bush.
+            const playerCenter = getCenter(this.player);
+            const playerTileIndex = getTileIndexOfObject(this.player);
+            let bushUnderPlayer: Bush | null = null;
+            for (const obj of this.tileMap.getNearbyObjects(playerTileIndex)) {
+                if (obj instanceof Bush && includesPoint(obj, playerCenter)) {
+                    bushUnderPlayer = obj;
+                    break;
+                }
+            }
+
             for (let i = 0; i < objectsToDraw.length; i++) {
                 const o = objectsToDraw[i];
 
@@ -517,14 +533,84 @@ export class Level implements Area, Space {
                     continue;
                 }
 
-                if (o instanceof Bush && isBehind(this.player, o)) {
-                    cx.save();
-                    cx.globalAlpha = 0.3;
-                    o.draw(time);
-                    cx.restore();
-                } else {
-                    o.draw(time);
+                // If this is a bush that the player is under, draw the bush
+                // slightly transparent so the player can be seen through it.
+                if (
+                    o instanceof Bush &&
+                    bushUnderPlayer &&
+                    includesPoint(o, playerCenter)
+                ) {
+                    // If the cat is actively chasing and its chase target lies
+                    // inside this bush, keep the bush opaque so the chase is
+                    // visually clear. Otherwise use a fixed semi-transparent
+                    // rendering so the player can be seen under it.
+                    const catAi = this.cat?.ai;
+                    const catIsChasing = !!catAi && catAi.isChasing;
+                    const chaseTarget = catAi?.chaseTarget ?? null;
+                    const jumpTarget =
+                        (
+                            this.cat?.ai as unknown as {
+                                jumpTarget?: { x: number; y: number };
+                            }
+                        )?.jumpTarget ?? null;
+
+                    const targetInsideBush =
+                        // If chasing, and the chase target is inside the bush
+                        (catIsChasing && chaseTarget
+                            ? includesPoint(o, chaseTarget)
+                            : false) ||
+                        // Or if the cat's jump target (when jumping) is inside
+                        // the bush — this covers cases where the AI set a
+                        // landing point instead of the sighting.
+                        (jumpTarget ? includesPoint(o, jumpTarget) : false);
+
+                    if (targetInsideBush) {
+                        o.draw(time);
+                    } else {
+                        cx.save();
+                        cx.globalAlpha = BUSH_UNDER_ALPHA;
+                        o.draw(time);
+                        cx.restore();
+                    }
+
+                    continue;
                 }
+
+                // Keep the mouse visible if the cat is actively chasing into
+                // that same bush.
+                if (o instanceof Mouse) {
+                    const catAi = this.cat?.ai;
+                    const catIsChasing = !!catAi && catAi.isChasing;
+                    const chaseTarget = catAi?.chaseTarget ?? null;
+
+                    const targetInsideBush =
+                        catIsChasing && chaseTarget && bushUnderPlayer
+                            ? includesPoint(bushUnderPlayer, chaseTarget)
+                            : false;
+
+                    if (bushUnderPlayer && !targetInsideBush) {
+                        // Dynamically darken the mouse based on tile visibility so
+                        // lower visibility (deeper hiding) results in a darker
+                        // rendering while still keeping the player visible.
+                        const vis = this.tileMap.getVisibility(this.player);
+                        // Map visibility [0..1] -> brightness [0.4..1.0] and clamp
+                        const raw = 0.4 + vis * 0.6;
+                        const clamped = Math.min(1, raw);
+                        const brightness = Math.max(0.2, clamped);
+                        cx.save();
+                        cx.filter = `brightness(${brightness})`;
+                        o.draw(time);
+                        cx.restore();
+                    } else {
+                        o.draw(time);
+                    }
+
+                    continue;
+                }
+
+                // Draw everything else normally (including bushes — we no
+                // longer change their alpha here).
+                o.draw(time);
             }
         });
 
@@ -574,9 +660,3 @@ export class Level implements Area, Space {
         renderGradient(canvas, cx, 0.9);
     }
 }
-
-const isBehind = (o: GameObject, obstacle: GameObject): boolean =>
-    o.y + o.height / 2 < obstacle.y + obstacle.height / 2 &&
-    obstacle.y - 4 * TILE_DRAW_HEIGHT < o.y &&
-    obstacle.x <= o.x &&
-    o.x + o.width <= obstacle.x + obstacle.width;
