@@ -320,6 +320,11 @@ export class CatAi {
     }
 
     private observe(time: TimeStep, hostCenter: Vector): void {
+        if (this.fenceState === FenceState.Jumped && !this.hasLanded) {
+            // Skip observations during jump.
+            return;
+        }
+
         const seen = this.lookForMouse(time, hostCenter);
         let heard: Observation | null = null;
 
@@ -386,14 +391,6 @@ export class CatAi {
             lastObservation &&
             lastObservation.accuracy > FENCE_NOTICE_THRESHOLD
         ) {
-            this.lastSightObservation = {
-                ...lastObservation,
-                position: {
-                    x: lastObservation.position.x,
-                    // Anticipate that the mouse is going forward
-                    y: lastObservation.position.y - TILE_DRAW_HEIGHT * 8,
-                },
-            };
             this.fenceState = FenceState.Noticed;
             this.noticedTime = time.t;
             playTune(SFX_MEOW);
