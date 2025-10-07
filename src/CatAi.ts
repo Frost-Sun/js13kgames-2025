@@ -65,7 +65,7 @@ const FENCE_HEARD_THRESHOLD = 0.06;
 const FENCE_NOTICE_THRESHOLD = 0.25;
 
 export const JUMP_DURATION: number = 1500; // ms
-const STILL_AFTER_JUMP_DURATION = 1000;
+const STILL_AFTER_JUMP_DURATION = 500;
 
 const HEARING_PERIOD = 200;
 const HEAR_OBSERVATION_BUFFER_TIME = 1500;
@@ -301,7 +301,7 @@ export class CatAi {
         this.host.x = INITIAL_CAT_POS.x;
         this.host.y = INITIAL_CAT_POS.y;
         this.host.direction = { x: 0, y: 1 };
-        this.speedMultiplier = this.difficulty === Difficulty.Easy ? 0.6 : 1.0;
+        this.speedMultiplier = this.difficulty === Difficulty.Easy ? 0.63 : 0.9;
     }
 
     getMovement(time: TimeStep): Vector {
@@ -320,6 +320,11 @@ export class CatAi {
     }
 
     private observe(time: TimeStep, hostCenter: Vector): void {
+        if (this.fenceState === FenceState.Jumped && !this.hasLanded) {
+            // Skip observations during jump.
+            return;
+        }
+
         const seen = this.lookForMouse(time, hostCenter);
         let heard: Observation | null = null;
 
@@ -348,7 +353,12 @@ export class CatAi {
                     : // On the fence
                       {
                           x: this.space.x + this.space.width / 2,
-                          y: this.space.y,
+                          // Fixed y position so that fence hearing thresholds work the same with
+                          // different level sizes.
+                          y:
+                              this.space.y +
+                              this.space.height -
+                              50 * TILE_DRAW_HEIGHT,
                       };
 
             heard = this.space.listen(time, listenerPosition);
@@ -386,14 +396,6 @@ export class CatAi {
             lastObservation &&
             lastObservation.accuracy > FENCE_NOTICE_THRESHOLD
         ) {
-            this.lastSightObservation = {
-                ...lastObservation,
-                position: {
-                    x: lastObservation.position.x,
-                    // Anticipate that the mouse is going forward
-                    y: lastObservation.position.y - TILE_DRAW_HEIGHT * 8,
-                },
-            };
             this.fenceState = FenceState.Noticed;
             this.noticedTime = time.t;
             playTune(SFX_MEOW);
