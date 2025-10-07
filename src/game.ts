@@ -98,7 +98,7 @@ let level: Level;
 // Highscore management per difficulty
 function getHighscoreKey(): string {
     // Base key for difficulty-classified highscores
-    const base = "FS-Midnight_Paws-DC";
+    const base = "FS-Midnight_Paws-DC-v1.2";
     return getDifficulty() === Difficulty.Easy ? base + "-Easy" : base;
 }
 function getHighscore(): number {
