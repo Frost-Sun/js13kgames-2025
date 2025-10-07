@@ -65,7 +65,7 @@ const FENCE_HEARD_THRESHOLD = 0.06;
 const FENCE_NOTICE_THRESHOLD = 0.25;
 
 export const JUMP_DURATION: number = 1500; // ms
-const STILL_AFTER_JUMP_DURATION = 1000;
+const STILL_AFTER_JUMP_DURATION = 500;
 
 const HEARING_PERIOD = 200;
 const HEAR_OBSERVATION_BUFFER_TIME = 1500;
@@ -353,7 +353,12 @@ export class CatAi {
                     : // On the fence
                       {
                           x: this.space.x + this.space.width / 2,
-                          y: this.space.y,
+                          // Fixed y position so that fence hearing thresholds work the same with
+                          // different level sizes.
+                          y:
+                              this.space.y +
+                              this.space.height -
+                              50 * TILE_DRAW_HEIGHT,
                       };
 
             heard = this.space.listen(time, listenerPosition);
