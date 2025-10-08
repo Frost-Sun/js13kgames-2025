@@ -511,7 +511,7 @@ export class CatAi {
             // Place the visible cat slightly lower than the raw target center so
             // the sprite's feet align visually with the preview ellipse.
             this.host.y = this.jumpTarget.y + h * 0.22;
-            
+
             this.jumpTarget = null;
             this.hasLanded = true;
             return ZERO_VECTOR;
