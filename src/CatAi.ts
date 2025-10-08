@@ -501,15 +501,8 @@ export class CatAi {
             this.jumpTarget
         ) {
             // Show cat at landing position after drop, aligned with shadow.
-            // jumpMovement treats jumpTarget as the center point, and during
-            // motion sets o.x = center.x - o.width/2. Use the same convention
-            // here so landing matches the preview ellipse.
-            // Show cat at landing position after drop, aligned with shadow.
-            // Compute renderer visual height from width and renderer aspect ratio
             const h = this.host.width / CAT_ASPECT_RATIO;
             this.host.x = this.jumpTarget.x - this.host.width / 2;
-            // Place the visible cat slightly lower than the raw target center so
-            // the sprite's feet align visually with the preview ellipse.
             this.host.y = this.jumpTarget.y + h * 0.22;
 
             this.jumpTarget = null;
