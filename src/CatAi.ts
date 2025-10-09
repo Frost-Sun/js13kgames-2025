@@ -42,6 +42,7 @@ import type { Mouse } from "./Mouse";
 import type { Observation, Space } from "./Space";
 import { Difficulty } from "./settings";
 import { TILE_DRAW_HEIGHT, TILE_SIZE } from "./tiles";
+import { CAT_ASPECT_RATIO } from "./BlackCatAnimation";
 import {
     playTune,
     SFX_CHASE,
@@ -59,12 +60,12 @@ export let hearAccuracyDebug: number = 0;
 const INITIAL_CAT_POS: Vector = { x: -1000, y: -1000 };
 
 const GOTO_FENCE_DURATION = 800;
-const NOTICE_DURATION = 1500;
+const NOTICE_DURATION = 800;
 
 const FENCE_HEARD_THRESHOLD = 0.06;
 const FENCE_NOTICE_THRESHOLD = 0.25;
 
-export const JUMP_DURATION: number = 1500; // ms
+export const JUMP_DURATION: number = 2200; // ms
 const STILL_AFTER_JUMP_DURATION = 500;
 
 const HEARING_PERIOD = 200;
@@ -434,13 +435,17 @@ export class CatAi {
             return null;
         }
 
-        // Set jumpTarget only when jump starts
+        // Set jumpStartTime when the jump begins. Only create a new
+        // jumpTarget if one wasn't already provided earlier (e.g., by
+        // stayOnTheFence) so the preview remains authoritative.
         if (!this.jumpStartTime) {
             this.jumpStartTime = time.t;
-            this.jumpTarget = {
-                x: this.mouse.x + randomMinMax(-0.5, 0.5) * TILE_SIZE,
-                y: this.mouse.y - 5 * TILE_DRAW_HEIGHT,
-            };
+            if (!this.jumpTarget) {
+                this.jumpTarget = {
+                    x: this.mouse.x + randomMinMax(-0.5, 0.5) * TILE_SIZE,
+                    y: this.mouse.y - 5 * TILE_DRAW_HEIGHT,
+                };
+            }
         }
 
         // Only draw shadow and move cat while actively jumping
@@ -480,7 +485,12 @@ export class CatAi {
             if (this.jumpTarget) {
                 // Start higher above the target, drop down
                 const startY = this.jumpTarget.y - 120;
-                const endY = this.jumpTarget.y - this.host.height / 2;
+                // Compute renderer visual height from width and renderer aspect ratio
+                const h = this.host.width / CAT_ASPECT_RATIO;
+                // Slight downward adjustment so the visible cat sits a bit
+                // lower than the raw jumpTarget center (tweak visually).
+                const landingYOffset = h * 0.22;
+                const endY = this.jumpTarget.y + landingYOffset;
                 const y = startY + (endY - startY) * ease;
                 this.host.x = this.jumpTarget.x - this.host.width / 2;
                 this.host.y = y;
@@ -492,11 +502,11 @@ export class CatAi {
             time.t - this.jumpFinishTime >= dropDuration &&
             this.jumpTarget
         ) {
-            // Show cat at landing position after drop, aligned with shadow
-            const width = this.host.width;
-            const h = width / (3 / 4); // CAT_ASPECT_RATIO
-            this.host.x = this.jumpTarget.x;
-            this.host.y = this.jumpTarget.y + h * 0.1;
+            // Show cat at landing position after drop, aligned with shadow.
+            const h = this.host.width / CAT_ASPECT_RATIO;
+            this.host.x = this.jumpTarget.x - this.host.width / 2;
+            this.host.y = this.jumpTarget.y + h * 0.22;
+
             this.jumpTarget = null;
             this.hasLanded = true;
             return ZERO_VECTOR;

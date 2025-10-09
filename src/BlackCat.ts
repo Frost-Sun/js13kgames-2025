@@ -31,7 +31,6 @@ import {
 } from "././BlackCatAnimation";
 import { cx } from "./graphics";
 import { CatAi, JUMP_DURATION } from "./CatAi";
-import { getDifficulty } from "./settings";
 import {
     length,
     multiply,
@@ -68,7 +67,7 @@ export class BlackCat implements Animal {
         this.y = y;
         this.displayX = x;
         this.displayY = y;
-        this.ai = new CatAi(this, space, mouse, getDifficulty());
+        this.ai = new CatAi(this, space, mouse);
     }
 
     getMovement(time: TimeStep): Vector {
@@ -153,25 +152,44 @@ export class BlackCat implements Animal {
         const inAir =
             (jumpTarget && !this.ai.jumpFinishTime) ||
             (this.ai.jumpFinishTime && time.t - this.ai.jumpFinishTime < 120);
-        if (jumpTarget && inAir) {
+        if (jumpTarget) {
             cx.save();
             const width = this.width;
             const h = width / CAT_ASPECT_RATIO;
-            cx.fillStyle = "rgba(0,0,0,0.15)";
+
+            // Draw the red outline at full size whenever a jump target exists
+            // so the preview appears already while the cat is on the fence.
+            cx.strokeStyle = "rgba(255,0,0,0.5)";
+            cx.lineWidth = 1;
             cx.beginPath();
             cx.ellipse(
-                jumpTarget.x + width / 2,
+                jumpTarget.x,
                 jumpTarget.y + h * 0.1,
-                width * 0.45 * shadowScale,
-                h * 0.24 * shadowScale,
+                width * 0.45,
+                h * 0.24,
                 0,
                 0,
                 Math.PI * 2,
             );
-            cx.fill();
-            cx.strokeStyle = "rgba(255,0,0,0.5)";
-            cx.lineWidth = 1;
             cx.stroke();
+
+            // Draw the filled shadow only while the cat is actually in the air
+            // and scale it by shadowScale during the jump arc.
+            if (inAir) {
+                cx.fillStyle = "rgba(0,0,0,0.15)";
+                cx.beginPath();
+                cx.ellipse(
+                    jumpTarget.x,
+                    jumpTarget.y + h * 0.1,
+                    width * 0.45 * shadowScale,
+                    h * 0.24 * shadowScale,
+                    0,
+                    0,
+                    Math.PI * 2,
+                );
+                cx.fill();
+            }
+
             cx.restore();
         }
 
