@@ -84,6 +84,7 @@ export class Level implements Area, Space {
         this.animals = cat ? [player, cat] : [player];
         this.camera = new Camera(this, this.levelDrawArea);
         this.camera.zoom = 15;
+        this.camera.yAdjust = -(1 / 4);
         this.camera.follow(this.player);
     }
     private horizonDrawArea = new PartialArea(

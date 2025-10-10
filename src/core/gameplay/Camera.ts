@@ -39,6 +39,10 @@ export class Camera {
     zoom = 1;
     visibleAreaHeight?: number;
 
+    // Adjusts the camera y position, relative to the visible level
+    // area.
+    yAdjust: number = 0;
+
     private target: Area | null = null;
     // private transition: Transition | null = null;
 
@@ -133,11 +137,12 @@ export class Camera {
     }
 
     private followFrame(gameObject: Area): void {
-        let x = gameObject.x + gameObject.width;
-        let y = gameObject.y + gameObject.height;
-
         const viewAreaWidth = this.view.width / this.zoom;
         const viewAreaHeight = this.view.height / this.zoom;
+
+        let x = gameObject.x + gameObject.width;
+        let y =
+            gameObject.y + gameObject.height + viewAreaHeight * this.yAdjust;
 
         // Keep camera within level in x-direction.
         if (x - viewAreaWidth / 2 < this.level.x) {
