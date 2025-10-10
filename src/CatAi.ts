@@ -307,7 +307,7 @@ export class CatAi {
         this.host.x = INITIAL_CAT_POS.x;
         this.host.y = INITIAL_CAT_POS.y;
         this.host.direction = { x: 0, y: 1 };
-        this.speedMultiplier = this.difficulty === Difficulty.Easy ? 0.45 : 0.8;
+        this.speedMultiplier = this.difficulty === Difficulty.Easy ? 0.5 : 0.8;
     }
 
     getMovement(time: TimeStep): Vector {
