@@ -192,6 +192,11 @@ function reduceObservations(
     };
 }
 
+const getJumpTarget = (mouse: GameObject): Vector => ({
+    x: mouse.x + randomMinMax(-0.5, 0.5) * TILE_SIZE,
+    y: mouse.y - 10 * TILE_DRAW_HEIGHT,
+});
+
 function jumpMovement(
     time: TimeStep,
     startTime: number,
@@ -412,10 +417,7 @@ export class CatAi {
         ) {
             // Set jumpTarget as soon as Noticed state is reached, so shadow appears sooner
             if (!this.jumpTarget) {
-                this.jumpTarget = {
-                    x: this.mouse.x + randomMinMax(-0.5, 0.5) * TILE_SIZE,
-                    y: this.mouse.y - 5 * TILE_DRAW_HEIGHT,
-                };
+                this.jumpTarget = getJumpTarget(this.mouse);
             }
             // Position the cat such that it appears coming from the fence
             this.host.x = this.mouse.x - this.host.width * 0.5;
@@ -441,10 +443,7 @@ export class CatAi {
         if (!this.jumpStartTime) {
             this.jumpStartTime = time.t;
             if (!this.jumpTarget) {
-                this.jumpTarget = {
-                    x: this.mouse.x + randomMinMax(-0.5, 0.5) * TILE_SIZE,
-                    y: this.mouse.y - 5 * TILE_DRAW_HEIGHT,
-                };
+                this.jumpTarget = getJumpTarget(this.mouse);
             }
         }
 
