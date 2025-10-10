@@ -192,9 +192,12 @@ function reduceObservations(
     };
 }
 
-const getJumpTarget = (mouse: GameObject): Vector => ({
+const getJumpTarget = (mouse: Mouse): Vector => ({
     x: mouse.x + randomMinMax(-0.5, 0.5) * TILE_SIZE,
-    y: mouse.y - 12 * TILE_DRAW_HEIGHT,
+    y:
+        mouse.y -
+        10 * TILE_DRAW_HEIGHT +
+        (mouse.movement.y / 0.18) * 5 * TILE_DRAW_HEIGHT,
 });
 
 function jumpMovement(
