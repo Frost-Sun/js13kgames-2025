@@ -80,8 +80,8 @@ const CAT_FOV = (160 * Math.PI) / 180;
 export const NORMAL_SIGHT_THRESHOLD = 0.3;
 export const ACCURATE_SIGHT_THRESHOLD = 0.15;
 
-export const HEAR_THRESHOLD = 0.18;
-export const ACCURATE_HEAR_THRESHOLD = 0.1;
+export const HEAR_THRESHOLD = 0.28;
+export const ACCURATE_HEAR_THRESHOLD = 0.2;
 
 const HEAR_OBSERVATION_IGNORE_TIME = 3500;
 
