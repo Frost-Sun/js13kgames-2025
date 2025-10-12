@@ -94,7 +94,7 @@ const LOOK_AROUND_INTERVAL = 1500;
 
 // Speeds relative to the actual speed in BlackCat.ts.
 const SPEED_IDLE = 0.4;
-const SPEED_VAGUE_OBSERVATION = 0.8;
+const SPEED_HEAR_OBSERVATION = 0.5;
 const SPEED_CHASE = 1.0;
 
 const DIRECTIONS: readonly Vector[] = [
@@ -130,7 +130,7 @@ function getPointBetween(from: Vector, to: Vector): Vector {
     const difference = subtract(to, from),
         dist = length(difference),
         direction = normalize(difference);
-    return add(from, multiply(direction, dist * 0.5));
+    return add(from, multiply(direction, dist * 0.35));
 }
 
 function better(
@@ -583,22 +583,15 @@ export class CatAi {
             }
 
             this.isAlert = true;
-            const d = distance(
+            const target = getPointBetween(
                 hostCenter,
                 this.lastAccurateHearObservation.position,
             );
-            const target =
-                d < TILE_SIZE
-                    ? this.lastAccurateHearObservation.position
-                    : getPointBetween(
-                          hostCenter,
-                          this.lastAccurateHearObservation.position,
-                      );
 
             return this.goTo(
                 target,
                 hostCenter,
-                SPEED_VAGUE_OBSERVATION * this.speedMultiplier,
+                SPEED_HEAR_OBSERVATION * this.speedMultiplier,
             );
         }
 
