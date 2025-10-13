@@ -548,12 +548,7 @@ export class Level implements Area, Space {
                     const catAi = this.cat?.ai;
                     const catIsChasing = !!catAi && catAi.isChasing;
                     const chaseTarget = catAi?.chaseTarget ?? null;
-                    const jumpTarget =
-                        (
-                            this.cat?.ai as unknown as {
-                                jumpTarget?: { x: number; y: number };
-                            }
-                        )?.jumpTarget ?? null;
+                    const jumpTarget = catAi?.jumpTarget;
 
                     const targetInsideBush =
                         // If chasing, and the chase target is inside the bush
