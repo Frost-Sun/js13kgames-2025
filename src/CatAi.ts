@@ -130,7 +130,7 @@ function getPointBetween(from: Vector, to: Vector): Vector {
     const difference = subtract(to, from),
         dist = length(difference),
         direction = normalize(difference);
-    return add(from, multiply(direction, dist * 0.35));
+    return add(from, multiply(direction, dist * 0.5));
 }
 
 function better(
@@ -243,7 +243,6 @@ export enum FenceState {
 }
 
 export class CatAi {
-    isAlert: boolean = false;
     fenceState: FenceState = FenceState.Nothing;
     jumpTarget: Vector | null = null;
     jumpFinishTime: number = 0;
@@ -266,6 +265,8 @@ export class CatAi {
 
     private stopToListenStartTime: number = 0;
     private lastAccurateHearObservation: Observation | null = null;
+
+    private followHearObservationTarget: Vector | null = null;
 
     // Tracks whether we've already played a meow for the current chase cycle.
     private meowPlayed: boolean = false;
@@ -290,14 +291,18 @@ export class CatAi {
 
     // Public accessor so other systems can know if the cat is actively
     // chasing a sighting and where that chase is directed.
-    public get isChasing(): boolean {
+    get isChasing(): boolean {
         return !!this.lastSightObservation;
     }
 
-    public get chaseTarget(): Vector | null {
+    get chaseTarget(): Vector | null {
         return this.lastSightObservation
             ? this.lastSightObservation.position
             : null;
+    }
+
+    get isAlert(): boolean {
+        return !!this.followHearObservationTarget;
     }
 
     constructor(
@@ -573,29 +578,38 @@ export class CatAi {
     ): Vector | null {
         if (
             !this.stopToListenStartTime &&
+            !this.followHearObservationTarget &&
             this.lastAccurateHearObservation &&
             time.t - this.lastAccurateHearObservation.t <
                 HEAR_OBSERVATION_IGNORE_TIME
         ) {
-            if (this.idleTarget) {
-                // Dont always go back to the same direction after following the mouse.
-                this.idleTarget = null;
-            }
-
-            this.isAlert = true;
             const target = getPointBetween(
                 hostCenter,
                 this.lastAccurateHearObservation.position,
             );
+            this.followHearObservationTarget = target;
 
-            return this.goTo(
-                target,
+            if (this.idleTarget) {
+                // Dont always go back to the same direction after following the mouse.
+                this.idleTarget = null;
+            }
+        }
+
+        if (this.followHearObservationTarget) {
+            const movement = this.goTo(
+                this.followHearObservationTarget,
                 hostCenter,
                 SPEED_HEAR_OBSERVATION * this.speedMultiplier,
             );
+
+            if (!movement) {
+                this.followHearObservationTarget = null;
+                this.lastAccurateHearObservation = null;
+            }
+
+            return movement;
         }
 
-        this.isAlert = false;
         return null;
     }
 
