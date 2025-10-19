@@ -78,10 +78,10 @@ const SIGHT_ACCURACY_LOWERING_DISTANCE = 6.5 * TILE_SIZE;
 const CAT_FOV = (160 * Math.PI) / 180;
 
 export const NORMAL_SIGHT_THRESHOLD = 0.3;
-export const ACCURATE_SIGHT_THRESHOLD = 0.15;
+export const ACCURATE_SIGHT_THRESHOLD = 0.2;
 
-export const HEAR_THRESHOLD = 0.18;
-export const ACCURATE_HEAR_THRESHOLD = 0.1;
+export const HEAR_THRESHOLD = 0.28;
+export const ACCURATE_HEAR_THRESHOLD = 0.2;
 
 const HEAR_OBSERVATION_IGNORE_TIME = 3500;
 
@@ -94,7 +94,7 @@ const LOOK_AROUND_INTERVAL = 1500;
 
 // Speeds relative to the actual speed in BlackCat.ts.
 const SPEED_IDLE = 0.4;
-const SPEED_VAGUE_OBSERVATION = 0.8;
+const SPEED_HEAR_OBSERVATION = 0.5;
 const SPEED_CHASE = 1.0;
 
 const DIRECTIONS: readonly Vector[] = [
@@ -117,7 +117,7 @@ function getSightAccuracy(d: number) {
 }
 
 function getMoveFactor(m: Mouse) {
-    return clamp(length(m.movement) / 0.16, 0.3, 1);
+    return clamp(length(m.movement) / 0.18, 0.32, 1);
 }
 
 function getRandomPosition(s: Space): Vector {
@@ -192,6 +192,14 @@ function reduceObservations(
     };
 }
 
+const getJumpTarget = (mouse: Mouse): Vector => ({
+    x: mouse.x + randomMinMax(-0.5, 0.5) * TILE_SIZE,
+    y:
+        mouse.y -
+        10 * TILE_DRAW_HEIGHT +
+        (mouse.movement.y / 0.18) * 5 * TILE_DRAW_HEIGHT,
+});
+
 function jumpMovement(
     time: TimeStep,
     startTime: number,
@@ -235,7 +243,6 @@ export enum FenceState {
 }
 
 export class CatAi {
-    isAlert: boolean = false;
     fenceState: FenceState = FenceState.Nothing;
     jumpTarget: Vector | null = null;
     jumpFinishTime: number = 0;
@@ -258,6 +265,8 @@ export class CatAi {
 
     private stopToListenStartTime: number = 0;
     private lastAccurateHearObservation: Observation | null = null;
+
+    private followHearObservationTarget: Vector | null = null;
 
     // Tracks whether we've already played a meow for the current chase cycle.
     private meowPlayed: boolean = false;
@@ -282,14 +291,18 @@ export class CatAi {
 
     // Public accessor so other systems can know if the cat is actively
     // chasing a sighting and where that chase is directed.
-    public get isChasing(): boolean {
+    get isChasing(): boolean {
         return !!this.lastSightObservation;
     }
 
-    public get chaseTarget(): Vector | null {
+    get chaseTarget(): Vector | null {
         return this.lastSightObservation
             ? this.lastSightObservation.position
             : null;
+    }
+
+    get isAlert(): boolean {
+        return !!this.followHearObservationTarget;
     }
 
     constructor(
@@ -302,7 +315,7 @@ export class CatAi {
         this.host.x = INITIAL_CAT_POS.x;
         this.host.y = INITIAL_CAT_POS.y;
         this.host.direction = { x: 0, y: 1 };
-        this.speedMultiplier = this.difficulty === Difficulty.Easy ? 0.63 : 0.9;
+        this.speedMultiplier = this.difficulty === Difficulty.Easy ? 0.5 : 0.8;
     }
 
     getMovement(time: TimeStep): Vector {
@@ -331,7 +344,7 @@ export class CatAi {
 
         sightAccuracyDebug = seen?.accuracy ?? 0;
 
-        if (seen && seen.accuracy >= this.sightThreshold) {
+        if (seen && seen.accuracy > this.sightThreshold) {
             // Only trigger a meow when we transition from no sight
             // observation to having one. This prevents repeated meows while
             // already chasing the same sighting. Also mark chaseActive so
@@ -412,10 +425,7 @@ export class CatAi {
         ) {
             // Set jumpTarget as soon as Noticed state is reached, so shadow appears sooner
             if (!this.jumpTarget) {
-                this.jumpTarget = {
-                    x: this.mouse.x + randomMinMax(-0.5, 0.5) * TILE_SIZE,
-                    y: this.mouse.y - 5 * TILE_DRAW_HEIGHT,
-                };
+                this.jumpTarget = getJumpTarget(this.mouse);
             }
             // Position the cat such that it appears coming from the fence
             this.host.x = this.mouse.x - this.host.width * 0.5;
@@ -441,10 +451,7 @@ export class CatAi {
         if (!this.jumpStartTime) {
             this.jumpStartTime = time.t;
             if (!this.jumpTarget) {
-                this.jumpTarget = {
-                    x: this.mouse.x + randomMinMax(-0.5, 0.5) * TILE_SIZE,
-                    y: this.mouse.y - 5 * TILE_DRAW_HEIGHT,
-                };
+                this.jumpTarget = getJumpTarget(this.mouse);
             }
         }
 
@@ -571,36 +578,38 @@ export class CatAi {
     ): Vector | null {
         if (
             !this.stopToListenStartTime &&
+            !this.followHearObservationTarget &&
             this.lastAccurateHearObservation &&
             time.t - this.lastAccurateHearObservation.t <
                 HEAR_OBSERVATION_IGNORE_TIME
         ) {
+            const target = getPointBetween(
+                hostCenter,
+                this.lastAccurateHearObservation.position,
+            );
+            this.followHearObservationTarget = target;
+
             if (this.idleTarget) {
                 // Dont always go back to the same direction after following the mouse.
                 this.idleTarget = null;
             }
-
-            this.isAlert = true;
-            const d = distance(
-                hostCenter,
-                this.lastAccurateHearObservation.position,
-            );
-            const target =
-                d < TILE_SIZE
-                    ? this.lastAccurateHearObservation.position
-                    : getPointBetween(
-                          hostCenter,
-                          this.lastAccurateHearObservation.position,
-                      );
-
-            return this.goTo(
-                target,
-                hostCenter,
-                SPEED_VAGUE_OBSERVATION * this.speedMultiplier,
-            );
         }
 
-        this.isAlert = false;
+        if (this.followHearObservationTarget) {
+            const movement = this.goTo(
+                this.followHearObservationTarget,
+                hostCenter,
+                SPEED_HEAR_OBSERVATION * this.speedMultiplier,
+            );
+
+            if (!movement) {
+                this.followHearObservationTarget = null;
+                this.lastAccurateHearObservation = null;
+            }
+
+            return movement;
+        }
+
         return null;
     }
 
