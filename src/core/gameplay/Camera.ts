@@ -116,6 +116,16 @@ export class Camera {
             this.zoom = this.view.height / this.visibleAreaHeight;
         }
 
+        // Force that the level fills the entire view area.
+        const minXZoom = this.view.width / this.level.width;
+        if (this.zoom < minXZoom) {
+            this.zoom = minXZoom;
+        }
+        const minYZoom = this.view.height / this.level.height;
+        if (this.zoom < minYZoom) {
+            this.zoom = minYZoom;
+        }
+
         // if (this.transition != null) {
         //     const { startY, endY, startTime, duration } = this.transition;
 
