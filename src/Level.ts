@@ -82,11 +82,11 @@ export class Level implements Area, Space {
         this.player = player;
         this.cat = cat;
         this.animals = cat ? [player, cat] : [player];
-        this.camera = new Camera(this, this.levelDrawArea);
         this.camera.visibleAreaHeight = 20 * TILE_DRAW_HEIGHT;
         this.camera.yAdjust = -(1 / 4);
         this.camera.follow(this.player);
     }
+
     private horizonDrawArea = new PartialArea(
         canvas,
         0,
@@ -100,7 +100,7 @@ export class Level implements Area, Space {
 
     private tileMap: TileMap;
 
-    private camera!: Camera;
+    private camera: Camera = new Camera(this, this.levelDrawArea);
 
     state: LevelState = LevelState.Running;
 
