@@ -23,14 +23,17 @@
  */
 
 import type { Area, Dimensions } from "../math/Area";
-// import { easeInOutExpo } from "../math/easings";
-// import type { TimeStep } from "../time/TimeStep";
+import type { Vector } from "../math/Vector";
+import type { TimeStep } from "../time/TimeStep";
 
-export interface Transition {
-    startY: number;
-    endY: number;
-    startTime: number;
-    duration: number;
+export interface TransitionParameters {
+    readonly to: Vector;
+    readonly duration: number;
+}
+
+interface Transition extends TransitionParameters {
+    readonly from: Vector;
+    readonly startTime: number;
 }
 
 export class Camera {
@@ -44,7 +47,7 @@ export class Camera {
     yAdjust: number = 0;
 
     private target: Area | null = null;
-    // private transition: Transition | null = null;
+    private transition: Transition | null = null;
 
     constructor(
         private level: Area,
@@ -81,18 +84,18 @@ export class Camera {
     //     }
     // }
 
-    follow(target: Area): void {
+    follow(target: Area | null): void {
         this.target = target;
     }
 
-    // setTransition(transition: Transition): void {
-    //     const viewAreaHeight = this.view.height / this.zoom;
-    //     this.transition = {
-    //         ...transition,
-    //         endY: transition.endY + viewAreaHeight * this.yAdjust,
-    //     };
-    //     this.target = null;
-    // }
+    setTransition(time: TimeStep, parameters: TransitionParameters): void {
+        this.transition = {
+            ...parameters,
+            from: { x: this.x, y: this.y },
+            startTime: time.t,
+        };
+        this.target = null;
+    }
 
     /**
      * Applies camera view when drawing. Drawing within this
@@ -111,38 +114,56 @@ export class Camera {
         cx.restore();
     }
 
-    update(/* time: TimeStep */): void {
-        if (this.visibleAreaHeight != null) {
-            this.zoom = this.view.height / this.visibleAreaHeight;
-        }
+    update(time: TimeStep): void {
+        if (this.transition != null) {
+            const { from, to, startTime, duration } = this.transition;
 
-        // Force that the level fills the entire view area.
-        const minXZoom = this.view.width / this.level.width;
-        if (this.zoom < minXZoom) {
-            this.zoom = minXZoom;
-        }
-        const minYZoom = this.view.height / this.level.height;
-        if (this.zoom < minYZoom) {
-            this.zoom = minYZoom;
-        }
+            if (time.t < startTime + duration) {
+                const viewAreaWidth = this.view.width / this.zoom;
+                const viewAreaHeight = this.view.height / this.zoom;
+                const elapsedTime = time.t - this.transition.startTime;
+                const progress = elapsedTime / this.transition.duration;
 
-        // if (this.transition != null) {
-        //     const { startY, endY, startTime, duration } = this.transition;
+                let x = from.x + progress * (to.x - from.x);
+                let y = from.y + progress * (to.y - from.y);
 
-        //     if (time.t < startTime + duration) {
-        //         const elapsedTime = time.t - this.transition.startTime;
-        //         const progress = elapsedTime / this.transition.duration;
+                // Keep camera within level in x-direction.
+                if (x - viewAreaWidth / 2 < this.level.x) {
+                    x = this.level.x + viewAreaWidth / 2;
+                } else if (x + viewAreaWidth / 2 > this.level.width) {
+                    x = this.level.width - viewAreaWidth / 2;
+                }
 
-        //         this.y = startY + easeInOutExpo(progress) * (endY - startY);
-        //     } else {
-        //         this.transition = null;
-        //     }
-        // } else if (this.target) {
-        //     this.followFrame(this.target);
-        // }
+                // Keep camera within level in y-direction.
+                if (y - viewAreaHeight / 2 < this.level.y) {
+                    y = this.level.y + viewAreaHeight / 2;
+                } else if (y + viewAreaHeight / 2 > this.level.height) {
+                    y = this.level.height - viewAreaHeight / 2;
+                }
 
-        if (this.target) {
-            this.followFrame(this.target);
+                this.x = x;
+                this.y = y;
+            } else {
+                this.transition = null;
+            }
+        } else {
+            if (this.visibleAreaHeight != null) {
+                this.zoom = this.view.height / this.visibleAreaHeight;
+            }
+
+            // Force that the level fills the entire view area.
+            const minXZoom = this.view.width / this.level.width;
+            if (this.zoom < minXZoom) {
+                this.zoom = minXZoom;
+            }
+            const minYZoom = this.view.height / this.level.height;
+            if (this.zoom < minYZoom) {
+                this.zoom = minYZoom;
+            }
+
+            if (this.target) {
+                this.followFrame(this.target);
+            }
         }
     }
 

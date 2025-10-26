@@ -56,6 +56,7 @@ import { playTune, SFX_RUNNING } from "./audio/sfx";
 import { Bush } from "./Bush";
 import { renderGradient } from "./core/graphics/gradient";
 import { renderText, TextSize } from "./text";
+import { FenceState, JUMP_DURATION } from "./CatAi";
 
 const HORIZON_HEIGHT_OF_CANVAS = 0.25;
 
@@ -101,6 +102,8 @@ export class Level implements Area, Space {
     private tileMap: TileMap;
 
     private camera: Camera = new Camera(this, this.levelDrawArea);
+    private transitionStartTime: number | null = null;
+    private transitionDone = false;
 
     state: LevelState = LevelState.Running;
 
@@ -179,7 +182,7 @@ export class Level implements Area, Space {
     }
 
     update(time: TimeStep): void {
-        this.camera.update();
+        this.camera.update(time);
 
         this.calculateMovement(time);
 
@@ -195,6 +198,29 @@ export class Level implements Area, Space {
             return;
         }
 
+        // Camera effect when the cat is jumping
+        if (
+            !this.transitionStartTime &&
+            this.cat?.ai.fenceState == FenceState.Jumped &&
+            !this.cat?.ai.isOnLevel
+        ) {
+            this.transitionStartTime = time.t;
+            const playerPos = getCenter(this.player);
+
+            this.camera.setTransition(time, {
+                to: this.cat.ai.jumpTarget ?? playerPos,
+                duration: 1000,
+            });
+        } else if (
+            !this.transitionDone &&
+            this.transitionStartTime &&
+            JUMP_DURATION + 500 < time.t - this.transitionStartTime
+        ) {
+            this.transitionDone = true;
+            this.camera.follow(this.player);
+        }
+
+        // Check collision with the cat
         if (this.cat?.ai.isOnLevel) {
             const playerCenter = getCenter(this.player);
             const catCenter = getCenter(this.cat);
