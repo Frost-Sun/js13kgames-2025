@@ -28,19 +28,26 @@ import type { TimeStep } from "../time/TimeStep";
 
 export interface TransitionParameters {
     readonly to: Vector;
+    readonly visibleAreaHeight?: number;
     readonly duration: number;
 }
 
-interface Transition extends TransitionParameters {
+interface Transition extends Omit<TransitionParameters, "zoom"> {
     readonly from: Vector;
+    readonly fromVisibleAreaHeight: number;
+    readonly toVisibleAreaHeight: number;
     readonly startTime: number;
 }
 
 export class Camera {
     x = 0;
     y = 0;
+
+    // How much of the level should be visible within the camera view in the y-direction.
+    visibleAreaHeight: number = 1;
+
+    // The actual zoom factor. Do not set directly, use visibleAreaHeight instead.
     zoom = 1;
-    visibleAreaHeight?: number;
 
     // Adjusts the camera y position, relative to the visible level
     // area.
@@ -92,6 +99,9 @@ export class Camera {
         this.transition = {
             ...parameters,
             from: { x: this.x, y: this.y },
+            fromVisibleAreaHeight: this.visibleAreaHeight,
+            toVisibleAreaHeight:
+                parameters.visibleAreaHeight ?? this.visibleAreaHeight,
             startTime: time.t,
         };
         this.target = null;
@@ -116,16 +126,29 @@ export class Camera {
 
     update(time: TimeStep): void {
         if (this.transition != null) {
-            const { from, to, startTime, duration } = this.transition;
+            const {
+                from,
+                to,
+                fromVisibleAreaHeight,
+                toVisibleAreaHeight,
+                startTime,
+                duration,
+            } = this.transition;
 
             if (time.t < startTime + duration) {
-                const viewAreaWidth = this.view.width / this.zoom;
-                const viewAreaHeight = this.view.height / this.zoom;
                 const elapsedTime = time.t - this.transition.startTime;
                 const progress = elapsedTime / this.transition.duration;
 
                 let x = from.x + progress * (to.x - from.x);
                 let y = from.y + progress * (to.y - from.y);
+
+                const newVisibleAreaHeight =
+                    fromVisibleAreaHeight +
+                    progress * (toVisibleAreaHeight - fromVisibleAreaHeight);
+
+                const newZoom = this.view.height / newVisibleAreaHeight;
+                const viewAreaWidth = this.view.width / newZoom;
+                const viewAreaHeight = this.view.height / newZoom;
 
                 // Keep camera within level in x-direction.
                 if (x - viewAreaWidth / 2 < this.level.x) {
@@ -143,23 +166,25 @@ export class Camera {
 
                 this.x = x;
                 this.y = y;
+                this.visibleAreaHeight = newVisibleAreaHeight;
+                this.zoom = newZoom;
             } else {
                 this.transition = null;
             }
         } else {
-            if (this.visibleAreaHeight != null) {
-                this.zoom = this.view.height / this.visibleAreaHeight;
-            }
+            let newZoom = this.view.height / this.visibleAreaHeight;
 
             // Force that the level fills the entire view area.
             const minXZoom = this.view.width / this.level.width;
-            if (this.zoom < minXZoom) {
-                this.zoom = minXZoom;
+            if (newZoom < minXZoom) {
+                newZoom = minXZoom;
             }
             const minYZoom = this.view.height / this.level.height;
-            if (this.zoom < minYZoom) {
-                this.zoom = minYZoom;
+            if (newZoom < minYZoom) {
+                newZoom = minYZoom;
             }
+
+            this.zoom = newZoom;
 
             if (this.target) {
                 this.followFrame(this.target);

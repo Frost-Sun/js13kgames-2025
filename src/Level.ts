@@ -60,6 +60,9 @@ import { FenceState, JUMP_DURATION } from "./CatAi";
 
 const HORIZON_HEIGHT_OF_CANVAS = 0.25;
 
+const VIEW_HEIGHT_NORMAL = 20 * TILE_DRAW_HEIGHT;
+const VIEW_HEIGHT_ZOOM_EFFECT = 23 * TILE_DRAW_HEIGHT;
+
 const NIGHT_FADE_DURATION = 240000; // 4 minutes in ms
 
 let GAME_START_TIME = performance.now();
@@ -83,7 +86,7 @@ export class Level implements Area, Space {
         this.player = player;
         this.cat = cat;
         this.animals = cat ? [player, cat] : [player];
-        this.camera.visibleAreaHeight = 20 * TILE_DRAW_HEIGHT;
+        this.camera.visibleAreaHeight = VIEW_HEIGHT_NORMAL;
         this.camera.yAdjust = -(1 / 4);
         this.camera.follow(this.player);
     }
@@ -209,6 +212,7 @@ export class Level implements Area, Space {
 
             this.camera.setTransition(time, {
                 to: this.cat.ai.jumpTarget ?? playerPos,
+                visibleAreaHeight: VIEW_HEIGHT_ZOOM_EFFECT,
                 duration: 1000,
             });
         } else if (
@@ -217,7 +221,11 @@ export class Level implements Area, Space {
             JUMP_DURATION + 500 < time.t - this.transitionStartTime
         ) {
             this.transitionDone = true;
-            this.camera.follow(this.player);
+            this.camera.setTransition(time, {
+                to: getCenter(this.player),
+                visibleAreaHeight: VIEW_HEIGHT_NORMAL,
+                duration: 1000,
+            });
         }
 
         // Check collision with the cat
