@@ -207,11 +207,16 @@ export class Level implements Area, Space {
             this.cat?.ai.fenceState == FenceState.Jumped
         ) {
             this.zoomEffectStarted = true;
+
             const playerPos = getCenter(this.player);
+            const jumpTarget = this.cat.ai.jumpTarget ?? playerPos;
 
             this.camera
                 .setTransition(time, {
-                    to: this.cat.ai.jumpTarget ?? playerPos,
+                    to: {
+                        x: playerPos.x + (jumpTarget.x - playerPos.x) / 2,
+                        y: playerPos.y + (jumpTarget.y - playerPos.y) / 2,
+                    },
                     visibleAreaHeight: VIEW_HEIGHT_ZOOM_EFFECT,
                     duration: JUMP_DURATION,
                 })
