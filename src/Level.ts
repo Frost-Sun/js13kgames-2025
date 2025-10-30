@@ -57,6 +57,7 @@ import { Bush } from "./Bush";
 import { renderGradient } from "./core/graphics/gradient";
 import { renderText, TextSize } from "./text";
 import { FenceState, JUMP_DURATION } from "./CatAi";
+import { sleep } from "./core/time/sleep";
 
 const HORIZON_HEIGHT_OF_CANVAS = 0.25;
 
@@ -105,8 +106,7 @@ export class Level implements Area, Space {
     private tileMap: TileMap;
 
     private camera: Camera = new Camera(this, this.levelDrawArea);
-    private transitionStartTime: number | null = null;
-    private transitionDone = false;
+    private zoomEffectStarted = false;
 
     state: LevelState = LevelState.Running;
 
@@ -201,31 +201,29 @@ export class Level implements Area, Space {
             return;
         }
 
-        // Camera effect when the cat is jumping
+        // Camera effect when the cat jumps to the level
         if (
-            !this.transitionStartTime &&
-            this.cat?.ai.fenceState == FenceState.Jumped &&
-            !this.cat?.ai.isOnLevel
+            !this.zoomEffectStarted &&
+            this.cat?.ai.fenceState == FenceState.Jumped
         ) {
-            this.transitionStartTime = time.t;
+            this.zoomEffectStarted = true;
             const playerPos = getCenter(this.player);
 
-            this.camera.setTransition(time, {
-                to: this.cat.ai.jumpTarget ?? playerPos,
-                visibleAreaHeight: VIEW_HEIGHT_ZOOM_EFFECT,
-                duration: 1000,
-            });
-        } else if (
-            !this.transitionDone &&
-            this.transitionStartTime &&
-            JUMP_DURATION + 500 < time.t - this.transitionStartTime
-        ) {
-            this.transitionDone = true;
-            this.camera.setTransition(time, {
-                to: getCenter(this.player),
-                visibleAreaHeight: VIEW_HEIGHT_NORMAL,
-                duration: 1000,
-            });
+            this.camera
+                .setTransition(time, {
+                    to: this.cat.ai.jumpTarget ?? playerPos,
+                    visibleAreaHeight: VIEW_HEIGHT_ZOOM_EFFECT,
+                    duration: JUMP_DURATION,
+                })
+                .then(() => sleep(500))
+                .then(() =>
+                    this.camera.setTransition(time, {
+                        to: getCenter(this.player),
+                        visibleAreaHeight: VIEW_HEIGHT_NORMAL,
+                        duration: 500,
+                    }),
+                )
+                .then(() => this.camera.follow(this.player));
         }
 
         // Check collision with the cat

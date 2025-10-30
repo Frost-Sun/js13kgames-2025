@@ -37,6 +37,7 @@ interface Transition extends Omit<TransitionParameters, "zoom"> {
     readonly fromVisibleAreaHeight: number;
     readonly toVisibleAreaHeight: number;
     readonly startTime: number;
+    readonly resolve: () => void;
 }
 
 export class Camera {
@@ -95,16 +96,22 @@ export class Camera {
         this.target = target;
     }
 
-    setTransition(time: TimeStep, parameters: TransitionParameters): void {
-        this.transition = {
-            ...parameters,
-            from: { x: this.x, y: this.y },
-            fromVisibleAreaHeight: this.visibleAreaHeight,
-            toVisibleAreaHeight:
-                parameters.visibleAreaHeight ?? this.visibleAreaHeight,
-            startTime: time.t,
-        };
-        this.target = null;
+    setTransition(
+        time: TimeStep,
+        parameters: TransitionParameters,
+    ): Promise<void> {
+        return new Promise((resolve) => {
+            this.target = null;
+            this.transition = {
+                ...parameters,
+                from: { x: this.x, y: this.y },
+                fromVisibleAreaHeight: this.visibleAreaHeight,
+                toVisibleAreaHeight:
+                    parameters.visibleAreaHeight ?? this.visibleAreaHeight,
+                startTime: time.t,
+                resolve,
+            };
+        });
     }
 
     /**
@@ -169,6 +176,7 @@ export class Camera {
                 this.visibleAreaHeight = newVisibleAreaHeight;
                 this.zoom = newZoom;
             } else {
+                this.transition.resolve.apply(null);
                 this.transition = null;
             }
         } else {
