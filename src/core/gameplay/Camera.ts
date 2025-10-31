@@ -150,12 +150,14 @@ export class Camera {
                     elapsedTime / this.transition.duration,
                 );
 
-                let x = from.x + progress * (to.x - from.x);
-                let y = from.y + progress * (to.y - from.y);
-
                 const newVisibleAreaHeight =
                     fromVisibleAreaHeight +
                     progress * (toVisibleAreaHeight - fromVisibleAreaHeight);
+                let x = from.x + progress * (to.x - from.x);
+                let y =
+                    from.y +
+                    progress * (to.y - from.y) +
+                    newVisibleAreaHeight * this.yAdjust;
 
                 const newZoom = this.view.height / newVisibleAreaHeight;
                 const viewAreaWidth = this.view.width / newZoom;
