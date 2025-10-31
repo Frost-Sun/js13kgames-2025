@@ -227,7 +227,7 @@ export class Level implements Area, Space {
                     this.camera.setTransition(time, {
                         to: getCenter(this.player),
                         visibleAreaHeight: VIEW_HEIGHT_NORMAL,
-                        duration: 500,
+                        duration: 1000,
                         easing: easeOutCubic,
                     }),
                 )
