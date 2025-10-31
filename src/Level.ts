@@ -58,6 +58,7 @@ import { renderGradient } from "./core/graphics/gradient";
 import { renderText, TextSize } from "./text";
 import { FenceState, JUMP_DURATION } from "./CatAi";
 import { sleep } from "./core/time/sleep";
+import { easeOutCubic } from "./core/math/easings";
 
 const HORIZON_HEIGHT_OF_CANVAS = 0.25;
 
@@ -219,6 +220,7 @@ export class Level implements Area, Space {
                     },
                     visibleAreaHeight: VIEW_HEIGHT_ZOOM_EFFECT,
                     duration: JUMP_DURATION,
+                    easing: easeOutCubic,
                 })
                 .then(() => sleep(500))
                 .then(() =>
@@ -226,6 +228,7 @@ export class Level implements Area, Space {
                         to: getCenter(this.player),
                         visibleAreaHeight: VIEW_HEIGHT_NORMAL,
                         duration: 500,
+                        easing: easeOutCubic,
                     }),
                 )
                 .then(() => this.camera.follow(this.player));

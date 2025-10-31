@@ -30,6 +30,7 @@ export interface TransitionParameters {
     readonly to: Vector;
     readonly visibleAreaHeight?: number;
     readonly duration: number;
+    readonly easing: (x: number) => number;
 }
 
 interface Transition extends Omit<TransitionParameters, "zoom"> {
@@ -144,7 +145,10 @@ export class Camera {
 
             if (time.t < startTime + duration) {
                 const elapsedTime = time.t - this.transition.startTime;
-                const progress = elapsedTime / this.transition.duration;
+                const progress = this.transition.easing.call(
+                    null,
+                    elapsedTime / this.transition.duration,
+                );
 
                 let x = from.x + progress * (to.x - from.x);
                 let y = from.y + progress * (to.y - from.y);
@@ -176,7 +180,7 @@ export class Camera {
                 this.visibleAreaHeight = newVisibleAreaHeight;
                 this.zoom = newZoom;
             } else {
-                this.transition.resolve.apply(null);
+                this.transition.resolve.call(null);
                 this.transition = null;
             }
         } else {
@@ -204,9 +208,11 @@ export class Camera {
         const viewAreaWidth = this.view.width / this.zoom;
         const viewAreaHeight = this.view.height / this.zoom;
 
-        let x = gameObject.x + gameObject.width;
+        let x = gameObject.x + gameObject.width / 2;
         let y =
-            gameObject.y + gameObject.height + viewAreaHeight * this.yAdjust;
+            gameObject.y +
+            gameObject.height / 2 +
+            viewAreaHeight * this.yAdjust;
 
         // Keep camera within level in x-direction.
         if (x - viewAreaWidth / 2 < this.level.x) {
