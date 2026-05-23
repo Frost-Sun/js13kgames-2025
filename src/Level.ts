@@ -56,8 +56,14 @@ import { playTune, SFX_RUNNING } from "./audio/sfx";
 import { Bush } from "./Bush";
 import { renderGradient } from "./core/graphics/gradient";
 import { renderText, TextSize } from "./text";
+import { FenceState, JUMP_DURATION } from "./CatAi";
+import { sleep } from "./core/time/sleep";
+import { easeOutCubic } from "./core/math/easings";
 
 const HORIZON_HEIGHT_OF_CANVAS = 0.25;
+
+const VIEW_HEIGHT_NORMAL = 20 * TILE_DRAW_HEIGHT;
+const VIEW_HEIGHT_ZOOM_EFFECT = 23 * TILE_DRAW_HEIGHT;
 
 const NIGHT_FADE_DURATION = 240000; // 4 minutes in ms
 
@@ -82,11 +88,11 @@ export class Level implements Area, Space {
         this.player = player;
         this.cat = cat;
         this.animals = cat ? [player, cat] : [player];
-        this.camera = new Camera(this, this.levelDrawArea);
-        this.camera.zoom = 15;
+        this.camera.visibleAreaHeight = VIEW_HEIGHT_NORMAL;
         this.camera.yAdjust = -(1 / 4);
         this.camera.follow(this.player);
     }
+
     private horizonDrawArea = new PartialArea(
         canvas,
         0,
@@ -100,7 +106,8 @@ export class Level implements Area, Space {
 
     private tileMap: TileMap;
 
-    private camera!: Camera;
+    private camera: Camera = new Camera(this, this.levelDrawArea);
+    private zoomEffectStarted = false;
 
     state: LevelState = LevelState.Running;
 
@@ -179,7 +186,7 @@ export class Level implements Area, Space {
     }
 
     update(time: TimeStep): void {
-        this.camera.update();
+        this.camera.update(time);
 
         this.calculateMovement(time);
 
@@ -195,6 +202,39 @@ export class Level implements Area, Space {
             return;
         }
 
+        // Camera effect when the cat jumps to the level
+        if (
+            !this.zoomEffectStarted &&
+            this.cat?.ai.fenceState == FenceState.Jumped
+        ) {
+            this.zoomEffectStarted = true;
+
+            const playerPos = getCenter(this.player);
+            const jumpTarget = this.cat.ai.jumpTarget ?? playerPos;
+
+            this.camera
+                .setTransition(time, {
+                    to: {
+                        x: playerPos.x + (jumpTarget.x - playerPos.x) / 2,
+                        y: playerPos.y + (jumpTarget.y - playerPos.y) / 2,
+                    },
+                    visibleAreaHeight: VIEW_HEIGHT_ZOOM_EFFECT,
+                    duration: JUMP_DURATION,
+                    easing: easeOutCubic,
+                })
+                .then(() => sleep(500))
+                .then(() =>
+                    this.camera.setTransition(time, {
+                        to: getCenter(this.player),
+                        visibleAreaHeight: VIEW_HEIGHT_NORMAL,
+                        duration: 1000,
+                        easing: easeOutCubic,
+                    }),
+                )
+                .then(() => this.camera.follow(this.player));
+        }
+
+        // Check collision with the cat
         if (this.cat?.ai.isOnLevel) {
             const playerCenter = getCenter(this.player);
             const catCenter = getCenter(this.cat);
